@@ -49,6 +49,8 @@ func _on_phase_changed(new_phase: int) -> void:
 			_load_phase_3()
 		4:
 			_load_phase_4()
+		5:
+			_show_level_complete()
 
 func _on_time_updated(time: float) -> void:
 	var minutes: int = int(time) / 60
@@ -84,7 +86,9 @@ func _load_phase_3() -> void:
 
 func _load_phase_4() -> void:
 	print("Loading Phase 4 - Final Attack")
-	_show_level_complete()
+	var phase4: Node = Node.new()
+	phase4.script = load("res://scripts/phases/Phase4Manager.gd")
+	phase_container.add_child(phase4)
 
 func _show_game_over() -> void:
 	var overlay: ColorRect = ColorRect.new()
@@ -101,6 +105,15 @@ func _show_game_over() -> void:
 	label.add_theme_font_size_override("font_size", 56)
 	label.add_theme_color_override("font_color", Color(1, 0, 0))
 	add_child(label)
+	
+	var desc: Label = Label.new()
+	desc.text = "Il livello non è stato completato in tempo."
+	desc.anchor_left = 0.5
+	desc.anchor_top = 0.52
+	desc.offset_left = -200
+	desc.add_theme_font_size_override("font_size", 20)
+	desc.add_theme_color_override("font_color", Color(1, 1, 1))
+	add_child(desc)
 
 func _show_level_complete() -> void:
 	var overlay: ColorRect = ColorRect.new()
@@ -110,11 +123,27 @@ func _show_level_complete() -> void:
 	add_child(overlay)
 	
 	var label: Label = Label.new()
-	label.text = "LIVELLO COMPLETATO!\nHai imparato come funzionano i Binary Search Tree!"
+	label.text = "LIVELLO COMPLETATO!"
 	label.anchor_left = 0.5
-	label.anchor_top = 0.4
-	label.offset_left = -300
-	label.offset_top = -50
-	label.add_theme_font_size_override("font_size", 40)
-	label.add_theme_color_override("font_color", Color(0, 1, 0))
+	label.anchor_top = 0.3
+	label.offset_left = -280
+	label.add_theme_font_size_override("font_size", 48)
+	label.add_theme_color_override("font_color", Color(0, 1, 0.5))
 	add_child(label)
+	
+	var desc: Label = Label.new()
+	desc.text = "Hai imparato come funzionano i Binary Search Tree!\n\nHai ripristinato la rete e sconfitto l'hacker.\nOttimo lavoro, campione!"
+	desc.anchor_left = 0.5
+	desc.anchor_top = 0.45
+	desc.offset_left = -250
+	desc.add_theme_font_size_override("font_size", 20)
+	desc.add_theme_color_override("font_color", Color.WHITE)
+	add_child(desc)
+	
+	var button: Button = Button.new()
+	button.text = "Menu Principale"
+	button.anchor_left = 0.35
+	button.anchor_top = 0.7
+	button.custom_minimum_size = Vector2(150, 50)
+	button.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/introduction.tscn"))
+	add_child(button)
