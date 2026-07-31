@@ -3,178 +3,302 @@ extends Node
 var game_manager: Node
 var phase_ui: Control
 var canvas: Control
-var router_ui_nodes: Dictionary = {}
-var root_node_ui: Control = null
-var placed_values: Array[int] = []
+var drag_container: HBoxContainer
+
+var router_nodes: Dictionary = {}  # value -> Control
+var placed_nodes: Dictionary = {}  # value -> {node, pos, parent, direction}
 var remaining_values: Array[int] = []
-var error_message: Label = Label.new()
+var tree_positions: Dictionary = {}  # value -> Vector2
+
+var dragging_router: Control = null
+var drag_offset: Vector2 = Vector2.ZERO
+var is_dragging: bool = false
+
+var error_label: Label = Label.new()
+var line_container: Control
 
 func _ready() -> void:
 	game_manager = GameManager
 	phase_ui = get_parent()
-	setup_phase_1_ui()
-	initialize_phase_1()
-	get_tree().root.gui_input.connect(_on_root_gui_input)
+	setup_ui()
+	initialize_phase()
 
-func setup_phase_1_ui() -> void:
+func setup_ui() -> void:
 	var bg: Panel = Panel.new()
-	bg.anchor_left = 0.1
-	bg.anchor_top = 0.15
-	bg.anchor_right = 0.9
-	bg.anchor_bottom = 0.88
+	bg.anchor_left = 0.05
+	bg.anchor_top = 0.1
+	bg.anchor_right = 0.95
+	bg.anchor_bottom = 0.92
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.12, 0.2)
+	style.bg_color = Color(0.05, 0.08, 0.15)
+	style.corner_radius = 8
 	bg.add_theme_stylebox_override("panel", style)
 	phase_ui.add_child(bg)
-	
+
 	var title: Label = Label.new()
-	title.text = "Fase 1: Trascinare i router - minori a SINISTRA, maggiori a DESTRA"
-	title.anchor_left = 0.1
-	title.anchor_top = 0.15
-	title.add_theme_font_size_override("font_size", 16)
-	title.add_theme_color_override("font_color", Color(0, 1, 0.5))
+	title.text = "FASE 1: Ricostruzione della Rete"
+	title.anchor_left = 0.05
+	title.anchor_top = 0.1
+	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_color_override("font_color", Color(0.2, 0.8, 1))
 	phase_ui.add_child(title)
-	
-	error_message.anchor_left = 0.1
-	error_message.anchor_top = 0.19
-	error_message.add_theme_font_size_override("font_size", 12)
-	error_message.add_theme_color_override("font_color", Color(1, 0.2, 0.2))
-	phase_ui.add_child(error_message)
-	
+
+	var hint: Label = Label.new()
+	hint.text = "Trascina i router nella posizione corretta — minori a SINISTRA, maggiori a DESTRA"
+	hint.anchor_left = 0.05
+	hint.anchor_top = 0.14
+	hint.add_theme_font_size_override("font_size", 12)
+	hint.add_theme_color_override("font_color", Color(0.5, 0.7, 1))
+	phase_ui.add_child(hint)
+
+	error_label.anchor_left = 0.1
+	error_label.anchor_top = 0.18
+	error_label.add_theme_font_size_override("font_size", 14)
+	error_label.add_theme_color_override("font_color", Color(1, 0.2, 0.2))
+	phase_ui.add_child(error_label)
+
+	line_container = Control.new()
+	line_container.anchor_left = 0.05
+	line_container.anchor_top = 0.1
+	line_container.anchor_right = 0.95
+	line_container.anchor_bottom = 0.92
+	line_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	phase_ui.add_child(line_container)
+
 	canvas = Control.new()
-	canvas.anchor_left = 0.15
-	canvas.anchor_top = 0.22
-	canvas.anchor_right = 0.65
-	canvas.anchor_bottom = 0.85
+	canvas.anchor_left = 0.1
+	canvas.anchor_top = 0.2
+	canvas.anchor_right = 0.9
+	canvas.anchor_bottom = 0.68
 	phase_ui.add_child(canvas)
-	
-	var drag_container: VBoxContainer = VBoxContainer.new()
-	drag_container.anchor_left = 0.68
-	drag_container.anchor_top = 0.23
-	drag_container.anchor_right = 0.89
-	drag_container.anchor_bottom = 0.84
-	drag_container.add_theme_constant_override("separation", 10)
-	drag_container.name = "DragContainer"
+
+	drag_container = HBoxContainer.new()
+	drag_container.anchor_left = 0.15
+	drag_container.anchor_top = 0.72
+	drag_container.anchor_right = 0.85
+	drag_container.anchor_bottom = 0.86
+	drag_container.add_theme_constant_override("separation", 25)
+	drag_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	phase_ui.add_child(drag_container)
 
-func initialize_phase_1() -> void:
+func initialize_phase() -> void:
 	if not game_manager:
 		return
-	
+
+	calculate_tree_positions()
+
+	# Create root router
 	var root_value: int = game_manager.phase1_values[0]
-	root_node_ui = _create_router_ui(root_value)
-	root_node_ui.position = Vector2(canvas.size.x / 2 - 40, 20)
-	canvas.add_child(root_node_ui)
-	placed_values.append(root_value)
-	
-	var drag_container: VBoxContainer = phase_ui.find_child("DragContainer")
+	var root_ui: Control = _create_router_ui(root_value, true)
+	root_ui.position = tree_positions[root_value] - Vector2(30, 30)
+	canvas.add_child(root_ui)
+	placed_nodes[root_value] = {
+		"node": root_ui,
+		"pos": tree_positions[root_value],
+		"parent": -1,
+		"direction": ""
+	}
+
+	# Create draggable routers in the bottom bar
 	for i in range(1, game_manager.phase1_values.size()):
 		var val: int = game_manager.phase1_values[i]
 		remaining_values.append(val)
-		var router_ui: Control = _create_router_ui(val)
-		router_ui.custom_minimum_size = Vector2(70, 70)
+		var router_ui: Control = _create_router_ui(val, false)
 		drag_container.add_child(router_ui)
-		router_ui_nodes[val] = router_ui
+		router_nodes[val] = router_ui
 
-func _create_router_ui(value: int) -> Control:
+func calculate_tree_positions() -> void:
+	var center_x: float = canvas.size.x / 2.0
+	# Level 0: root
+	tree_positions[50] = Vector2(center_x, 40)
+	# Level 1
+	tree_positions[30] = Vector2(center_x - 100, 140)
+	tree_positions[70] = Vector2(center_x + 100, 140)
+	# Level 2
+	tree_positions[20] = Vector2(center_x - 150, 240)
+	tree_positions[40] = Vector2(center_x - 50, 240)
+	tree_positions[60] = Vector2(center_x + 50, 240)
+	tree_positions[80] = Vector2(center_x + 150, 240)
+
+func _create_router_ui(value: int, is_root: bool) -> Control:
 	var container: Control = Control.new()
-	container.custom_minimum_size = Vector2(80, 80)
+	container.custom_minimum_size = Vector2(60, 60)
+	container.mouse_filter = Control.MOUSE_FILTER_PASS
+
 	var sprite: Sprite2D = Sprite2D.new()
 	sprite.texture = load("res://assets/generated/router_node_frame_0.png")
 	sprite.centered = true
-	sprite.scale = Vector2(1.5, 1.5)
-	sprite.position = Vector2(40, 40)
+	sprite.scale = Vector2(1.5, 1.5) if is_root else Vector2(1.2, 1.2)
+	sprite.position = Vector2(30, 30)
 	container.add_child(sprite)
+
 	var label: Label = Label.new()
 	label.text = str(value)
-	label.add_theme_font_size_override("font_size", 20)
+	label.add_theme_font_size_override("font_size", 18)
 	label.add_theme_color_override("font_color", Color.WHITE)
-	label.anchor_left = 0.5
-	label.anchor_top = 0.5
-	label.offset_left = -10
-	label.offset_top = -10
+	label.position = Vector2(20, 16)
 	container.add_child(label)
+
 	container.set_meta("value", value)
-	container.set_meta("is_dragging", false)
-	container.set_meta("drag_offset", Vector2.ZERO)
 	return container
 
-func _on_root_gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		for val in remaining_values:
-			if val in router_ui_nodes:
-				var router = router_ui_nodes[val]
-				if router.get_global_rect().has_point(event.position):
-					router.set_meta("is_dragging", true)
-					router.set_meta("drag_offset", event.position - router.global_position)
-	elif event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		for val in remaining_values:
-			if val in router_ui_nodes and router_ui_nodes[val].get_meta("is_dragging", false):
-				_on_router_dropped(val)
-				router_ui_nodes[val].set_meta("is_dragging", false)
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			for val in remaining_values:
+				if val in router_nodes:
+					var router: Control = router_nodes[val]
+					if router.get_global_rect().has_point(event.global_position):
+						dragging_router = router
+						drag_offset = event.global_position - router.global_position
+						is_dragging = true
+						router.z_index = 100
+						break
+		else:
+			if is_dragging and dragging_router:
+				_on_router_dropped()
+				dragging_router.z_index = 0
+				dragging_router = null
+				is_dragging = false
 
-func _process(_delta: float) -> void:
-	for val in remaining_values:
-		if val in router_ui_nodes:
-			var router = router_ui_nodes[val]
-			if router.get_meta("is_dragging", false):
-				var offset: Vector2 = router.get_meta("drag_offset", Vector2.ZERO)
-				router.global_position = get_global_mouse_position() - offset
+	if event is InputEventMouseMotion and is_dragging and dragging_router:
+		dragging_router.global_position = event.global_position - drag_offset
 
-func _on_router_dropped(value: int) -> void:
-	error_message.text = ""
-	var router_ui: Control = router_ui_nodes[value]
+func _draw_connection(from_pos: Vector2, to_pos: Vector2, color: Color = Color(0.3, 0.8, 1)) -> void:
+	var line: Line2D = Line2D.new()
+	line.add_point(from_pos)
+	line.add_point(to_pos)
+	line.width = 3.0
+	line.default_color = color
+	line.antialiased = true
+	line_container.add_child(line)
+
+func _find_nearest_parent(mouse_global: Vector2) -> Dictionary:
+	var nearest: Dictionary = {"value": -1, "distance": 200.0}
+	
+	for placed_val in placed_nodes:
+		var placed: Dictionary = placed_nodes[placed_val]
+		var node_center: Vector2 = placed["pos"] + canvas.global_position
+		var dist: float = node_center.distance_to(mouse_global)
+		
+		if mouse_global.y > node_center.y + 20 and dist < nearest["distance"]:
+			nearest["value"] = placed_val
+			nearest["distance"] = dist
+	
+	return nearest
+
+func _on_router_dropped() -> void:
+	if not dragging_router:
+		return
+	
+	var value: int = dragging_router.get_meta("value", -1)
 	var mouse_pos: Vector2 = get_global_mouse_position()
+	var canvas_rect: Rect2 = canvas.get_global_rect()
 	
-	if not canvas.get_global_rect().has_point(mouse_pos):
+	if not canvas_rect.has_point(mouse_pos):
+		error_label.text = ""
+		_animate_router_back(dragging_router)
 		return
 	
-	var local_pos: Vector2 = mouse_pos - canvas.global_position
-	var target_parent_value: int = -1
-	var direction: String = ""
-	var min_distance: float = 100.0
-	
-	for placed_val in placed_values:
-		var target_ui: Control = root_node_ui if placed_val == game_manager.phase1_values[0] else (router_ui_nodes[placed_val] if placed_val in router_ui_nodes else null)
-		if target_ui:
-			var target_pos: Vector2 = target_ui.position
-			var distance: float = target_pos.distance_to(local_pos)
-			if distance < min_distance and distance < 120 and local_pos.y > target_pos.y:
-				min_distance = distance
-				target_parent_value = placed_val
-				direction = "left" if local_pos.x < target_pos.x else "right"
-	
-	if target_parent_value == -1:
-		error_message.text = "Posiziona sotto un router esistente!"
+	var nearest: Dictionary = _find_nearest_parent(mouse_pos)
+	if nearest["value"] == -1:
+		error_label.text = "Posiziona il router sotto un router esistente!"
+		_animate_router_back(dragging_router)
 		return
 	
-	if (direction == "left" and value >= target_parent_value) or (direction == "right" and value <= target_parent_value):
-		error_message.text = "Sbagliato! Minori a SINISTRA, maggiori a DESTRA"
+	var parent_value: int = nearest["value"]
+	var parent_center: Vector2 = placed_nodes[parent_value]["pos"] + canvas.global_position
+	var direction: String = "left" if mouse_pos.x < parent_center.x else "right"
+	
+	# Check BST rules
+	var is_valid: bool = false
+	if direction == "left" and value < parent_value:
+		is_valid = true
+	elif direction == "right" and value > parent_value:
+		is_valid = true
+	
+	if not is_valid:
+		error_label.text = "Sbagliato! Valori minori a SINISTRA, maggiori a DESTRA"
+		var flash: Tween = create_tween()
+		flash.tween_property(dragging_router, "modulate", Color(1, 0.2, 0.2), 0.2)
+		flash.tween_property(dragging_router, "modulate", Color.WHITE, 0.3)
+		_animate_router_back(dragging_router)
 		return
 	
-	router_ui.global_position = mouse_pos
-	router_ui.reparent(canvas)
-	placed_values.append(value)
+	# Check if position already taken
+	for placed_val in placed_nodes:
+		var p: Dictionary = placed_nodes[placed_val]
+		if p["parent"] == parent_value and p["direction"] == direction:
+			error_label.text = "Questa posizione è già occupata!"
+			_animate_router_back(dragging_router)
+			return
+	
+	_place_router(value, parent_value, direction)
+
+func _place_router(value: int, parent_value: int, direction: String) -> void:
+	error_label.text = ""
+	dragging_router.reparent(canvas)
+	
+	var target_pos: Vector2 = tree_positions[value] - Vector2(30, 30)
+	dragging_router.position = target_pos
+	
+	# Draw connection to parent
+	var parent_pos: Vector2 = tree_positions[parent_value]
+	var child_pos: Vector2 = tree_positions[value]
+	_draw_connection(parent_pos, child_pos, Color(0, 1, 0.5))
+	
+	# Green flash
+	var tween: Tween = create_tween()
+	tween.tween_property(dragging_router, "modulate", Color(0, 1, 0.3), 0.15)
+	tween.tween_property(dragging_router, "modulate", Color.WHITE, 0.3)
+	
+	placed_nodes[value] = {
+		"node": dragging_router,
+		"pos": tree_positions[value],
+		"parent": parent_value,
+		"direction": direction
+	}
 	remaining_values.erase(value)
 	
-	var tween: Tween = create_tween()
-	tween.tween_property(router_ui, "modulate", Color.GREEN, 0.2)
-	tween.tween_property(router_ui, "modulate", Color.WHITE, 0.3)
-	
+	# Check if all placed
 	if remaining_values.is_empty():
-		await get_tree().create_timer(0.5).timeout
-		var complete: Label = Label.new()
-		complete.text = "Perfetto! Premi AVANTI"
-		complete.anchor_left = 0.2
-		complete.anchor_top = 0.9
-		complete.add_theme_font_size_override("font_size", 16)
-		complete.add_theme_color_override("font_color", Color(0, 1, 0))
-		phase_ui.add_child(complete)
-		
-		var btn: Button = Button.new()
-		btn.text = "Avanti"
-		btn.anchor_left = 0.45
-		btn.anchor_top = 0.93
-		btn.custom_minimum_size = Vector2(80, 35)
-		btn.pressed.connect(func(): if game_manager: game_manager.advance_phase())
-		phase_ui.add_child(btn)
+		await get_tree().create_timer(0.6).timeout
+		_show_complete()
+
+func _animate_router_back(router: Control) -> void:
+	var target_global: Vector2 = drag_container.global_position + Vector2(50, 30)
+	var tween: Tween = create_tween()
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(router, "global_position", target_global, 0.4)
+	
+	await tween.finished
+	if router.get_parent() != drag_container:
+		router.reparent(drag_container)
+	router.position = Vector2.ZERO
+
+func _show_complete() -> void:
+	for child in line_container.get_children():
+		if child is Line2D:
+			child.default_color = Color(0, 1, 0.3)
+	
+	var complete_label: Label = Label.new()
+	complete_label.text = "✓ Rete ricostruita con successo!"
+	complete_label.anchor_left = 0.3
+	complete_label.anchor_top = 0.9
+	complete_label.anchor_right = 0.7
+	complete_label.add_theme_font_size_override("font_size", 22)
+	complete_label.add_theme_color_override("font_color", Color(0, 1, 0.3))
+	complete_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	phase_ui.add_child(complete_label)
+
+	var btn: Button = Button.new()
+	btn.text = "Avanti →"
+	btn.anchor_left = 0.42
+	btn.anchor_top = 0.94
+	btn.custom_minimum_size = Vector2(120, 40)
+	btn.pressed.connect(func():
+		if game_manager:
+			game_manager.advance_phase()
+	)
+	phase_ui.add_child(btn)
