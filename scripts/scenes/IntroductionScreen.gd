@@ -4,7 +4,6 @@ func _ready() -> void:
 	setup_ui()
 
 func setup_ui() -> void:
-	# Sfondo scuro
 	var panel: Panel = Panel.new()
 	panel.anchor_right = 1.0
 	panel.anchor_bottom = 1.0
@@ -13,7 +12,6 @@ func setup_ui() -> void:
 	panel.add_theme_stylebox_override("panel", style_box)
 	add_child(panel)
 	
-	# Title
 	var title: Label = Label.new()
 	title.text = "Binary Search Tree Network"
 	title.add_theme_font_size_override("font_size", 48)
@@ -24,7 +22,6 @@ func setup_ui() -> void:
 	title.add_theme_color_override("font_color", Color.WHITE)
 	add_child(title)
 	
-	# Content
 	var content: Label = Label.new()
 	content.text = """Cos'è un Binary Search Tree?
 
@@ -53,7 +50,6 @@ dall'hacker e imparare come funziona questa struttura."""
 	content.add_theme_color_override("font_color", Color.WHITE)
 	add_child(content)
 	
-	# Button
 	var button: Button = Button.new()
 	button.text = "Avanti"
 	button.anchor_left = 0.5
@@ -65,4 +61,5 @@ dall'hacker e imparare come funziona questa struttura."""
 	add_child(button)
 
 func _on_next_pressed() -> void:
+	GameManager.start_game()
 	get_tree().change_scene_to_file("res://scenes/level.tscn")

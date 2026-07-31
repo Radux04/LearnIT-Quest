@@ -39,7 +39,7 @@ func _process(delta: float) -> void:
 		time_updated.emit(time_remaining)
 		
 		if time_remaining <= 0:
-			time_remaining = 0
+			time_remaining = 0.0
 			end_game_timeout()
 			time_expired.emit()
 
