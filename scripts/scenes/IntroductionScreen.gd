@@ -61,5 +61,4 @@ dall'hacker e imparare come funziona questa struttura."""
 	add_child(button)
 
 func _on_next_pressed() -> void:
-	GameManager.start_game()
 	get_tree().change_scene_to_file("res://scenes/level.tscn")
