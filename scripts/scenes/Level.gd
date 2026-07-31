@@ -1,6 +1,6 @@
 extends Control
 
-var game_manager: Node
+var game_manager
 var current_phase: int = 0
 var timer_label: Label = Label.new()
 var phase_container: Node = Node.new()
@@ -72,12 +72,19 @@ func _load_phase_1() -> void:
 
 func _load_phase_2() -> void:
 	print("Loading Phase 2")
+	var phase2: Node = Node.new()
+	phase2.script = load("res://scripts/phases/Phase2Manager.gd")
+	phase_container.add_child(phase2)
 
 func _load_phase_3() -> void:
 	print("Loading Phase 3")
+	var phase3: Node = Node.new()
+	phase3.script = load("res://scripts/phases/Phase3Manager.gd")
+	phase_container.add_child(phase3)
 
 func _load_phase_4() -> void:
-	print("Loading Phase 4")
+	print("Loading Phase 4 - Final Attack")
+	_show_level_complete()
 
 func _show_game_over() -> void:
 	var overlay: ColorRect = ColorRect.new()
@@ -87,7 +94,7 @@ func _show_game_over() -> void:
 	add_child(overlay)
 	
 	var label: Label = Label.new()
-	label.text = "TIME'S UP!"
+	label.text = "TEMPO SCADUTO!"
 	label.anchor_left = 0.5
 	label.anchor_top = 0.4
 	label.offset_left = -150
@@ -95,10 +102,19 @@ func _show_game_over() -> void:
 	label.add_theme_color_override("font_color", Color(1, 0, 0))
 	add_child(label)
 
-func _on_restart() -> void:
-	game_manager.current_phase = 0
-	game_manager.game_active = false
-	get_tree().reload_current_scene()
-
-func _on_main_menu() -> void:
-	get_tree().change_scene_to_file("res://scenes/introduction.tscn")
+func _show_level_complete() -> void:
+	var overlay: ColorRect = ColorRect.new()
+	overlay.anchor_right = 1.0
+	overlay.anchor_bottom = 1.0
+	overlay.color = Color(0, 0, 0, 0.5)
+	add_child(overlay)
+	
+	var label: Label = Label.new()
+	label.text = "LIVELLO COMPLETATO!\nHai imparato come funzionano i Binary Search Tree!"
+	label.anchor_left = 0.5
+	label.anchor_top = 0.4
+	label.offset_left = -300
+	label.offset_top = -50
+	label.add_theme_font_size_override("font_size", 40)
+	label.add_theme_color_override("font_color", Color(0, 1, 0))
+	add_child(label)
