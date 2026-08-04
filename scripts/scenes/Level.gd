@@ -1,235 +1,343 @@
+class_name LevelController
 extends Control
 
-var game_manager: Node
+## Livello 1 — Binary Search Tree Network.
+## Orchestra le quattro fasi (senza caricamenti intermedi), l'HUD e il timer.
+
+const ROOT_VALUE := 50.0
+
+const PHASE_SCRIPTS: Array[String] = [
+	"res://scripts/phases/Phase1.gd",
+	"res://scripts/phases/Phase2.gd",
+	"res://scripts/phases/Phase3.gd",
+	"res://scripts/phases/Phase4.gd",
+]
+
+const PHASE_BANNERS: Array = [
+	["FASE 1 — RICOSTRUZIONE", "L'hacker ha staccato 8 router: rimettili al loro posto. Occhio ai decimali!", Color(0.35, 0.85, 1.0)],
+	["FASE 2 — INSTRADAMENTO", "Guida i pacchetti dalla radice alla destinazione... se esiste.", Color(0.35, 1.0, 0.7)],
+	["FASE 3 — SCANSIONE", "Tre visite diverse: Preorder, Inorder, Postorder o BFS.", Color(0.75, 0.6, 1.0)],
+	["FASE 4 — ATTACCO FINALE", "Inserimenti, cancellazioni, minimo, massimo e successore.", Color(1.0, 0.42, 0.42)],
+]
+
+@onready var network: NetworkView = $NetworkView
+@onready var tray: Control = $Tray
+@onready var action_bar: Control = $ActionBar
+@onready var hud: Control = $HUD
+@onready var phase_title: Label = $HUD/PhaseTitle
+@onready var objective_label: Label = $HUD/Objective
+@onready var timer_label: Label = $HUD/TimerLabel
+@onready var timer_bar: ProgressBar = $HUD/TimerBar
+@onready var toast_label: Label = $HUD/Toast
+@onready var hint_label: Label = $HUD/Hint
+@onready var banner: Panel = $Overlays/Banner
+@onready var banner_title: Label = $Overlays/Banner/BannerTitle
+@onready var banner_sub: Label = $Overlays/Banner/BannerSub
+@onready var end_screen: Control = $Overlays/EndScreen
+@onready var end_title: Label = $Overlays/EndScreen/Title
+@onready var end_subtitle: Label = $Overlays/EndScreen/Subtitle
+@onready var restart_button: Button = $Overlays/EndScreen/RestartButton
+@onready var menu_button: Button = $Overlays/EndScreen/MenuButton
+@onready var background: ColorRect = $Background
+
+var model: BSTModel = BSTModel.new()
+var is_over: bool = false
 var current_phase: int = 0
-var timer_label: Label = Label.new()
-var timer_bar: ColorRect
-var phase_container: Node = Node.new()
-var phase_indicator: Label = Label.new()
-var is_game_over: bool = false
+
+var _toast_tween: Tween = null
+var _alert_mode: bool = false
+var _alert_time: float = 0.0
+
 
 func _ready() -> void:
-	game_manager = GameManager
-	setup_ui()
-	
-	if game_manager:
-		game_manager.phase_changed.connect(_on_phase_changed)
-		game_manager.time_updated.connect(_on_time_updated)
-		game_manager.time_expired.connect(_on_time_expired)
-		game_manager.initialize_bst()
-		# Start the game timer now (not from introduction screen)
-		game_manager.start_game()
+	_style_hud()
+	end_screen.visible = false
+	restart_button.pressed.connect(_on_restart_pressed)
+	menu_button.pressed.connect(_on_menu_pressed)
 
-func setup_ui() -> void:
-	var bg: Panel = Panel.new()
-	bg.anchor_right = 1.0
-	bg.anchor_bottom = 1.0
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.12, 0.2)
-	bg.add_theme_stylebox_override("panel", style)
-	add_child(bg)
-	
-	# Timer background bar
-	var timer_bg: ColorRect = ColorRect.new()
-	timer_bg.anchor_left = 0.7
-	timer_bg.anchor_top = 0.01
-	timer_bg.anchor_right = 0.98
-	timer_bg.anchor_bottom = 0.05
-	timer_bg.color = Color(0.1, 0.1, 0.2, 0.7)
-	add_child(timer_bg)
-	
-	timer_bar = ColorRect.new()
-	timer_bar.anchor_left = 0.7
-	timer_bar.anchor_top = 0.01
-	timer_bar.anchor_right = 0.98
-	timer_bar.anchor_bottom = 0.05
-	timer_bar.color = Color(0, 0.8, 0.3, 0.6)
-	add_child(timer_bar)
-	
-	timer_label.anchor_left = 0.72
-	timer_label.anchor_top = 0.01
-	timer_label.anchor_bottom = 0.05
-	timer_label.add_theme_font_size_override("font_size", 22)
-	timer_label.add_theme_color_override("font_color", Color.WHITE)
-	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	add_child(timer_label)
-	
-	# Phase indicator
-	phase_indicator.anchor_left = 0.01
-	phase_indicator.anchor_top = 0.01
-	phase_indicator.add_theme_font_size_override("font_size", 16)
-	phase_indicator.add_theme_color_override("font_color", Color(0.4, 0.7, 1))
-	add_child(phase_indicator)
-	
-	phase_container.name = "PhaseContainer"
-	add_child(phase_container)
+	GameManager.time_updated.connect(_on_time_updated)
+	GameManager.time_expired.connect(_on_time_expired)
 
-func _on_phase_changed(new_phase: int) -> void:
-	current_phase = new_phase
-	is_game_over = false
-	
-	# Nomi delle fasi
-	var phase_names: Array[String] = ["", "Ricostruzione Rete", "Instradamento Pacchetti", "Scansione Rete", "Attacco Hacker", "Completato"]
-	var phase_colors: Array[Color] = [
-		Color.WHITE,
-		Color(0.2, 0.8, 1),
-		Color(0.3, 1, 0.5),
-		Color(0.8, 0.6, 1),
-		Color(1, 0.4, 0.4),
-		Color(0, 1, 0.3)
-	]
-	
-	if new_phase >= 1 and new_phase <= 5:
-		phase_indicator.text = "Fase %d: %s" % [new_phase, phase_names[new_phase]]
-		phase_indicator.add_theme_color_override("font_color", phase_colors[new_phase])
-	
-	for child in phase_container.get_children():
+	model.clear()
+	model.insert(ROOT_VALUE)
+	network.setup(model)
+	var root_router: RouterNode = network.get_router(ROOT_VALUE)
+	if root_router != null:
+		root_router.set_state(RouterNode.State.SUCCESS)
+
+	GameManager.start_level()
+	_run_level()
+
+
+func _process(delta: float) -> void:
+	if _alert_mode:
+		_alert_time += delta
+		var pulse: float = (sin(_alert_time * 4.0) * 0.5 + 0.5) * 0.06
+		background.color = Color(0.09 + pulse, 0.03, 0.06 + pulse * 0.4, 1.0)
+
+
+# ------------------------------------------------------------- phase flow ---
+
+func _run_level() -> void:
+	for i in range(PHASE_SCRIPTS.size()):
+		if is_over:
+			return
+		current_phase = i + 1
+		var banner_data: Array = PHASE_BANNERS[i]
+		await show_banner(String(banner_data[0]), String(banner_data[1]), banner_data[2])
+		if is_over:
+			return
+
+		var phase_script: GDScript = load(PHASE_SCRIPTS[i])
+		var phase: PhaseBase = phase_script.new()
+		phase.name = "Phase%d" % current_phase
+		phase.level = self
+		add_child(phase)
+		await phase.run()
+		if is_instance_valid(phase):
+			phase.queue_free()
+		clear_action_bar()
+
+	if not is_over:
+		_show_victory()
+
+
+# -------------------------------------------------------------- HUD tools ---
+
+func set_phase_header(title: String, color: Color) -> void:
+	phase_title.text = title
+	phase_title.add_theme_color_override("font_color", color)
+
+
+func set_objective(text: String) -> void:
+	objective_label.text = text
+
+
+func set_hint(text: String) -> void:
+	hint_label.text = text
+
+
+func toast(text: String, color: Color = Color.WHITE) -> void:
+	toast_label.text = text
+	toast_label.add_theme_color_override("font_color", color)
+	toast_label.modulate.a = 1.0
+	if _toast_tween != null and _toast_tween.is_valid():
+		_toast_tween.kill()
+	_toast_tween = create_tween()
+	_toast_tween.tween_interval(2.2)
+	_toast_tween.tween_property(toast_label, "modulate:a", 0.0, 0.6)
+
+
+func show_banner(title: String, subtitle: String, color: Color) -> void:
+	banner_title.text = title
+	banner_title.add_theme_color_override("font_color", color)
+	banner_sub.text = subtitle
+	banner.modulate.a = 0.0
+	banner.scale = Vector2(0.92, 0.92)
+	var tween: Tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(banner, "modulate:a", 1.0, 0.35)
+	tween.tween_property(banner, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.chain().tween_interval(1.6)
+	tween.chain().tween_property(banner, "modulate:a", 0.0, 0.4)
+	await tween.finished
+
+
+func make_action_button(text: String, center: Vector2, button_size: Vector2,
+		base_color: Color = Color(0.12, 0.35, 0.6)) -> Button:
+	var button: Button = Button.new()
+	button.text = text
+	button.size = button_size
+	button.position = center - button_size * 0.5
+	button.add_theme_font_size_override("font_size", 20)
+	button.focus_mode = Control.FOCUS_NONE
+	_style_button(button, base_color)
+	action_bar.add_child(button)
+	return button
+
+
+func clear_action_bar() -> void:
+	for child in action_bar.get_children():
 		child.queue_free()
-	
-	match new_phase:
-		1:
-			_load_phase_1()
-		2:
-			_load_phase_2()
-		3:
-			_load_phase_3()
-		4:
-			_load_phase_4()
-		5:
-			_show_level_complete()
 
-func _on_time_updated(time_left: float) -> void:
-	var minutes: int = int(time_left) / 60
-	var seconds: int = int(time_left) % 60
-	timer_label.text = "%02d:%02d" % [minutes, seconds]
-	
-	# Update timer bar
-	var ratio: float = time_left / game_manager.max_time
-	timer_bar.anchor_right = 0.3 + ratio * 0.68  # 0.7 to 0.98 range
-	
-	if ratio > 0.5:
-		timer_bar.color = Color(0, 0.8, 0.3, 0.6)
-		timer_label.add_theme_color_override("font_color", Color.WHITE)
-	elif ratio > 0.25:
-		timer_bar.color = Color(1, 0.8, 0, 0.7)
-		timer_label.add_theme_color_override("font_color", Color(1, 1, 0.5))
-	else:
-		timer_bar.color = Color(1, 0.2, 0.2, 0.7)
-		timer_label.add_theme_color_override("font_color", Color(1, 0.5, 0.5))
+
+func flash_slot(slot: Dictionary, color: Color) -> void:
+	var parent_value: float = float(slot["parent"])
+	var pos: Vector2 = network.slot_center(parent_value, String(slot["side"]))
+	var marker: Control = Control.new()
+	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	network.add_child(marker)
+	var rect: ColorRect = ColorRect.new()
+	rect.color = Color(color.r, color.g, color.b, 0.35)
+	rect.size = Vector2(64.0, 64.0)
+	rect.position = pos - Vector2(32.0, 32.0)
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	marker.add_child(rect)
+	var tween: Tween = create_tween()
+	tween.tween_property(rect, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(marker.queue_free)
+
+
+func penalty(seconds: float = GameManager.WRONG_ANSWER_PENALTY) -> void:
+	GameManager.apply_penalty(seconds)
+	_spawn_penalty_text(seconds)
+
+
+func set_alert_mode(enabled: bool) -> void:
+	_alert_mode = enabled
+	if not enabled:
+		background.color = Color(0.027, 0.047, 0.098, 1.0)
+
+
+func _spawn_penalty_text(seconds: float) -> void:
+	var label: Label = Label.new()
+	label.text = "-%d s" % int(seconds)
+	label.add_theme_font_size_override("font_size", 34)
+	label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+	label.add_theme_color_override("font_outline_color", Color(0.1, 0.0, 0.0))
+	label.add_theme_constant_override("outline_size", 6)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.position = timer_label.position + Vector2(60.0, 44.0)
+	hud.add_child(label)
+	var tween: Tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y + 46.0, 0.9)
+	tween.tween_property(label, "modulate:a", 0.0, 0.9)
+	tween.chain().tween_callback(label.queue_free)
+
+
+# ------------------------------------------------------------------ timer ---
+
+func _on_time_updated(_time_left: float, ratio: float) -> void:
+	timer_label.text = GameManager.formatted_time()
+	timer_bar.value = ratio
+	var color: Color = Color(0.3, 1.0, 0.55)
+	if ratio < 0.15:
+		color = Color(1.0, 0.25, 0.25)
+	elif ratio < 0.35:
+		color = Color(1.0, 0.75, 0.2)
+	timer_label.add_theme_color_override("font_color", color)
+	var fill: StyleBoxFlat = timer_bar.get_theme_stylebox("fill")
+	if fill is StyleBoxFlat:
+		fill.bg_color = color
+
 
 func _on_time_expired() -> void:
-	if is_game_over:
+	if is_over:
 		return
-	is_game_over = true
-	_show_game_over()
+	is_over = true
+	Sfx.play("fail")
+	clear_action_bar()
+	network.clear_slots()
+	end_title.text = "TEMPO SCADUTO"
+	end_title.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+	end_subtitle.text = "L'hacker ha avuto la meglio: la rete non è stata ripristinata in tempo.\nRipassa la regola del BST — minori a sinistra, maggiori a destra — e riprova."
+	_show_end_screen()
 
-func _load_phase_1() -> void:
-	var phase1: Node = Node.new()
-	phase1.script = load("res://scripts/phases/Phase1Manager.gd")
-	phase_container.add_child(phase1)
 
-func _load_phase_2() -> void:
-	var phase2: Node = Node.new()
-	phase2.script = load("res://scripts/phases/Phase2Manager.gd")
-	phase_container.add_child(phase2)
+func _show_victory() -> void:
+	is_over = true
+	GameManager.complete_level()
+	Sfx.play("victory")
+	clear_action_bar()
+	set_alert_mode(false)
+	end_title.text = "RETE RIPRISTINATA"
+	end_title.add_theme_color_override("font_color", Color(0.3, 1.0, 0.6))
+	end_subtitle.text = "Hai completato il Livello 1 con %s ancora sul cronometro.\n\nHai imparato sul campo: inserimento, ricerca riuscita e fallita, visite\n(Preorder, Inorder, Postorder, BFS), minimo, massimo, successore in-order\ne cancellazione di un nodo con due figli." % GameManager.formatted_time()
+	restart_button.text = "Gioca di nuovo"
+	_show_end_screen()
 
-func _load_phase_3() -> void:
-	var phase3: Node = Node.new()
-	phase3.script = load("res://scripts/phases/Phase3Manager.gd")
-	phase_container.add_child(phase3)
 
-func _load_phase_4() -> void:
-	var phase4: Node = Node.new()
-	phase4.script = load("res://scripts/phases/Phase4Manager.gd")
-	phase_container.add_child(phase4)
+func _show_end_screen() -> void:
+	end_screen.visible = true
+	end_screen.modulate.a = 0.0
+	var tween: Tween = create_tween()
+	tween.tween_property(end_screen, "modulate:a", 1.0, 0.5)
 
-func _show_game_over() -> void:
-	var overlay: ColorRect = ColorRect.new()
-	overlay.anchor_right = 1.0
-	overlay.anchor_bottom = 1.0
-	overlay.color = Color(0, 0, 0, 0.8)
-	add_child(overlay)
-	
-	var label: Label = Label.new()
-	label.text = "⏰ TEMPO SCADUTO!"
-	label.anchor_left = 0.5
-	label.anchor_top = 0.3
-	label.offset_left = -200
-	label.add_theme_font_size_override("font_size", 52)
-	label.add_theme_color_override("font_color", Color(1, 0.1, 0.1))
-	label.add_theme_constant_override("outline_size", 4)
-	add_child(label)
-	
-	var desc: Label = Label.new()
-	desc.text = "L'hacker ha vinto... La rete non è stata ripristinata in tempo."
-	desc.anchor_left = 0.5
-	desc.anchor_top = 0.42
-	desc.offset_left = -220
-	desc.add_theme_font_size_override("font_size", 18)
-	desc.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
-	add_child(desc)
-	
-	# Bottone Ricomincia
-	var restart_btn: Button = Button.new()
-	restart_btn.text = "🔄 Ricomincia il Gioco"
-	restart_btn.anchor_left = 0.5
-	restart_btn.anchor_top = 0.55
-	restart_btn.offset_left = -150
-	restart_btn.custom_minimum_size = Vector2(300, 50)
-	restart_btn.add_theme_font_size_override("font_size", 18)
-	restart_btn.pressed.connect(_on_restart_pressed)
-	add_child(restart_btn)
-	
-	# Bottone Menu Principale
-	var menu_btn: Button = Button.new()
-	menu_btn.text = "🏠 Torna al Menu Principale"
-	menu_btn.anchor_left = 0.5
-	menu_btn.anchor_top = 0.65
-	menu_btn.offset_left = -150
-	menu_btn.custom_minimum_size = Vector2(300, 50)
-	menu_btn.add_theme_font_size_override("font_size", 18)
-	menu_btn.pressed.connect(_on_menu_pressed)
-	add_child(menu_btn)
 
 func _on_restart_pressed() -> void:
-	game_manager.start_game()
-	get_tree().reload_current_scene()
+	GameManager.restart_game()
+
 
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/introduction.tscn")
+	GameManager.go_to_menu()
 
-func _show_level_complete() -> void:
-	var overlay: ColorRect = ColorRect.new()
-	overlay.anchor_right = 1.0
-	overlay.anchor_bottom = 1.0
-	overlay.color = Color(0, 0, 0, 0.6)
-	add_child(overlay)
-	
-	var label: Label = Label.new()
-	label.text = "🎉 LIVELLO COMPLETATO!"
-	label.anchor_left = 0.5
-	label.anchor_top = 0.25
-	label.offset_left = -250
-	label.add_theme_font_size_override("font_size", 46)
-	label.add_theme_color_override("font_color", Color(0, 1, 0.5))
-	add_child(label)
-	
-	var desc: Label = Label.new()
-	desc.text = "Hai imparato come funzionano i Binary Search Tree!\n\n✓ Ricostruzione della rete\n✓ Instradamento dei pacchetti\n✓ Scansione dell'albero\n✓ Attacco hacker respinto\n\nOttimo lavoro, campione!"
-	desc.anchor_left = 0.5
-	desc.anchor_top = 0.4
-	desc.offset_left = -200
-	desc.add_theme_font_size_override("font_size", 18)
-	desc.add_theme_color_override("font_color", Color.WHITE)
-	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(desc)
-	
-	var menu_btn: Button = Button.new()
-	menu_btn.text = "🏠 Menu Principale"
-	menu_btn.anchor_left = 0.5
-	menu_btn.anchor_top = 0.7
-	menu_btn.offset_left = -120
-	menu_btn.custom_minimum_size = Vector2(240, 50)
-	menu_btn.add_theme_font_size_override("font_size", 18)
-	menu_btn.pressed.connect(_on_menu_pressed)
-	add_child(menu_btn)
+
+# ------------------------------------------------------------------ style ---
+
+func _style_hud() -> void:
+	phase_title.add_theme_font_size_override("font_size", 26)
+	phase_title.add_theme_color_override("font_color", Color(0.35, 0.85, 1.0))
+
+	objective_label.add_theme_font_size_override("font_size", 17)
+	objective_label.add_theme_color_override("font_color", Color(0.78, 0.88, 1.0))
+
+	timer_label.add_theme_font_size_override("font_size", 40)
+	timer_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.55))
+
+	toast_label.add_theme_font_size_override("font_size", 20)
+	toast_label.add_theme_color_override("font_outline_color", Color(0.0, 0.03, 0.08))
+	toast_label.add_theme_constant_override("outline_size", 8)
+	toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+	hint_label.add_theme_font_size_override("font_size", 16)
+	hint_label.add_theme_color_override("font_color", Color(0.55, 0.72, 0.9))
+
+	banner_title.add_theme_font_size_override("font_size", 40)
+	banner_title.add_theme_color_override("font_outline_color", Color(0.0, 0.03, 0.08))
+	banner_title.add_theme_constant_override("outline_size", 8)
+	banner_sub.add_theme_font_size_override("font_size", 19)
+	banner_sub.add_theme_color_override("font_color", Color(0.78, 0.88, 1.0))
+	banner.pivot_offset = Vector2(470.0, 96.0)
+
+	end_title.add_theme_font_size_override("font_size", 56)
+	end_subtitle.add_theme_font_size_override("font_size", 20)
+	end_subtitle.add_theme_color_override("font_color", Color(0.8, 0.88, 1.0))
+	end_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+	_style_button(restart_button, Color(0.12, 0.42, 0.28))
+	_style_button(menu_button, Color(0.16, 0.24, 0.44))
+	restart_button.add_theme_font_size_override("font_size", 20)
+	menu_button.add_theme_font_size_override("font_size", 20)
+
+	var fill: StyleBoxFlat = StyleBoxFlat.new()
+	fill.bg_color = Color(0.3, 1.0, 0.55)
+	fill.corner_radius_top_left = 6
+	fill.corner_radius_top_right = 6
+	fill.corner_radius_bottom_left = 6
+	fill.corner_radius_bottom_right = 6
+	timer_bar.add_theme_stylebox_override("fill", fill)
+
+	var bg: StyleBoxFlat = StyleBoxFlat.new()
+	bg.bg_color = Color(0.1, 0.15, 0.25, 0.9)
+	bg.corner_radius_top_left = 6
+	bg.corner_radius_top_right = 6
+	bg.corner_radius_bottom_left = 6
+	bg.corner_radius_bottom_right = 6
+	timer_bar.add_theme_stylebox_override("background", bg)
+
+
+static func _style_button(button: Button, base: Color) -> void:
+	var normal: StyleBoxFlat = StyleBoxFlat.new()
+	normal.bg_color = base
+	normal.border_color = Color(base.r + 0.3, base.g + 0.45, base.b + 0.4, 0.9)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(10)
+	normal.set_content_margin_all(10)
+
+	var hover: StyleBoxFlat = normal.duplicate()
+	hover.bg_color = Color(base.r * 1.5 + 0.06, base.g * 1.5 + 0.06, base.b * 1.5 + 0.06)
+
+	var pressed: StyleBoxFlat = normal.duplicate()
+	pressed.bg_color = Color(base.r * 0.7, base.g * 0.7, base.b * 0.7)
+
+	var disabled: StyleBoxFlat = normal.duplicate()
+	disabled.bg_color = Color(0.14, 0.16, 0.2, 0.75)
+	disabled.border_color = Color(0.3, 0.35, 0.4, 0.5)
+
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_color_override("font_color", Color(0.92, 0.97, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.5, 0.55, 0.62))
