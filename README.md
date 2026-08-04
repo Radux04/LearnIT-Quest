@@ -1,179 +1,160 @@
-# LearnIT Quest - Level 1: Binary Search Tree Network
+# LearnIT Quest
 
-Un edugame interattivo sviluppato in Godot Engine che insegna i **Binary Search Tree (BST)** attraverso un'esperienza pratica di 5 minuti.
+**Edugame 2D in Godot 4.5 che insegna le strutture dati e gli algoritmi facendoli usare, non spiegandoli.**
 
-## 🎮 Panoramica del Gioco
+Ogni livello è una "missione informatica" da completare in **5 minuti**: niente quiz a risposta multipla, ma meccaniche di gioco in cui l'algoritmo *è* il gameplay. Se il tempo scade la partita è persa e si può ricominciare o tornare al menu.
 
-Il giocatore impersona un tecnico di rete che deve ripristinare una rete di router danneggiata da un hacker, imparando nel contempo il funzionamento dei Binary Search Tree. Il gioco è diviso in **4 fasi consecutive** senza schermate di caricamento.
-
-## 📋 Fasi del Gioco
-
-### 🟦 Introduzione
-- Schermata di tutorial che spiega i concetti base del BST
-- Regola principale: valori minori a sinistra, maggiori a destra
-- Benefici: ricerca veloce nella struttura
-
-### ⚙️ Fase 1: Ricostruzione della Rete (Drag & Drop)
-**Durata**: ~1 minuto
-
-- Un router radice (50) è già posizionato al centro
-- 6 router aggiuntivi (30, 70, 20, 40, 60, 80) da trascinare
-- Il giocatore deve posizionare ogni router nella posizione corretta rispetto al BST
-- **Validazione in tempo reale**: posizionamento corretto = feedback verde, errato = messaggio d'errore
-- Completamento: quando tutti i router sono posizionati
-
-### 📡 Fase 2: Instradamento dei Pacchetti (Decision Tree)
-**Durata**: ~1 minuto
-
-- 5 pacchetti di rete con destinazioni diverse da consegnare
-- Al nodo radice, il giocatore sceglie SINISTRA o DESTRA per raggiungere la destinazione
-- Percorso corretto = pacchetto consegnato
-- Percorso errato = -10 secondi di tempo
-- Insegna la ricerca nel BST attraverso il gameplay
-
-### 🔍 Fase 3: Scansione della Rete (Tree Traversals)
-**Durata**: ~1.5 minuti
-
-- L'antivirus deve esaminare la rete in un ordine specifico
-- 4 tipi di visita casuali:
-  - **Preorder** (radice → sinistro → destro)
-  - **Inorder** (sinistro → radice → destro)
-  - **Postorder** (sinistro → destro → radice)
-  - **BFS** (livello per livello)
-- Il giocatore clicca i router nell'ordine corretto
-- Visual feedback: verde = corretto, rosso = errore (-10 sec)
-
-### ⚡ Fase 4: Attacco Finale (45 secondi)
-**Durata**: 45 secondi
-
-L'hacker attacca continuamente. Tre tipi di sfide casuali:
-- **Inserisci**: Digita il valore del router da inserire
-- **Elimina**: Scegli quale router è compromesso (3 opzioni)
-- **Ricerca**: Scegli la direzione corretta per trovare un valore
-
-Penalità: -15 secondi per risposta errata. Il giocatore deve completare quante più sfide possibili in 45 secondi.
-
-## ⏱️ Sistema Timer
-
-- **Durata totale**: 5 minuti (300 secondi)
-- **Timer visibile** in alto a destra
-- **Colore dinamico**: verde (>60s), rosso (<60s)
-- **Game Over**: scadenza tempo prima del completamento
-
-## 🎨 Estetica Visiva
-
-- **Stile**: Cyberpunk moderno con tema blu/verde/rosso
-- **Router**: Sprite futuristici con design moderno
-- **Cavi**: Linee luminose che collegano i nodi
-- **Feedback**: 
-  - Verde per azioni corrette
-  - Rosso per errori
-  - Animazioni di fade e scale per feedback visivo
-- **Effetti**: Glow, flash, shake quando necessario
-
-## 🛠️ Tecnologie Utilizzate
-
-- **Engine**: Godot 4.5+
-- **Linguaggio**: GDScript
-- **Struttura dati**: Binary Search Tree (implementato in GDScript)
-- **Generazione asset**: AI per sprite e animazioni
-
-## 📁 Struttura del Progetto
-
-```
-learn-it-quest/
-├── scenes/
-│   ├── introduction.tscn       # Schermata di introduzione
-│   ├── level.tscn              # Scene principale del livello
-│   └── main.tscn               # Scena root con GameManager
-├── scripts/
-│   ├── global/
-│   │   └── GameManager.gd      # Gestione globale del gioco e BST
-│   ├── scenes/
-│   │   ├── IntroductionScreen.gd  # UI introduzione
-│   │   └── Level.gd              # Logica principale del livello
-│   ├── phases/
-│   │   ├── Phase1Manager.gd    # Drag & drop ricostruzione
-│   │   ├── Phase2Manager.gd    # Routing dei pacchetti
-│   │   ├── Phase3Manager.gd    # Tree traversals
-│   │   └── Phase4Manager.gd    # Sfide finali
-│   └── utils/
-│       └── VisualEffects.gd    # Effetti visivi e animazioni
-└── assets/
-    └── generated/              # Asset generati con AI
-        ├── router_node_frame_0.png
-        ├── network_packet_frame_0.png
-        ├── packet_glow.png (animation)
-        └── error_flash.png (animation)
-```
-
-## 📊 Valori del BST Utilizzati
-
-```
-        50 (radice)
-       /  \
-      30   70
-     / \   / \
-    20 40 60 80
-```
-
-**Inorder**: 20, 30, 40, 50, 60, 70, 80
-**Preorder**: 50, 30, 20, 40, 70, 60, 80
-**Postorder**: 20, 40, 30, 60, 80, 70, 50
-**BFS**: 50, 30, 70, 20, 40, 60, 80
-
-## 🎯 Obiettivi di Apprendimento
-
-✅ Comprendere la struttura di un Binary Search Tree
-✅ Imparare le regole di inserimento (minori a sinistra, maggiori a destra)
-✅ Praticare la ricerca in un BST
-✅ Visualizzare le visite dell'albero (preorder, inorder, postorder, BFS)
-✅ Applicare i concetti in scenari pratici (instradamento, ricerca, scansione)
-
-## 🚀 Come Giocare
-
-1. Avvia il gioco
-2. Leggi l'introduzione e premi **"Avanti"**
-3. **Fase 1**: Trascina i 6 router nelle posizioni corrette
-4. **Fase 2**: Instrada 5 pacchetti scegliendo le direzioni giuste
-5. **Fase 3**: Clicca i router negli ordini di visita corretti
-6. **Fase 4**: Completa le sfide casuali in 45 secondi
-7. Se completi tutte le fasi in tempo, **HAI VINTO!**
-
-## ⚠️ Game Over
-
-Se il timer raggiunge zero:
-- Schermare "Tempo Scaduto!"
-- Opzioni: Ricomincia il livello o Torna al Menu
-
-## 📝 Note di Sviluppo
-
-### Commit History
-- ✅ Struttura di base e GameManager
-- ✅ Schermata Introduzione
-- ✅ Fase 1 - Drag & Drop
-- ✅ Fase 2 - Packet Routing
-- ✅ Fase 3 - Tree Traversals
-- ✅ Fase 4 - Final Attack
-- ✅ Visual Effects e Animazioni
-
-### Sviluppi Futuri
-- [ ] Menu principale
-- [ ] Leaderboard
-- [ ] Più livelli (Sorting, Graphs, Dynamic Programming)
-- [ ] Audio e SFX
-- [ ] Spiegazioni in-game per concetti avanzati
-- [ ] Difficoltà progressive
-- [ ] Multiplayer competitivo (con upgrade Ziva)
-
-## 👨‍💻 Autore
-
-Sviluppato come progetto educativo su Godot Engine
-
-## 📄 Licenza
-
-Educational Project - Godot Engine
+| | |
+|---|---|
+| **Engine** | Godot 4.5 (Forward+) |
+| **Risoluzione** | 1280×720, stretch `canvas_items` / `expand` |
+| **Lingua** | Italiano |
+| **Livelli disponibili** | 1 — Binary Search Tree Network |
 
 ---
 
-**Buon divertimento imparando i Binary Search Tree!** 🎮💻
+## Livello 1 · Binary Search Tree Network
+
+La rete informatica è rappresentata come un albero di **router futuristici** collegati da **cavi luminosi** percorsi da **pacchetti animati**. Ogni router è un nodo del BST e la sua "metrica" è la chiave.
+
+Le metriche sono **numeri decimali** scelti a coppie ravvicinate (`25.5` / `25.9`, `62.1` / `62.4`): non basta guardare la parte intera, bisogna confrontare davvero.
+
+### Introduzione teorica (3 pagine)
+
+Prima del gameplay c'è una spiegazione navigabile con diagramma animato:
+
+1. **Che cos'è un BST** — nodi, cavi, radice, la regola d'oro (minori a sinistra, maggiori a destra) e il fatto che vale a *ogni* livello, non solo alla radice.
+2. **La ricerca** — perché costa quanto l'*altezza* dell'albero e non il numero di nodi, cosa succede quando il valore **non esiste** (vicolo cieco), e le quattro visite. Il diagramma evidenzia il percorso di ricerca reale.
+3. **La missione** — le 4 fasi, il timer, i comandi e le penalità.
+
+Il livello parte solo premendo *"Inizia la missione"*.
+
+### Le quattro fasi
+
+Le fasi si susseguono **senza caricamenti**: la rete disegnata a schermo è sempre la stessa e viene riorganizzata dal vivo.
+
+| Fase | Cosa fa il giocatore | Concetto di algoritmi | Penalità |
+|---|---|---|---|
+| **1 · Ricostruzione** | Trascina 8 router nelle postazioni libere della rete | **Inserimento** in un BST | −5 s |
+| **2 · Instradamento** | Guida 7 pacchetti dalla radice alla destinazione scegliendo SINISTRA/DESTRA — e riconosce i **vicoli ciechi** | **Ricerca** con esito positivo *e negativo* | −12 s |
+| **3 · Scansione** | Clicca i router nell'ordine di una visita estratta a caso | **Preorder, Inorder, Postorder, BFS** | −10 s |
+| **4 · Attacco finale** | Risponde a 7 richieste rapide e casuali | **Inserimento, cancellazione (con successore in-order), ricerca, minimo, massimo, successore** | −15 s |
+
+Dettagli che rendono l'esperienza didattica e non un quiz:
+
+- **Fase 1** — se sbagli, il messaggio spiega *esattamente perché*: «25.9 NON è minore di 25.5: non può stare a sinistra». Le postazioni libere sono cerchi tratteggiati pulsanti, quindi il giocatore vede subito dove *si potrebbe* inserire.
+- **Fase 2** — 2 pacchetti su 7 hanno una destinazione che **non esiste** in rete. Il giocatore deve accorgersi che dal lato in cui dovrebbe scendere non parte alcun cavo e premere **`✖ NON IN RETE`**. A consegna riuscita il gioco mostra il costo reale: *«Consegnato a 74.5 in 2 confronti invece di 9 router controllati!»*.
+- **Fase 3** — la regola della visita è mostrata solo nel **primo** dei tre round: dal secondo bisogna ricordarsela. Ogni clic corretto illumina il router e gli assegna il numero d'ordine.
+- **Fase 4** — la cancellazione sceglie di preferenza un nodo con **due figli**, il caso più istruttivo, e spiega che al suo posto sale il **successore in-order**. Lo sfondo pulsa in rosso durante l'attacco.
+
+### Comandi
+
+| Azione | Comando |
+|---|---|
+| Trascinare un router | Mouse (tieni premuto e rilascia sulla postazione) |
+| Selezionare/scansionare un router | Clic sinistro |
+| Instradare a sinistra / destra | Pulsanti oppure **←** / **→** |
+| Dichiarare che il valore non è in rete | Pulsante **`✖ NON IN RETE`** oppure **↓** |
+| Avanzare nell'introduzione | **Invio / Spazio**, indietro con **Esc** |
+
+---
+
+## Struttura del progetto
+
+```
+res://
+├── scenes/
+│   ├── main_menu.tscn          scena principale del gioco
+│   ├── introduction.tscn       spiegazione teorica a 3 pagine
+│   └── level.tscn              Livello 1 (HUD + rete + overlay)
+├── scripts/
+│   ├── global/
+│   │   ├── GameManager.gd      autoload: timer, penalità, cambio scena
+│   │   └── Sfx.gd              autoload: audio sintetizzato a runtime
+│   ├── bst/
+│   │   └── BSTModel.gd         il BST puro (nessuna grafica)
+│   ├── ui/
+│   │   ├── NetworkView.gd      disegna la rete: cavi, slot, pacchetti
+│   │   └── RouterNode.gd       un router: stati, drag & drop, clic
+│   ├── phases/
+│   │   ├── PhaseBase.gd        i mini-giochi riusabili
+│   │   └── Phase1..4.gd        le quattro fasi del Livello 1
+│   └── scenes/
+│       ├── MainMenu.gd
+│       ├── IntroductionScreen.gd
+│       └── Level.gd            orchestratore del livello + HUD
+├── tests/
+│   ├── autoplay.tscn           bot che gioca il livello intero
+│   └── timeout.tscn            verifica la schermata "tempo scaduto"
+└── assets/generated/           sprite pixel art generati
+```
+
+### Idea architetturale
+
+Tre strati separati, ognuno ignaro di quello sopra:
+
+```
+BSTModel          ← solo dati e algoritmi, nessun nodo Godot
+   ↑
+NetworkView       ← solo rendering e animazioni, nessuna regola di gioco
+   ↑
+PhaseBase         ← le regole dei mini-giochi (che cosa è giusto o sbagliato)
+   ↑
+Phase1..4         ← la sceneggiatura: quali mini-giochi, con quali parametri
+   ↑
+LevelController   ← HUD, timer, sequenza delle fasi, schermate di fine
+```
+
+Grazie a questa separazione un nuovo livello su un'altra struttura dati riusa quasi tutto: si scrive un nuovo *model*, si adatta la *view* e si compongono nuove fasi. La guida passo-passo è in **[`docs/CREARE_UN_LIVELLO.md`](docs/CREARE_UN_LIVELLO.md)**.
+
+### Audio
+
+Nessun file audio nel repository: `Sfx.gd` sintetizza a runtime tutti i suoni (clic, conferma, errore, allarme, vittoria, sconfitta) generando le forme d'onda PCM in un `AudioStreamWAV`. Per aggiungere una nuova voce basta una riga in `_ready()`.
+
+---
+
+## Come eseguire il gioco
+
+1. Apri il progetto con **Godot 4.5** o superiore.
+2. Premi **F5** (la scena principale è `res://scenes/main_menu.tscn`).
+
+Per provare direttamente il livello: apri `res://scenes/level.tscn` e premi **F6**.
+
+> **Nota:** il progetto usa due autoload (`GameManager` e `Sfx`). Se dopo aver clonato il repo l'editor segnala `Identifier not found: GameManager`, riavvia l'editor: gli autoload vengono registrati all'avvio.
+
+## Test automatici
+
+Il progetto include due scene di verifica, utili dopo ogni modifica:
+
+| Scena | Cosa fa |
+|---|---|
+| `res://tests/autoplay.tscn` | Istanzia il livello e lo **gioca da solo in modo sempre corretto**, attraversando tutte e 4 le fasi fino alla vittoria. Stampa in console ogni mossa. |
+| `res://tests/timeout.tscn` | Porta il cronometro a zero e verifica la schermata *Tempo Scaduto* con i due pulsanti. |
+
+Esegui `autoplay.tscn` con **F6**: se arriva a `RETE RIPRISTINATA` senza errori runtime, l'intera catena (modello, vista, fasi, HUD) è sana. Alza `TIME_SCALE` in `AutoPlayHarness.gd` per accelerare la verifica.
+
+## Bilanciamento
+
+Tutte le manopole sono raccolte in pochi punti:
+
+| Cosa | Dove |
+|---|---|
+| Durata del livello | `GameManager.LEVEL_DURATION` |
+| Penalità delle 4 fasi | `PhaseBase.PENALTY_PLACE / ROUTE / SCAN / ATTACK` |
+| Router da posizionare | `Phase1.ROUTERS_TO_PLACE` |
+| Numero di pacchetti e valori assenti | `Phase2.PRESENT_PACKETS`, `ABSENT_PACKETS`, `ABSENT_CANDIDATES` |
+| Numero di visite | `Phase3.ROUNDS` |
+| Numero e mix di sfide finali | `Phase4.CHALLENGE_COUNT`, `Phase4._build_plan()` |
+
+---
+
+## Roadmap
+
+- [x] Livello 1 — Binary Search Tree
+- [ ] Menu principale completo con selezione livelli e progressi
+- [ ] Livello 2 — argomento da definire
+- [ ] Schermata di riepilogo con statistiche (confronti risparmiati, errori)
+
+## Licenza
+
+Progetto sviluppato a scopo didattico nell'ambito di una tesi.
