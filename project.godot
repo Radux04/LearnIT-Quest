@@ -8,15 +8,26 @@
 
 config_version=5
 
+autoload="GameManager=\"*res://scripts/global/GameManager.gd\""
+
 [application]
 
 config/name="LearnIT Quest"
+run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
-GameManager="res://scenes/main.tscn"
+GameManager="*res://scripts/global/GameManager.gd"
+Sfx="*res://scripts/global/Sfx.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [run]
 

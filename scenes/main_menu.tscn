@@ -1,0 +1,135 @@
+[gd_scene load_steps=5 format=3 uid="uid://414qgotlivsx"]
+
+[ext_resource type="Script" uid="uid://hm1wl82inlni" path="res://scripts/scenes/MainMenu.gd" id="1_menu"]
+[ext_resource type="Texture2D" uid="uid://ba5x5y6v05mrb" path="res://assets/generated/circuit_bg_frame_0.png" id="2_circuit"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
+bg_color = Color(0.09, 0.28, 0.48, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 0.8, 1, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.14, 0.42, 0.68, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.5, 0.95, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.04, 0.086, 1)
+
+[node name="Circuit" type="TextureRect" parent="."]
+modulate = Color(1, 1, 1, 0.28)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_circuit")
+stretch_mode = 1
+
+[node name="Diagram" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 1
+offset_left = 90.0
+offset_top = 180.0
+offset_right = 760.0
+offset_bottom = 262.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0.05, 0.12, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 64
+text = "LEARNIT QUEST"
+
+[node name="Subtitle" type="Label" parent="."]
+layout_mode = 1
+offset_left = 94.0
+offset_top = 268.0
+offset_right = 780.0
+offset_bottom = 300.0
+theme_override_colors/font_color = Color(0.45, 0.82, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "Livello 1 · Binary Search Tree Network"
+
+[node name="Buttons" type="VBoxContainer" parent="."]
+layout_mode = 1
+offset_left = 92.0
+offset_top = 360.0
+offset_right = 452.0
+offset_bottom = 520.0
+theme_override_constants/separation = 18
+
+[node name="PlayButton" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(360, 68)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
+text = "▶  Gioca il Livello 1"
+
+[node name="QuitButton" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(360, 56)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.86, 0.95, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
+text = "Esci"
+
+[node name="Footer" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -56.0
+offset_bottom = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.4, 0.55, 0.72, 1)
+theme_override_font_sizes/font_size = 15
+text = "Altri livelli in arrivo"
+horizontal_alignment = 1
