@@ -114,17 +114,19 @@ static func _run_select(db: SqlDatabase, ast: Dictionary) -> Dictionary:
 		else:
 			groups.append(filtered)
 
+		# Le chiavi di "values" devono coincidere con le intestazioni di "columns":
+		# l'utente può scrivere NOME ma la colonna reale si chiama nome.
+		columns = _output_columns(ast, db, table_name)
 		for group_rows in groups:
 			var values: Dictionary = {}
 			var representative: Dictionary = group_rows[0] if group_rows.size() > 0 else {}
-			for item in ast["columns"]:
-				var name: String = _output_name(item)
+			for i in range(ast["columns"].size()):
+				var item: Dictionary = ast["columns"][i]
 				var value: Variant = _eval_group(db, item["expr"], group_rows, representative, table_name)
 				if value is String and String(value).begins_with("\u0001"):
 					return fail(String(value).substr(1))
-				values[name] = value
+				values[columns[i]] = value
 			output.append({"values": values, "source": representative})
-		columns = _output_columns(ast, db, table_name)
 	else:
 		if ast["star"]:
 			columns = db.column_names(table_name)
@@ -137,12 +139,12 @@ static func _run_select(db: SqlDatabase, ast: Dictionary) -> Dictionary:
 			columns = _output_columns(ast, db, table_name)
 			for row in filtered:
 				var values: Dictionary = {}
-				for item in ast["columns"]:
-					var name: String = _output_name(item)
+				for i in range(ast["columns"].size()):
+					var item: Dictionary = ast["columns"][i]
 					var value: Variant = _eval_expression(db, item["expr"], row, table_name)
 					if value is String and String(value).begins_with("\u0001"):
 						return fail(String(value).substr(1))
-					values[name] = value
+					values[columns[i]] = value
 				output.append({"values": values, "source": row})
 
 	# 3. DISTINCT

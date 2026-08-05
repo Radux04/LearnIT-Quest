@@ -1,6 +1,7 @@
 class_name SqlDatabase
 extends RefCounted
 
+
 ## Database in memoria: un insieme di tabelle con colonne tipizzate e righe.
 ## I nomi di tabelle e colonne sono trattati senza distinzione fra
 ## maiuscole e minuscole, come fa MySQL con le colonne.

@@ -82,7 +82,7 @@ static func fmt(value: float) -> String:
 	return BSTModel.fmt(value)
 
 
-# =========================================================== INSERT GAME ====
+# ==== INSERT GAME ====
 # Trascina i router dal vassoio nello slot libero corretto della rete.
 
 func place_routers(values: Array[float], penalty: float = 0.0) -> void:
