@@ -5,7 +5,7 @@ extends PhaseBase
 ## eliminazione e instradamento entrano in gioco le operazioni "classiche"
 ## del BST: minimo, massimo e successore in-order.
 
-const CHALLENGE_COUNT := 7
+const CHALLENGE_COUNT := 5
 
 
 func _start() -> void:

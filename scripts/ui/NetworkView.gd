@@ -16,6 +16,9 @@ const DROP_TOLERANCE := 78.0
 const CABLE_IDLE := Color(0.25, 0.62, 1.0, 0.85)
 const CABLE_OK := Color(0.25, 1.0, 0.6, 1.0)
 const CABLE_BAD := Color(1.0, 0.28, 0.32, 1.0)
+const CABLE_EXTRA := Color(0.65, 0.55, 1.0, 0.85)
+const CABLE_PATH := Color(1.0, 0.82, 0.3, 1.0)
+const EXTRA_BULGE := 34.0
 
 var model: BSTModel = null
 
@@ -29,6 +32,7 @@ var _flow: float = 0.0
 var _slot_pulse: float = 0.0
 var _flow_enabled: bool = true
 var _level_height: float = LEVEL_HEIGHT_MAX
+var graph: NetworkGraph = null         # attivo solo nella fase Dijkstra
 
 
 func _ready() -> void:
@@ -226,6 +230,34 @@ static func _edge_key(from_value: float, to_value: float) -> String:
 	return "%s>%s" % [BSTModel.fmt(from_value), BSTModel.fmt(to_value)]
 
 
+## I cavi sono bidirezionali: cerca il colore in entrambi i versi.
+func _edge_color_or(from_value: float, to_value: float, fallback: Color) -> Color:
+	if _edge_colors.has(_edge_key(from_value, to_value)):
+		return _edge_colors[_edge_key(from_value, to_value)]
+	if _edge_colors.has(_edge_key(to_value, from_value)):
+		return _edge_colors[_edge_key(to_value, from_value)]
+	return fallback
+
+
+# --------------------------------------------------------- grafo pesato ----
+
+## Attiva la visualizzazione a grafo: cavi ridondanti curvi e costi sui cavi.
+func set_graph(new_graph: NetworkGraph) -> void:
+	graph = new_graph
+	queue_redraw()
+
+
+func clear_graph() -> void:
+	graph = null
+	queue_redraw()
+
+
+## Evidenzia un cammino (sequenza di valori) come cavi dorati.
+func highlight_path(path: Array[float], color: Color = CABLE_PATH) -> void:
+	for i in range(path.size() - 1):
+		set_edge_color(path[i], path[i + 1], color)
+
+
 func reset_edges() -> void:
 	_edge_colors.clear()
 	queue_redraw()
@@ -323,8 +355,25 @@ func _draw() -> void:
 			continue
 		var a: Vector2 = _positions[from_value]
 		var b: Vector2 = _positions[to_value]
-		var color: Color = _edge_colors.get(_edge_key(from_value, to_value), CABLE_IDLE)
+		var color: Color = _edge_color_or(from_value, to_value, CABLE_IDLE)
 		_draw_cable(a, b, color, float(i) * 0.31)
+
+	# Modalità grafo: cavi ridondanti (curvi) e latenza scritta su ogni cavo.
+	if graph != null:
+		for link in graph.edges:
+			var a_value: float = float(link["a"])
+			var b_value: float = float(link["b"])
+			if not _positions.has(a_value) or not _positions.has(b_value):
+				continue
+			var pa: Vector2 = _positions[a_value]
+			var pb: Vector2 = _positions[b_value]
+			var is_extra: bool = bool(link["extra"])
+			var link_color: Color = _edge_color_or(a_value, b_value,
+				CABLE_EXTRA if is_extra else CABLE_IDLE)
+			var label_pos: Vector2 = (pa + pb) * 0.5
+			if is_extra:
+				label_pos = _draw_curved_cable(pa, pb, link_color)
+			_draw_weight(label_pos, int(link["weight"]), link_color)
 
 	# Ghost slots where a router can be dropped.
 	for slot in _slots:
@@ -355,6 +404,56 @@ func _draw_cable(a: Vector2, b: Vector2, color: Color, phase_offset: float) -> v
 		var fade: float = sin(t * PI)
 		draw_circle(p, 4.0, Color(color.r, color.g, color.b, 0.85 * fade))
 		draw_circle(p, 7.5, Color(color.r, color.g, color.b, 0.22 * fade))
+
+
+## Cavo ridondante: una curva, per distinguerlo dai cavi dell'albero e per
+## non farlo passare sopra i router che stanno in mezzo.
+## Ritorna il punto centrale della curva (dove va scritto il costo).
+func _draw_curved_cable(a: Vector2, b: Vector2, color: Color) -> Vector2:
+	var dir: Vector2 = (b - a).normalized()
+	var trim: float = minf(30.0, a.distance_to(b) * 0.34)
+	var start: Vector2 = a + dir * trim
+	var end: Vector2 = b - dir * trim
+	var normal: Vector2 = Vector2(-dir.y, dir.x)
+	if normal.y > 0.0:
+		normal = -normal              # curva sempre verso l'alto
+	var control: Vector2 = (start + end) * 0.5 + normal * EXTRA_BULGE
+
+	var points: PackedVector2Array = PackedVector2Array()
+	var steps: int = 16
+	for i in range(steps + 1):
+		var t: float = float(i) / float(steps)
+		var p: Vector2 = start.lerp(control, t).lerp(control.lerp(end, t), t)
+		points.append(p)
+
+	draw_polyline(points, Color(color.r, color.g, color.b, 0.16), 9.0, true)
+	draw_polyline(points, color, 2.2, true)
+
+	if _flow_enabled:
+		var t_flow: float = fposmod(_flow * 0.8, 1.0)
+		var index: int = clampi(int(t_flow * float(steps)), 0, steps)
+		var fade: float = sin(t_flow * PI)
+		draw_circle(points[index], 3.5, Color(color.r, color.g, color.b, 0.85 * fade))
+
+	@warning_ignore("integer_division")
+	var mid: int = steps / 2
+	return points[mid]
+
+
+## Etichetta con il costo del cavo, su una pastiglia scura per la leggibilità.
+func _draw_weight(at: Vector2, weight: int, color: Color) -> void:
+	var font: Font = get_theme_default_font()
+	if font == null:
+		return
+	var text: String = str(weight)
+	var font_size: int = 15
+	var text_size: Vector2 = font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1.0, font_size)
+	var pad: Vector2 = Vector2(7.0, 3.0)
+	var rect: Rect2 = Rect2(at - text_size * 0.5 - pad, text_size + pad * 2.0)
+	draw_rect(rect, Color(0.03, 0.06, 0.12, 0.92), true)
+	draw_rect(rect, Color(color.r, color.g, color.b, 0.7), false, 1.5)
+	draw_string(font, at + Vector2(-text_size.x * 0.5, text_size.y * 0.36), text,
+		HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(0.92, 0.97, 1.0))
 
 
 func _draw_dashed_line(a: Vector2, b: Vector2, color: Color, width: float) -> void:

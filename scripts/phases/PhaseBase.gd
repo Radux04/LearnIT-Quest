@@ -38,6 +38,15 @@ var _pick_active: bool = false
 var _pick_penalty: float = PENALTY_ATTACK
 var _pick_success_message: String = ""
 
+# Stato della fase Dijkstra.
+var _dij_graph: NetworkGraph = null
+var _dij_dist: Dictionary = {}
+var _dij_prev: Dictionary = {}
+var _dij_settled: Array[float] = []
+var _dij_source: float = NAN
+var _dij_target: float = NAN
+var _dij_active: bool = false
+
 # Stato osservabile (usato dall'HUD, dai messaggi e dai test automatici).
 var current_target: float = NAN
 var current_router: float = NAN
@@ -549,6 +558,152 @@ func delete_router(target: float) -> void:
 	else:
 		level.toast("Rete riorganizzata: la proprietà del BST è intatta.", COLOR_INFO)
 	await _wait(1.1)
+
+
+# ========================================================== DIJKSTRA GAME ==
+# Il giocatore esegue a mano il ciclo principale di Dijkstra: a ogni turno
+# deve cliccare il router NON ancora fissato con la distanza provvisoria
+# più bassa. Il gioco si occupa del rilassamento dei vicini e mostra le
+# distanze aggiornate sui badge, così l'algoritmo si vede lavorare.
+
+const DIJ_INF := NetworkGraph.INF
+const BADGE_UNREACHED := Color(0.35, 0.42, 0.55)
+const BADGE_TENTATIVE := Color(1.0, 0.82, 0.35)
+const BADGE_SETTLED := Color(0.3, 1.0, 0.6)
+
+
+func shortest_path_game(graph: NetworkGraph, source: float, target: float) -> void:
+	if _is_over() or graph == null:
+		return
+	_dij_graph = graph
+	_dij_source = source
+	_dij_target = target
+	_dij_settled.clear()
+	_dij_dist.clear()
+	_dij_prev.clear()
+	for value in graph.nodes():
+		_dij_dist[value] = DIJ_INF
+	_dij_dist[source] = 0.0
+
+	_dij_active = true
+	level.network.set_graph(graph)
+	level.network.reset_edges()
+	for router in level.network.all_routers():
+		router.set_state(RouterNode.State.IDLE)
+	_refresh_dijkstra_badges()
+	_connect_router_clicks(_on_dijkstra_click)
+
+	await helper_done
+
+	_dij_active = false
+	_disconnect_router_clicks()
+
+
+func _refresh_dijkstra_badges() -> void:
+	for router in level.network.all_routers():
+		var d: float = float(_dij_dist.get(router.value, DIJ_INF))
+		if d >= DIJ_INF:
+			router.show_badge("∞", BADGE_UNREACHED)
+		elif _dij_settled.has(router.value):
+			router.show_badge(str(int(d)), BADGE_SETTLED)
+		else:
+			router.show_badge(str(int(d)), BADGE_TENTATIVE)
+
+
+## La distanza provvisoria più bassa fra i router non ancora fissati.
+func _dijkstra_min_distance() -> float:
+	var best: float = DIJ_INF
+	for value in _dij_dist.keys():
+		if _dij_settled.has(float(value)):
+			continue
+		best = minf(best, float(_dij_dist[value]))
+	return best
+
+
+func _on_dijkstra_click(router: RouterNode) -> void:
+	if not _dij_active or _is_over():
+		return
+	var value: float = router.value
+
+	if _dij_settled.has(value):
+		level.toast("Il router %s è già fissato: la sua distanza non cambierà più." % fmt(value), COLOR_INFO)
+		return
+
+	var d: float = float(_dij_dist.get(value, DIJ_INF))
+	var best: float = _dijkstra_min_distance()
+
+	if d >= DIJ_INF:
+		Sfx.play("error")
+		router.shake()
+		level.toast("%s è ancora a distanza ∞: non è raggiungibile dai router già fissati. Tempo -%d s" % [
+			fmt(value), int(PENALTY_ROUTE)], COLOR_BAD)
+		level.penalty(PENALTY_ROUTE)
+		return
+
+	if d > best + 0.0001:
+		Sfx.play("error")
+		router.shake()
+		level.toast("Troppo presto: %s costa %d, ma c'è ancora un router non fissato a %d. Dijkstra prende sempre il minimo! Tempo -%d s" % [
+			fmt(value), int(d), int(best), int(PENALTY_ROUTE)], COLOR_BAD)
+		level.penalty(PENALTY_ROUTE)
+		return
+
+	_settle_dijkstra_node(router, value, d)
+
+
+func _settle_dijkstra_node(router: RouterNode, value: float, distance: float) -> void:
+	_dij_settled.append(value)
+	router.set_state(RouterNode.State.SUCCESS)
+	router.pop()
+	Sfx.play("scan")
+
+	# Rilassamento dei vicini.
+	var improved: Array[String] = []
+	for link in _dij_graph.neighbors(value):
+		var to: float = float(link["to"])
+		if _dij_settled.has(to):
+			continue
+		var candidate: float = distance + float(link["weight"])
+		if candidate < float(_dij_dist.get(to, DIJ_INF)):
+			_dij_dist[to] = candidate
+			_dij_prev[to] = value
+			improved.append("%s→%d" % [fmt(to), int(candidate)])
+			level.network.set_edge_color(value, to, NetworkView.CABLE_OK)
+
+	_refresh_dijkstra_badges()
+
+	if is_equal_approx(value, _dij_target):
+		await _dijkstra_finished(distance)
+		return
+
+	if improved.is_empty():
+		level.toast("Fissato %s a costo %d. Nessun vicino migliora." % [fmt(value), int(distance)], COLOR_OK)
+	else:
+		level.toast("Fissato %s a costo %d. Aggiornati: %s" % [
+			fmt(value), int(distance), ", ".join(improved)], COLOR_OK)
+	level.set_hint("Ora clicca il router non fissato con il costo più basso.")
+
+
+func _dijkstra_finished(distance: float) -> void:
+	_dij_active = false
+	var path: Array[float] = NetworkGraph.path_from(_dij_prev, _dij_source, _dij_target)
+	level.network.reset_edges()
+	level.network.highlight_path(path)
+	for value in path:
+		var router: RouterNode = level.network.get_router(value)
+		if router != null:
+			router.set_state(RouterNode.State.SUCCESS)
+			router.pop()
+	Sfx.play("correct")
+
+	var readable: PackedStringArray = PackedStringArray()
+	for value in path:
+		readable.append(fmt(value))
+	level.toast("Percorso ottimo trovato: %s  —  latenza totale %d ms in %d salti." % [
+		" → ".join(readable), int(distance), maxi(path.size() - 1, 0)], COLOR_OK)
+	level.set_hint("")
+	await _wait(2.6)
+	helper_done.emit()
 
 
 # ============================================================ click routing ==

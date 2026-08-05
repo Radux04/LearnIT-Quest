@@ -6,7 +6,7 @@ extends PhaseBase
 ## riconoscere il vicolo cieco e dichiarare "NON IN RETE": è la ricerca
 ## con esito negativo, che costa comunque solo O(altezza) confronti.
 
-const PRESENT_PACKETS := 5
+const PRESENT_PACKETS := 4
 const ABSENT_PACKETS := 2
 
 ## Valori scelti apposta per cadere "in mezzo" ai router esistenti.

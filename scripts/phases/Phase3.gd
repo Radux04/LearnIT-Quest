@@ -5,7 +5,7 @@ extends PhaseBase
 ## La regola viene mostrata solo nel primo round: dal secondo il giocatore
 ## deve ricordarsela da solo.
 
-const ROUNDS := 3
+const ROUNDS := 2
 
 
 func _start() -> void:
