@@ -15,7 +15,7 @@ Ogni livello è una "missione informatica" da completare in **5 minuti**: niente
 
 ## Livello 1 · Binary Search Tree Network
 
-La rete informatica è rappresentata come un albero di **router futuristici** collegati da **cavi luminosi** percorsi da **pacchetti animati**. Ogni router è un nodo del BST e la sua "metrica" è la chiave.
+La rete informatica è rappresentata come un albero di **router futuristici** collegati da **cavi luminosi** percorsi da **pacchetti animati**. Ogni router è un nodo del BST e la sua "metrica" è la chiave. Nell'ultima fase la rete si apre in un **grafo pesato** e si passa al cammino minimo con **Dijkstra**.
 
 Le metriche sono **numeri decimali** scelti a coppie ravvicinate (`25.5` / `25.9`, `62.1` / `62.4`): non basta guardare la parte intera, bisogna confrontare davvero.
 
@@ -25,20 +25,22 @@ Prima del gameplay c'è una spiegazione navigabile con diagramma animato:
 
 1. **Che cos'è un BST** — nodi, cavi, radice, la regola d'oro (minori a sinistra, maggiori a destra) e il fatto che vale a *ogni* livello, non solo alla radice.
 2. **La ricerca** — perché costa quanto l'*altezza* dell'albero e non il numero di nodi, cosa succede quando il valore **non esiste** (vicolo cieco), e le quattro visite. Il diagramma evidenzia il percorso di ricerca reale.
-3. **La missione** — le 4 fasi, il timer, i comandi e le penalità.
+3. **Dijkstra** — cosa cambia quando i percorsi diventano più di uno: cavi con latenze diverse, il ciclo *fissa il minimo / rilassa i vicini*, e il fatto che il percorso con meno salti spesso **non** è il più veloce. Il diagramma mostra un grafo pesato con il cammino ottimo in oro.
+4. **La missione** — le 5 fasi, il timer, i comandi e le penalità.
 
 Il livello parte solo premendo *"Inizia la missione"*.
 
 ### Le quattro fasi
 
-Le fasi si susseguono **senza caricamenti**: la rete disegnata a schermo è sempre la stessa e viene riorganizzata dal vivo.
+Le fasi si susseguono **senza caricamenti**: la rete disegnata a schermo è sempre la stessa e viene riorganizzata dal vivo, fino a trasformarsi in un grafo pesato nell'ultima fase.
 
 | Fase | Cosa fa il giocatore | Concetto di algoritmi | Penalità |
 |---|---|---|---|
 | **1 · Ricostruzione** | Trascina 8 router nelle postazioni libere della rete | **Inserimento** in un BST | −5 s |
-| **2 · Instradamento** | Guida 7 pacchetti dalla radice alla destinazione scegliendo SINISTRA/DESTRA — e riconosce i **vicoli ciechi** | **Ricerca** con esito positivo *e negativo* | −12 s |
+| **2 · Instradamento** | Guida 6 pacchetti dalla radice alla destinazione scegliendo SINISTRA/DESTRA — e riconosce i **vicoli ciechi** | **Ricerca** con esito positivo *e negativo* | −12 s |
 | **3 · Scansione** | Clicca i router nell'ordine di una visita estratta a caso | **Preorder, Inorder, Postorder, BFS** | −10 s |
-| **4 · Attacco finale** | Risponde a 7 richieste rapide e casuali | **Inserimento, cancellazione (con successore in-order), ricerca, minimo, massimo, successore** | −15 s |
+| **4 · Attacco finale** | Risponde a 5 richieste rapide e casuali | **Inserimento, cancellazione (con successore in-order), ricerca, minimo, massimo, successore** | −15 s |
+| **5 · Instradamento ottimale** | Esegue a mano il ciclo di **Dijkstra** sulla rete diventata un grafo pesato | **Cammino minimo**, rilassamento, differenza fra "meno salti" e "costo minore" | −12 s |
 
 Dettagli che rendono l'esperienza didattica e non un quiz:
 
@@ -46,6 +48,7 @@ Dettagli che rendono l'esperienza didattica e non un quiz:
 - **Fase 2** — 2 pacchetti su 7 hanno una destinazione che **non esiste** in rete. Il giocatore deve accorgersi che dal lato in cui dovrebbe scendere non parte alcun cavo e premere **`✖ NON IN RETE`**. A consegna riuscita il gioco mostra il costo reale: *«Consegnato a 74.5 in 2 confronti invece di 9 router controllati!»*.
 - **Fase 3** — la regola della visita è mostrata solo nel **primo** dei tre round: dal secondo bisogna ricordarsela. Ogni clic corretto illumina il router e gli assegna il numero d'ordine.
 - **Fase 4** — la cancellazione sceglie di preferenza un nodo con **due figli**, il caso più istruttivo, e spiega che al suo posto sale il **successore in-order**. Lo sfondo pulsa in rosso durante l'attacco.
+- **Fase 5** — l'hacker, ritirandosi, riattiva i **cavi ridondanti**: l'albero diventa un **grafo pesato**, ogni cavo mostra la sua latenza in ms e fra due router esistono più strade. Il giocatore esegue il ciclo di Dijkstra a mano: a ogni turno deve cliccare il router **non ancora fissato con il costo provvisorio più basso**. Il gioco si occupa del **rilassamento** dei vicini e aggiorna i badge (`∞` → costo provvisorio → costo definitivo), così l'algoritmo si *vede* lavorare; alla fine il cammino ottimo si illumina in oro. Cliccare troppo presto un router costoso spiega l'errore: «Troppo presto: 62.4 costa 11, ma c'è ancora un router non fissato a 8. Dijkstra prende sempre il minimo!». È lo stesso algoritmo che il protocollo **OSPF** usa davvero nei router.
 
 ### Comandi
 
@@ -73,12 +76,14 @@ res://
 │   │   └── Sfx.gd              autoload: audio sintetizzato a runtime
 │   ├── bst/
 │   │   └── BSTModel.gd         il BST puro (nessuna grafica)
+│   ├── graph/
+│   │   └── NetworkGraph.gd     grafo pesato + algoritmo di Dijkstra
 │   ├── ui/
 │   │   ├── NetworkView.gd      disegna la rete: cavi, slot, pacchetti
 │   │   └── RouterNode.gd       un router: stati, drag & drop, clic
 │   ├── phases/
 │   │   ├── PhaseBase.gd        i mini-giochi riusabili
-│   │   └── Phase1..4.gd        le quattro fasi del Livello 1
+│   │   └── Phase1..5.gd        le cinque fasi del Livello 1
 │   └── scenes/
 │       ├── MainMenu.gd
 │       ├── IntroductionScreen.gd
@@ -145,6 +150,7 @@ Tutte le manopole sono raccolte in pochi punti:
 | Numero di pacchetti e valori assenti | `Phase2.PRESENT_PACKETS`, `ABSENT_PACKETS`, `ABSENT_CANDIDATES` |
 | Numero di visite | `Phase3.ROUNDS` |
 | Numero e mix di sfide finali | `Phase4.CHALLENGE_COUNT`, `Phase4._build_plan()` |
+| Cavi ridondanti e latenze | `Phase5.EXTRA_LINKS`, `MIN_WEIGHT`, `MAX_WEIGHT` |
 
 ---
 

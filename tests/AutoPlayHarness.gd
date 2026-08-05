@@ -6,7 +6,11 @@ extends Control
 ## cancellazione). Non fa parte del gioco: serve solo ai test.
 
 ## Impostato a 1.0 per catturare screenshot leggibili, alzalo per test rapidi.
-const TIME_SCALE := 1.0
+const TIME_SCALE := 4.0
+
+## Da questa fase in poi il tempo torna normale, così gli screenshot delle
+## ultime fasi sono leggibili anche partendo da una corsa accelerata.
+const SLOW_DOWN_AT_PHASE := 5
 
 var level: LevelController = null
 var _phase_seen: int = 0
@@ -49,6 +53,8 @@ func _process(_delta: float) -> void:
 	if level.current_phase != _phase_seen:
 		_phase_seen = level.current_phase
 		print("[AUTOPLAY] --> fase %d avviata" % _phase_seen)
+	if level.current_phase >= SLOW_DOWN_AT_PHASE and not is_equal_approx(Engine.time_scale, 1.0):
+		Engine.time_scale = 1.0
 
 	var now: float = Time.get_ticks_msec() / 1000.0
 	if now - _last_action_time < 0.10:
@@ -60,6 +66,8 @@ func _process(_delta: float) -> void:
 	if _try_pick(phase):
 		return
 	if _try_route(phase):
+		return
+	if _try_dijkstra(phase):
 		return
 	_try_scan(phase)
 
@@ -106,6 +114,30 @@ func _try_route(phase: PhaseBase) -> bool:
 	phase._on_direction_pressed(direction)
 	print("[AUTOPLAY] router %s -> %s (cerca %s)" % [
 		BSTModel.fmt(phase.current_router), direction, BSTModel.fmt(phase.current_target)])
+	return true
+
+
+## Esegue il ciclo di Dijkstra: fissa il router non fissato a distanza minima.
+func _try_dijkstra(phase: PhaseBase) -> bool:
+	if not phase.get("_dij_active"):
+		return false
+	var dist: Dictionary = phase.get("_dij_dist")
+	var settled: Array = phase.get("_dij_settled")
+	var best: float = NAN
+	var best_dist: float = NetworkGraph.INF
+	for value in dist.keys():
+		if settled.has(float(value)):
+			continue
+		if float(dist[value]) < best_dist:
+			best_dist = float(dist[value])
+			best = float(value)
+	if is_nan(best):
+		return false
+	var router: RouterNode = level.network.get_router(best)
+	if router == null:
+		return false
+	phase._on_dijkstra_click(router)
+	print("[AUTOPLAY] Dijkstra: fissato %s a costo %d" % [BSTModel.fmt(best), int(best_dist)])
 	return true
 
 

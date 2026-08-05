@@ -29,7 +29,7 @@ Cinque strati, ognuno ignaro di quello sopra. Questo è il motivo per cui si riu
 │  │  │  I mini-giochi: cosa è giusto, cosa è sbagliato  │ │ │
 │  │  │  ┌─ NetworkView + RouterNode (scripts/ui/) ────┐ │ │ │
 │  │  │  │  Solo pixel: cavi, nodi, pacchetti, tween   │ │ │ │
-│  │  │  │  ┌─ BSTModel (scripts/bst/) ─────────────┐  │ │ │ │
+│  │  │  │  ┌─ BSTModel + NetworkGraph ─────────────┐  │ │ │ │
 │  │  │  │  │  Solo dati e algoritmi. Zero Godot.   │  │ │ │ │
 │  │  │  │  └───────────────────────────────────────┘  │ │ │ │
 │  │  │  └─────────────────────────────────────────────┘ │ │ │
@@ -50,10 +50,10 @@ Compila questa tabella **prima** di scrivere codice. Se una casella resta vuota,
 
 | Domanda | Esempio (Livello 1) |
 |---|---|
-| Qual è la struttura dati? | Binary Search Tree |
+| Qual è la struttura dati? | Binary Search Tree, che nell'ultima fase diventa un grafo pesato |
 | Quale metafora visiva? | Rete di router e cavi |
-| Quali operazioni deve interiorizzare il giocatore? | insert, search (positiva e negativa), 4 visite, delete, min/max/successore |
-| Che **gesto fisico** corrisponde a ogni operazione? | insert = *trascinare*; search = *scegliere un bivio*; visita = *cliccare in sequenza*; delete = *cliccare il nodo infetto* |
+| Quali operazioni deve interiorizzare il giocatore? | insert, search (positiva e negativa), 4 visite, delete, min/max/successore, cammino minimo con Dijkstra |
+| Che **gesto fisico** corrisponde a ogni operazione? | insert = *trascinare*; search = *scegliere un bivio*; visita = *cliccare in sequenza*; delete = *cliccare il nodo infetto*; Dijkstra = *fissare ogni volta il nodo a costo minimo* |
 | Come si vede l'errore? | Cavo rosso, router che trema, spiegazione col perché |
 | Come si vede il costo dell'algoritmo? | «trovato in 2 confronti invece di 9 router» |
 
@@ -63,7 +63,6 @@ Idee già mappate per i livelli futuri:
 |---|---|---|
 | Stack / Queue | Magazzino di pacchetti, nastro trasportatore | Impilare / prelevare nell'ordine giusto |
 | Grafi + BFS/DFS | Mappa di città e strade | Colorare le città nell'ordine di visita |
-| Dijkstra | Rete con costi sui cavi | Scegliere il prossimo nodo a costo minimo |
 | Hash table | Armadietti numerati | Mettere l'oggetto nell'armadietto `hash(x) % n`, gestire le collisioni |
 | Sorting | Barre da riordinare | Scambiare coppie seguendo l'algoritmo |
 | Alberi bilanciati (AVL) | Rete che si "raddrizza" | Applicare la rotazione giusta |
@@ -84,19 +83,19 @@ extends RefCounted
 var items: Array[float] = []
 
 static func fmt(value: float) -> String:
-    if is_equal_approx(value, roundf(value)):
-        return "%d" % int(roundf(value))
-    return String.num(value, 1)
+	if is_equal_approx(value, roundf(value)):
+		return "%d" % int(roundf(value))
+	return String.num(value, 1)
 
 func enqueue(value: float) -> void:
-    items.append(value)
+	items.append(value)
 
 func dequeue() -> float:
-    return items.pop_front()
+	return items.pop_front()
 
 ## La query che serve al gioco per validare una mossa.
 func next_expected() -> float:
-    return items[0] if not items.is_empty() else NAN
+	return items[0] if not items.is_empty() else NAN
 ```
 
 > Il model si testa senza aprire il gioco: `execute_script` o una scena vuota con qualche `print()`.
@@ -117,21 +116,21 @@ var model: QueueModel = null
 var _items: Dictionary = {}          # valore -> RouterNode
 
 func _ready() -> void:
-    mouse_filter = Control.MOUSE_FILTER_IGNORE   # i clic vanno ai figli
-    set_process(true)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE   # i clic vanno ai figli
+	set_process(true)
 
 func setup(m: QueueModel) -> void:
-    model = m
-    rebuild()
+	model = m
+	rebuild()
 
 func rebuild(animate: bool = true) -> void:
-    # 1. calcola le posizioni    2. riusa i nodi esistenti e li anima
-    # 3. crea i nuovi            4. dissolve quelli spariti
-    queue_redraw()
+	# 1. calcola le posizioni    2. riusa i nodi esistenti e li anima
+	# 3. crea i nuovi            4. dissolve quelli spariti
+	queue_redraw()
 
 func _draw() -> void:
-    # sfondo, connessioni, effetti: il genitore disegna PRIMA dei figli
-    pass
+	# sfondo, connessioni, effetti: il genitore disegna PRIMA dei figli
+	pass
 ```
 
 `RouterNode` è riusabile così com'è per qualsiasi "cella con un numero dentro": ha già stati, alone, drag & drop, clic, `pop()`, `shake()`, `flash()` e badge numerico.
@@ -145,32 +144,32 @@ Se ti serve una meccanica nuova, aggiungila a `PhaseBase` (se è generica) o a u
 ```gdscript
 ## 1. Prepara lo stato e collega gli input
 func my_minigame(target: float) -> void:
-    if _is_over():
-        return
-    _my_target = target
-    _my_active = true
-    _connect_router_clicks(_on_my_click)
+	if _is_over():
+		return
+	_my_target = target
+	_my_active = true
+	_connect_router_clicks(_on_my_click)
 
-    await helper_done          # 2. sospende finché il giocatore non finisce
+	await helper_done          # 2. sospende finché il giocatore non finisce
 
-    _my_active = false         # 3. pulisce
-    _disconnect_router_clicks()
+	_my_active = false         # 3. pulisce
+	_disconnect_router_clicks()
 
 ## 4. L'handler giudica la mossa ed emette helper_done quando ha finito
 func _on_my_click(router: RouterNode) -> void:
-    if not _my_active or _is_over():
-        return
-    if is_equal_approx(router.value, _my_target):
-        Sfx.play("correct")
-        router.pop()
-        level.toast("Esatto: %s.  Motivo." % fmt(router.value), COLOR_OK)
-        _my_active = false
-        helper_done.emit()
-    else:
-        Sfx.play("error")
-        router.shake()
-        level.toast("No: %s perché ...spiegazione con i numeri veri..." % fmt(router.value), COLOR_BAD)
-        level.penalty(PENALTY_ATTACK)
+	if not _my_active or _is_over():
+		return
+	if is_equal_approx(router.value, _my_target):
+		Sfx.play("correct")
+		router.pop()
+		level.toast("Esatto: %s.  Motivo." % fmt(router.value), COLOR_OK)
+		_my_active = false
+		helper_done.emit()
+	else:
+		Sfx.play("error")
+		router.shake()
+		level.toast("No: %s perché ...spiegazione con i numeri veri..." % fmt(router.value), COLOR_BAD)
+		level.penalty(PENALTY_ATTACK)
 ```
 
 Il pattern `await helper_done` è il cuore di tutto: rende il codice di gioco **lineare e leggibile** invece che una macchina a stati.
@@ -187,20 +186,20 @@ extends PhaseBase
 const PACKET_COUNT := 7
 
 func _start() -> void:
-    level.set_phase_header("FASE 2 — INSTRADAMENTO", Color(0.35, 1.0, 0.7))
+	level.set_phase_header("FASE 2 — INSTRADAMENTO", Color(0.35, 1.0, 0.7))
 
-    for i in range(PACKET_COUNT):
-        if _is_over():
-            return
-        level.set_objective("Pacchetto %d/%d — destinazione %s" % [i + 1, PACKET_COUNT, fmt(target)])
-        await route_packet(target)
+	for i in range(PACKET_COUNT):
+		if _is_over():
+			return
+		level.set_objective("Pacchetto %d/%d — destinazione %s" % [i + 1, PACKET_COUNT, fmt(target)])
+		await route_packet(target)
 
-    if _is_over():
-        return
-    Sfx.play("victory")
-    level.toast("Frase che riassume che cosa hai appena imparato.", COLOR_OK)
-    await _wait(1.2)
-    finished.emit()
+	if _is_over():
+		return
+	Sfx.play("victory")
+	level.toast("Frase che riassume che cosa hai appena imparato.", COLOR_OK)
+	await _wait(1.2)
+	finished.emit()
 ```
 
 **Controlla sempre `_is_over()` dopo ogni `await`**: se il tempo scade mentre una fase è sospesa, deve smettere di agire.
@@ -219,8 +218,8 @@ Level (Control)            ← script LevelController
 ├── HUD (Control)
 │   ├── TopBar · PhaseTitle · Objective · TimerLabel · TimerBar · Toast · Hint
 └── Overlays (Control)
-    ├── Banner (Panel) → BannerTitle, BannerSub
-    └── EndScreen (Control) → Dim, Title, Subtitle, RestartButton, MenuButton
+	├── Banner (Panel) → BannerTitle, BannerSub
+	└── EndScreen (Control) → Dim, Title, Subtitle, RestartButton, MenuButton
 ```
 
 `NetworkView`, `Tray` e `ActionBar` sono **tutti a schermo intero e sovrapposti**: è ciò che permette di trascinare un router dal vassoio alla rete senza conversioni di coordinate.
@@ -229,13 +228,13 @@ Poi crea `Level2.gd` copiando `Level.gd` e cambiando solo:
 
 ```gdscript
 const PHASE_SCRIPTS: Array[String] = [
-    "res://scripts/phases/lvl2/Phase1.gd",
-    "res://scripts/phases/lvl2/Phase2.gd",
+	"res://scripts/phases/lvl2/Phase1.gd",
+	"res://scripts/phases/lvl2/Phase2.gd",
 ]
 
 const PHASE_BANNERS: Array = [
-    ["FASE 1 — TITOLO", "Sottotitolo che anticipa la meccanica.", Color(0.35, 0.85, 1.0)],
-    ["FASE 2 — TITOLO", "Sottotitolo.", Color(0.35, 1.0, 0.7)],
+	["FASE 1 — TITOLO", "Sottotitolo che anticipa la meccanica.", Color(0.35, 0.85, 1.0)],
+	["FASE 2 — TITOLO", "Sottotitolo.", Color(0.35, 1.0, 0.7)],
 ]
 
 var model: QueueModel = QueueModel.new()   # il tuo model
@@ -252,7 +251,7 @@ const SCENE_LEVEL_2 := "res://scenes/level2.tscn"
 const SCENE_INTRO_2 := "res://scenes/introduction2.tscn"
 
 func go_to_level_2() -> void:
-    get_tree().change_scene_to_file(SCENE_LEVEL_2)
+	get_tree().change_scene_to_file(SCENE_LEVEL_2)
 ```
 
 e nel menu principale aggiungi il pulsante che porta a `SCENE_INTRO_2`.
@@ -263,13 +262,13 @@ Duplica `introduction.tscn` + `IntroductionScreen.gd`. Tutto il testo sta nella 
 
 ```gdscript
 const PAGES: Array = [
-    {
-        "diagram": true,                       # mostra il diagramma a destra
-        "diagram_title": "La struttura di esempio",
-        "diagram_note": "Riga sotto al disegno.",
-        "body": """[b][color=#7fd8ff]Titolo sezione[/color][/b]
+	{
+		"diagram": true,                       # mostra il diagramma a destra
+		"diagram_title": "La struttura di esempio",
+		"diagram_note": "Riga sotto al disegno.",
+		"body": """[b][color=#7fd8ff]Titolo sezione[/color][/b]
 Testo in BBCode, con [b]grassetti[/b] sulle parole chiave.""",
-    },
+	},
 ]
 ```
 
@@ -283,14 +282,14 @@ Duplica `tests/AutoPlayHarness.gd`. È un bot che gioca **sempre in modo corrett
 
 ```gdscript
 func _process(_delta: float) -> void:
-    var phase: PhaseBase = _current_phase()
-    if phase == null or level.is_over:
-        return
-    if _try_place_router(phase):   # c'è roba nel vassoio? posizionala
-        return
-    if _try_pick(phase):           # aspetta un clic su un nodo? cliccalo
-        return
-    _try_route(phase)              # aspetta una direzione? calcolala dal model
+	var phase: PhaseBase = _current_phase()
+	if phase == null or level.is_over:
+		return
+	if _try_place_router(phase):   # c'è roba nel vassoio? posizionala
+		return
+	if _try_pick(phase):           # aspetta un clic su un nodo? cliccalo
+		return
+	_try_route(phase)              # aspetta una direzione? calcolala dal model
 ```
 
 Eseguilo con **F6**: se arriva al messaggio di vittoria senza errori runtime, l'intera catena funziona. È il modo più veloce per accorgersi di una regressione dopo una modifica al bilanciamento.
@@ -327,6 +326,7 @@ Eseguilo con **F6**: se arriva al messaggio di vittoria senza errori runtime, l'
 | `await scan_network(tipo, mostra_regola)` | Mini-gioco di visita |
 | `await pick_router(valore, evidenzia, messaggio, penalità)` | «Clicca il nodo giusto» |
 | `await delete_router(valore)` | Selezione + cancellazione + riorganizzazione |
+| `await shortest_path_game(grafo, sorgente, destinazione)` | Ciclo di Dijkstra eseguito a mano dal giocatore |
 | `await _wait(secondi)` | Pausa |
 | `_is_over()` | Da controllare dopo ogni `await` |
 | `fmt(valore)` | Formattazione numerica coerente |

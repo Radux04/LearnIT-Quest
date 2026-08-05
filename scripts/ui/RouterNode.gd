@@ -36,6 +36,7 @@ var _drag_offset: Vector2 = Vector2.ZERO
 var _hovered: bool = false
 var _pulse_time: float = 0.0
 var _pulsing: bool = false
+var _badge_color: Color = Color(0.3, 1.0, 0.55)
 
 
 func _init(node_value: float = 0.0) -> void:
@@ -70,11 +71,12 @@ func _ready() -> void:
 
 	_badge = Label.new()
 	_badge.visible = false
-	_badge.position = Vector2(NODE_SIZE.x - 18.0, -10.0)
-	_badge.size = Vector2(24.0, 20.0)
+	_badge.position = Vector2(NODE_SIZE.x - 24.0, -14.0)
+	_badge.size = Vector2(36.0, 22.0)
 	_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_badge.add_theme_font_size_override("font_size", 14)
-	_badge.add_theme_color_override("font_color", Color(0.05, 0.1, 0.05))
+	_badge.add_theme_color_override("font_color", Color(0.04, 0.09, 0.06))
 	_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_badge)
 
@@ -127,9 +129,12 @@ func set_pulsing(enabled: bool) -> void:
 	queue_redraw()
 
 
-func show_badge(text: String) -> void:
+func show_badge(text: String, color: Color = Color(0.3, 1.0, 0.55)) -> void:
 	_badge.text = text
 	_badge.visible = true
+	_badge_color = color
+	_badge.add_theme_color_override("font_color",
+		Color(0.04, 0.09, 0.06) if color.get_luminance() > 0.45 else Color(0.95, 0.98, 1.0))
 	queue_redraw()
 
 
@@ -177,7 +182,9 @@ func _draw() -> void:
 	# Ring
 	draw_arc(mid, base_radius - 2.0, 0.0, TAU, 40, Color(c.r, c.g, c.b, 0.85), 2.0, true)
 	if _badge.visible:
-		draw_circle(Vector2(NODE_SIZE.x - 6.0, 0.0), 12.0, Color(0.3, 1.0, 0.55, 0.95))
+		var badge_center: Vector2 = Vector2(NODE_SIZE.x - 6.0, -3.0)
+		draw_circle(badge_center, 17.0, Color(_badge_color.r, _badge_color.g, _badge_color.b, 0.25))
+		draw_circle(badge_center, 14.0, Color(_badge_color.r, _badge_color.g, _badge_color.b, 0.97))
 
 
 func _gui_input(event: InputEvent) -> void:

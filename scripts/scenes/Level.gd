@@ -11,6 +11,7 @@ const PHASE_SCRIPTS: Array[String] = [
 	"res://scripts/phases/Phase2.gd",
 	"res://scripts/phases/Phase3.gd",
 	"res://scripts/phases/Phase4.gd",
+	"res://scripts/phases/Phase5.gd",
 ]
 
 const PHASE_BANNERS: Array = [
@@ -18,6 +19,7 @@ const PHASE_BANNERS: Array = [
 	["FASE 2 — INSTRADAMENTO", "Guida i pacchetti dalla radice alla destinazione... se esiste.", Color(0.35, 1.0, 0.7)],
 	["FASE 3 — SCANSIONE", "Tre visite diverse: Preorder, Inorder, Postorder o BFS.", Color(0.75, 0.6, 1.0)],
 	["FASE 4 — ATTACCO FINALE", "Inserimenti, cancellazioni, minimo, massimo e successore.", Color(1.0, 0.42, 0.42)],
+	["FASE 5 — INSTRADAMENTO OTTIMALE", "La rete ha cavi ridondanti con latenze diverse: trova il percorso più veloce.", Color(0.7, 0.65, 1.0)],
 ]
 
 @onready var network: NetworkView = $NetworkView
