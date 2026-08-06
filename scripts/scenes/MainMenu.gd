@@ -3,6 +3,7 @@ extends Control
 ## Menu principale segnaposto: verrà ampliato quando arriveranno gli altri livelli.
 
 @onready var play_button: Button = $Buttons/PlayButton
+@onready var level2_button: Button = $Buttons/Level2Button
 @onready var quit_button: Button = $Buttons/QuitButton
 @onready var diagram: Control = $Diagram
 
@@ -12,6 +13,7 @@ var _time: float = 0.0
 func _ready() -> void:
 	diagram.draw.connect(_on_diagram_draw)
 	play_button.pressed.connect(_on_play_pressed)
+	level2_button.pressed.connect(_on_level2_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
 	play_button.grab_focus()
 	set_process(true)
@@ -25,6 +27,11 @@ func _process(delta: float) -> void:
 func _on_play_pressed() -> void:
 	Sfx.play("correct")
 	GameManager.restart_game()
+
+
+func _on_level2_pressed() -> void:
+	Sfx.play("correct")
+	GameManager.go_to_intro_2()
 
 
 func _on_quit_pressed() -> void:

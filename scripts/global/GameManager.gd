@@ -47,6 +47,12 @@ func stop_timer() -> void:
 	timer_running = false
 
 
+## Riprende il conteggio dopo una pausa, solo se la partita è ancora in corso.
+func resume_timer() -> void:
+	if not level_failed and not level_completed and time_left > 0.0:
+		timer_running = true
+
+
 func complete_level() -> void:
 	timer_running = false
 	level_completed = true
