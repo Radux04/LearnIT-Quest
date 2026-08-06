@@ -5,6 +5,9 @@
 # Addons folder
 /addons/
 
+# Plugin dell'editor Ziva: sta sul disco ma non fa parte del gioco
+/ziva_installer/
+
 # File temporanei creati da Godot quando ricarica una GDExtension
 **/~*.dll
 **/*.TMP
