@@ -7,3 +7,4 @@
 
 # File temporanei creati da Godot quando ricarica una GDExtension
 **/~*.dll
+**/*.TMP
