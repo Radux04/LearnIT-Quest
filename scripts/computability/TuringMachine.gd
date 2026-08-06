@@ -23,17 +23,17 @@ var accept_state: String = ""
 var rules: Dictionary = {}                # "stato|letto" -> {write, move, next}
 
 
-static func _key(from_state: String, read_symbol: String) -> String:
-	return from_state + "|" + read_symbol
+static func _key(from_state: String, read_sym: String) -> String:
+	return from_state + "|" + read_sym
 
 
 ## move: LEFT (-1), RIGHT (+1) oppure STAY (0).
-func set_rule(from_state: String, read_symbol: String, write_symbol: String,
+func set_rule(from_state: String, read_sym: String, write_sym: String,
 		move_dir: int, next_state: String) -> void:
-	rules[_key(from_state, read_symbol)] = {
+	rules[_key(from_state, read_sym)] = {
 		"from": from_state,
-		"read": read_symbol,
-		"write": write_symbol,
+		"read": read_sym,
+		"write": write_sym,
 		"move": move_dir,
 		"next": next_state,
 	}
