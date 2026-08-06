@@ -71,7 +71,9 @@ res://
 │   ├── introduction.tscn       teoria Livello 1 (4 pagine)
 │   ├── level.tscn              Livello 1 — rete di router
 │   ├── introduction2.tscn      teoria Livello 2 (6 pagine)
-│   └── level2.tscn             Livello 2 — database MySQL
+│   ├── level2.tscn             Livello 2 — database MySQL
+│   ├── introduction3.tscn      teoria Livello 3 (7 pagine)
+│   └── level3.tscn             Livello 3 — calcolabilità
 ├── scripts/
 │   ├── global/
 │   │   ├── GameManager.gd      autoload: timer, penalità, cambio scena
@@ -101,6 +103,7 @@ res://
 ├── tests/
 │   ├── autoplay.tscn           bot che gioca il Livello 1
 │   ├── autoplay_level2.tscn    bot che gioca il Livello 2
+│   ├── autoplay_level3.tscn    bot che gioca il Livello 3
 │   ├── timeout.tscn            verifica la schermata "tempo scaduto"
 │   └── test_sql_engine.gd      52 test del motore SQL
 └── assets/generated/           sprite pixel art generati
@@ -147,6 +150,7 @@ Il progetto include due scene di verifica, utili dopo ogni modifica:
 |---|---|
 | `res://tests/autoplay.tscn` | Istanzia il Livello 1 e lo **gioca da solo in modo sempre corretto**, attraversando tutte e 5 le fasi fino alla vittoria. Stampa in console ogni mossa. |
 | `res://tests/autoplay_level2.tscn` | Gioca il Livello 2 inviando alla console le soluzioni dei 19 obiettivi, e verifica anche penalità e manuale. |
+| `res://tests/autoplay_level3.tscn` | Gioca il Livello 3: esegue automi, determinizza, fa girare le macchine di Turing, costruisce la diagonale e scrive i programmi WHILE. La costante `STOP_AT_PHASE` lo ferma su una fase per guardarla. |
 | `res://tests/timeout.tscn` | Porta il cronometro a zero e verifica la schermata *Tempo Scaduto* con i due pulsanti. |
 | `res://tests/test_sql_engine.gd` | 52 test del motore SQL, eseguibili senza aprire l'editor (vedi sopra). |
 
@@ -158,7 +162,7 @@ Tutte le manopole sono raccolte in pochi punti:
 
 | Cosa | Dove |
 |---|---|
-| Durata dei livelli | `GameManager.LEVEL_DURATION`, `LEVEL2_DURATION` |
+| Durata dei livelli | `GameManager.LEVEL_DURATION`, `LEVEL2_DURATION`, `LEVEL3_DURATION` |
 | Costo del manuale | `SqlManual.COST_SECONDS` |
 | Penalità del Livello 2 | `Level2Controller.PENALTY_SYNTAX`, `PENALTY_WRONG` |
 | Obiettivi del Livello 2 | le liste `SqlTask.make(...)` in `scripts/phases/lvl2/Phase1..5.gd` |
@@ -218,12 +222,50 @@ godot --headless --script res://tests/run_sql_tests.gd
 
 ---
 
+## Livello 3 · Laboratorio di Calcolabilità
+
+Fondamenti dell'informatica teorica: dai riconoscitori più semplici fino ai **limiti del calcolo**. Durata **12 minuti**.
+
+Il principio è sempre lo stesso: non si risponde a domande sulla teoria, **si esegue la teoria**.
+
+### Introduzione teorica (7 pagine)
+
+Automi di riconoscimento · non determinismo, ε-transizioni e costruzione per sottoinsiemi · macchine di Turing, funzioni calcolabili, linguaggi decidibili e semidecidibili, tesi di Church-Turing, macchine non deterministiche · macchina universale, problema dell'arresto, teoremi di Rice e Kleene, decimo problema di Hilbert · funzioni ricorsive, calcolabilità secondo Church, minimalizzazione μ e funzioni parziali ricorsive · sintassi e semantica del linguaggio WHILE · la missione.
+
+### Le cinque fasi
+
+| Fase | Argomento | Che cosa fa il giocatore |
+|---|---|---|
+| 1 · Automi deterministici | DFA, linguaggi regolari | **Esegue** l'automa: legge un simbolo, clicca lo stato di arrivo, poi dichiara se la parola è accettata |
+| 2 · Determinizzazione | NFA, ε-chiusura, trasformazioni | Esegue a mano la **costruzione per sottoinsiemi**: seleziona tutti gli stati raggiungibili |
+| 3 · Macchine di Turing | nastro, quintuple, δ | Applica la **quintupla giusta** a ogni passo, poi progetta la regola mancante e guarda la macchina girare |
+| 4 · Problema dell'arresto | diagonalizzazione, indecidibilità | Costruisce la **macchina diagonale D** invertendo la diagonale e trova la contraddizione |
+| 5 · Linguaggio WHILE | calcolabilità e programmazione | **Scrive programmi veri**: massimo, somma 1..n, divisione intera con resto, fattoriale |
+
+Penalità: **−6 s** per un passo di esecuzione sbagliato, **−10 s** per una scelta sbagliata, **−8 s** per un programma che non compila, **−12 s** per un programma che gira ma non risolve.
+
+### L'interprete WHILE
+
+`scripts/computability/WhileInterpreter.gd` è un interprete completo (tokenizer → parser a discesa ricorsiva → semantica operazionale) del linguaggio WHILE: assegnamento, sequenza, `while`, `if`, aritmetica sui naturali con **sottrazione troncata** (`3 - 5` fa `0`).
+
+Il **limite di passi** non è un dettaglio tecnico ma il cuore didattico del livello: un programma può non terminare, e in quel caso calcola una funzione **parziale**. L'interprete non può saperlo in anticipo — è esattamente il problema dell'arresto — quindi a un certo punto si arrende e lo dichiara.
+
+Come nel Livello 2 la correzione è **per equivalenza**: il programma del giocatore e quello di riferimento girano sugli stessi stati iniziali e si confrontano le variabili di uscita. Qualunque algoritmo corretto viene accettato.
+
+I modelli (`Automaton`, `TuringMachine`, `WhileInterpreter`, `WhileTask`) non contengono nessun riferimento a Godot e sono coperti da **66 test**:
+
+```
+godot --headless --script res://tests/run_lvl3_tests.gd
+```
+
+---
+
 ## Roadmap
 
 - [x] Livello 1 — Binary Search Tree e Dijkstra
 - [x] Livello 2 — Database relazionali e SQL
+- [x] Livello 3 — Calcolabilità: automi, macchine di Turing, WHILE
 - [ ] Menu principale completo con progressi e punteggi
-- [ ] Livello 3 — argomento da definire
 - [ ] Schermata di riepilogo con statistiche (confronti risparmiati, errori, manuale)
 
 ## Licenza

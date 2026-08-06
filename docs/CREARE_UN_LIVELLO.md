@@ -12,16 +12,18 @@ Se è la prima volta che apri il progetto, leggi comunque il capitolo 1: sono le
 | Voglio... | Vai a |
 |---|---|
 | aggiungere un esercizio SQL al Livello 2 | **§ 3.1** — cinque stringhe, nessuna logica nuova |
+| aggiungere un programma WHILE al Livello 3 | **§ 4.4** — anche qui solo dati |
 | cambiare quanti router / pacchetti / attacchi ci sono nel Livello 1 | **§ 2.1** — una tabella di costanti |
-| aggiungere una fase a un livello che esiste | **§ 2.3** (Livello 1) · **§ 3.2** (Livello 2) |
+| aggiungere un automa, una macchina di Turing o un passo di determinizzazione | **§ 4.1**, **§ 4.2**, **§ 4.3** |
+| aggiungere una fase a un livello che esiste | **§ 2.3** (L1) · **§ 3.2** (L2) · **§ 4.6** (L3) |
 | cambiare le tabelle e i dati del database | **§ 3.3** |
-| far accettare al motore SQL un comando che oggi rifiuta | **§ 3.5** |
+| far accettare un comando nuovo al motore SQL o all'interprete WHILE | **§ 3.5** e **§ 4.5** |
 | aggiungere una pagina al manuale | **§ 3.4** |
-| ritoccare difficoltà, penalità o durata | **§ 2.1** e **§ 3.6** |
-| creare il Livello 3 da zero | **§ 4** e **§ 5** |
-| capire perché una modifica ha rotto qualcosa | **§ 7** — trappole già incontrate |
+| ritoccare difficoltà, penalità o durata | **§ 2.1**, **§ 3.6**, **§ 4.7** |
+| creare un Livello 4 da zero | **§ 5** e **§ 6** |
+| capire perché una modifica ha rotto qualcosa | **§ 8** — trappole già incontrate |
 
-> **Regola che vale per ogni modifica:** prima di dire «fatto», rilancia i controlli automatici del **§ 3.7**. Ci mettono meno di un minuto e ti dicono subito se hai rotto qualcosa altrove.
+> **Regola che vale per ogni modifica:** prima di dire «fatto», rilancia i controlli automatici del **§ 3.7** e del **§ 4.7**. Ci mettono meno di un minuto e ti dicono subito se hai rotto qualcosa altrove.
 
 ---
 
@@ -111,7 +113,7 @@ Lo stesso schema vale per qualsiasi altra sfida: **un metodo `_challenge_*` + un
 
 ### 2.3 Aggiungere una fase intera al Livello 1
 
-1. Crea `scripts/phases/Phase6.gd` che `extends PhaseBase`, sovrascrive `_start()` e chiude con `finished.emit()` (lo scheletro è al § 5, passo 4).
+1. Crea `scripts/phases/Phase6.gd` che `extends PhaseBase`, sovrascrive `_start()` e chiude con `finished.emit()` (lo scheletro è al § 6, passo 4).
 2. In `scripts/scenes/Level.gd` aggiungi **nella stessa posizione** una voce a `PHASE_SCRIPTS` e una a `PHASE_BANNERS`: sono due array paralleli, se le lunghezze non coincidono il livello va in errore all'avvio.
 3. Aggiungi la teoria all'introduzione (`scripts/scenes/IntroductionScreen.gd`, costante `PAGES`) e la nuova fase all'elenco nella pagina della missione.
 4. Estendi il bot di autoplay perché sappia giocarla, altrimenti il test automatico si blocca lì.
@@ -119,7 +121,7 @@ Lo stesso schema vale per qualsiasi altra sfida: **un metodo `_challenge_*` + un
 
 ### 2.4 Aggiungere un mini-gioco nuovo
 
-Se la meccanica è generica (vale per qualunque struttura ad albero) mettila in `PhaseBase`; se serve solo a una fase, tienila in quella fase. In entrambi i casi segui il pattern `await helper_done` descritto al § 5, passo 3, e rispetta le due regole non negoziabili: **`_is_over()` dopo ogni `await`** e **messaggi d'errore che spiegano il perché con i numeri veri**.
+Se la meccanica è generica (vale per qualunque struttura ad albero) mettila in `PhaseBase`; se serve solo a una fase, tienila in quella fase. In entrambi i casi segui il pattern `await helper_done` descritto al § 6, passo 3, e rispetta le due regole non negoziabili: **`_is_over()` dopo ogni `await`** e **messaggi d'errore che spiegano il perché con i numeri veri**.
 
 ### 2.5 Verifica dopo ogni modifica
 
@@ -142,7 +144,7 @@ Dove sta cosa:
 | `scripts/sql/SqlParser.gd` | Da token ad albero sintattico (AST) |
 | `scripts/sql/SqlEngine.gd` | Esegue l'AST sul database |
 | `scripts/sql/SqlDatabase.gd` | Tabelle, righe, `snapshot()`/`restore()` per il confronto |
-| `scripts/sql/SqlTask.gd` | La correzione **per equivalenza** (§ 8) |
+| `scripts/sql/SqlTask.gd` | La correzione **per equivalenza** (§ 9) |
 | `scripts/phases/lvl2/Phase1.gd` … `Phase5.gd` | Gli elenchi di obiettivi |
 | `scripts/scenes/Level2.gd` | Fasi, dati iniziali, penalità, HUD |
 | `scripts/ui/SqlConsole.gd`, `SqlManual.gd`, `SqlTableView.gd` | Console, manuale, viste delle tabelle |
@@ -270,7 +272,106 @@ Il primo deve stampare `0 falliti`. Il secondo deve arrivare a `FINE — DATABAS
 
 ---
 
-## 4. Anatomia di un livello
+## 4. Ampliare il Livello 3 (calcolabilità)
+
+Dove sta cosa:
+
+| File | Contiene |
+|---|---|
+| `scripts/computability/Automaton.gd` | DFA e NFA: esecuzione, ε-chiusura, `move()`, costruzione per sottoinsiemi |
+| `scripts/computability/TuringMachine.gd` | Nastro, quintuple, `step()`, `run()` con limite di passi |
+| `scripts/computability/WhileInterpreter.gd` | Tokenizer, parser e semantica del linguaggio WHILE |
+| `scripts/computability/WhileTask.gd` | Correzione per equivalenza dei programmi |
+| `scripts/phases/lvl3/Phase1.gd` … `Phase5.gd` | Le cinque fasi |
+| `scripts/ui/AutomatonView.gd`, `StateNode.gd` | Stati e archi etichettati |
+| `scripts/ui/TapeView.gd`, `RuleTableView.gd` | Nastro e tabella delle quintuple |
+| `scripts/ui/DiagonalTable.gd`, `CodeConsole.gd` | Tabella diagonale e console WHILE |
+
+Questo livello è diverso dagli altri due: **non c'è una struttura unica** che si trasforma. Ogni fase porta in scena il proprio strumento su un «palco» (`level.stage`) che il controller svuota a ogni cambio. Per aggiungere una fase basta quindi montare la propria vista con `level.mount(view)`.
+
+### 4.1 Aggiungere un automa o una parola alla Fase 1
+
+Il caso più economico: sono dati dichiarativi dentro `Phase1._start()`.
+
+```gdscript
+	var divisibile: Automaton = Automaton.make(["r0", "r1", "r2"], ["0", "1"], "r0", ["r0"])
+	divisibile.add_transition("r0", "0", "r0")
+	# ... una add_transition per ogni freccia ...
+	await _round(divisibile, "1101", "Riga di suggerimento mostrata in basso.")
+```
+
+Tre vincoli:
+1. Per la Fase 1 l'automa deve essere **completo e deterministico**: da ogni stato, per ogni simbolo dell'alfabeto, esattamente una freccia. Altrimenti l'esecuzione si blocca a metà parola.
+2. **Massimo 4-5 stati**: la vista li dispone in fila orizzontale e oltre non ci stanno.
+3. La parola deve usare solo simboli dell'alfabeto dichiarato.
+
+### 4.2 Aggiungere un passo di determinizzazione (Fase 2)
+
+Una riga per passo, dentro `Phase2._start()`:
+
+```gdscript
+	await _build(nfa, [["q0", "q1"], "b"], "Suggerimento per questo passo.")
+```
+
+Il primo elemento è l'insieme di partenza, il secondo il simbolo. **La risposta attesa non si scrive**: la calcola il model con `automaton.move(insieme, simbolo)`, ε-chiusura compresa. Se sbagli l'insieme di partenza il gioco resta comunque coerente, ma il passo perde senso didattico: falli seguire l'uno all'altro come nella costruzione vera.
+
+### 4.3 Aggiungere una macchina di Turing (Fase 3)
+
+```gdscript
+	_machine = TuringMachine.new()
+	_machine.start_state = "q0"
+	_machine.accept_state = "qf"
+	_machine.set_rule("q0", "0", "1", TuringMachine.RIGHT, "q0")   # δ(q0,0) = (1, →, q0)
+	_machine.load_input("101")
+	_tape.setup(_machine)
+	_rules.setup(_machine, ["q0|0", "q0|1", "q0|" + TuringMachine.BLANK])
+```
+
+La chiave di una regola è `"stato|simbolo"`. `RuleTableView.setup` riceve l'elenco delle chiavi da mostrare: mettine anche qualcuna **non** applicabile, sono le distrazioni che rendono la scelta significativa.
+
+⚠️ Prova sempre la macchina prima, con `run()` in un test: se non si ferma, il giocatore resterà a cliccare all'infinito.
+
+### 4.4 Aggiungere un programma WHILE (Fase 5)
+
+Come nel Livello 2, un obiettivo è **solo dati**:
+
+```gdscript
+		WhileTask.make(
+			"Metti in r il resto di x diviso y.",        # richiesta
+			"r := x; while r >= y do r := r - y end",    # soluzione di riferimento
+			[{"x": 0, "y": 3}, {"x": 7, "y": 2}],       # stati iniziali di prova
+			["r"],                                       # variabili da confrontare
+			"Suggerimento.", "Spiegazione dopo il successo."),
+```
+
+Quattro regole:
+- **Scegli esercizi che il linguaggio non risolve con un operatore.** Massimo, divisione, resto, fattoriale vanno bene; «somma di x e y» no, perché `z := x + y` è una risposta legittima e il ciclo non serve.
+- **Metti fra i casi di prova quelli limite**: zero, uguali, primo minore del secondo. La correzione prova tutti i casi e si ferma al primo che fallisce.
+- **La soluzione di riferimento deve terminare** su ogni caso, altrimenti il giocatore riceve «Soluzione di riferimento non valida».
+- **Non serve prevedere le varianti**: si confronta l'effetto, non il testo.
+
+Il linguaggio accetta: `x := e` · `;` · `while c do ... end` (anche `od`) · `if c then ... else ... end` (anche `fi`, `else` facoltativo) · `skip` · `+ - *` (la sottrazione è troncata a 0) · `= != < <= > >=` · una condizione senza confronto significa «≠ 0» · commenti con `#`. Non esistono divisione, resto, array o funzioni: se ti servono, § 4.5.
+
+### 4.5 Estendere l'interprete WHILE
+
+Stessa procedura in tre stadi del motore SQL (§ 3.5): `tokenize()` per i simboli nuovi, la classe `Parser` per la grammatica, `_exec`/`_eval` per la semantica, e i casi in `tests/test_lvl3.gd`. I messaggi d'errore devono dire **la forma giusta**, non solo che c'è un errore: li legge il giocatore.
+
+### 4.6 Aggiungere una fase
+
+Crea `scripts/phases/lvl3/Phase6.gd` che `extends Lvl3PhaseBase`, monta la sua vista con `level.mount(...)`, e aggiungi la voce a `PHASE_SCRIPTS` **e** a `PHASE_BANNERS` di `Level3.gd` (array paralleli). Poi aggiorna l'introduzione e insegna la fase al bot.
+
+### 4.7 Verifica
+
+```bash
+"$GODOT" --headless --script res://tests/run_lvl3_tests.gd   # 66 test dei modelli
+"$GODOT" tests/autoplay_level3.tscn                          # il bot gioca tutto il livello
+```
+
+Il bot ha una costante comoda: **`STOP_AT_PHASE`**. Messa a `N`, gioca le fasi precedenti in fretta e poi si ferma all'inizio della fase `N` a velocità normale — è il modo più rapido per guardare (o fotografare) una singola fase senza giocarsela a mano.
+
+---
+
+## 5. Anatomia di un livello
 
 Cinque strati, ognuno ignaro di quello sopra. Questo è il motivo per cui si riusa quasi tutto.
 
@@ -296,7 +397,7 @@ Cinque strati, ognuno ignaro di quello sopra. Questo è il motivo per cui si riu
 
 ---
 
-## 5. Procedura passo-passo per un livello nuovo
+## 6. Procedura passo-passo per un livello nuovo
 
 ### Passo 0 — Scegli argomento e meccaniche (la parte più importante)
 
@@ -561,7 +662,7 @@ Eseguilo con **F6**: se arriva al messaggio di vittoria senza errori runtime, l'
 
 ---
 
-## 6. API di riferimento
+## 7. API di riferimento
 
 ### `level` (LevelController), disponibile in ogni fase
 
@@ -637,9 +738,38 @@ Per aggiungerne uno, una riga in `Sfx._ready()`: `_streams["nuovo"] = _tone([440
 `SqlEngine.execute(db, sql)` ritorna `{"ok": bool, "kind": String, "columns": Array, "rows": Array, "error": String}` — non solleva mai eccezioni.
 `SqlTask.make(richiesta, soluzione, kind, suggerimento, spiegazione)` · `SqlTask.check(db, sql_giocatore, task)` ritorna `{"status": "ok"|"error"|"wrong", "message": String}`.
 
+### `level` nel Livello 3 (Level3)
+
+| Membro | A che serve |
+|---|---|
+| `level.stage` | Il «palco»: le fasi ci montano la loro vista |
+| `level.mount(view)` | Aggiunge la vista al palco a schermo intero |
+| `level.clear_stage()` | Svuota il palco (lo fa già `_cleanup()`) |
+| `level.action_bar` · `make_action_button(testo, centro, dimensione)` · `clear_action_bar()` | I pulsanti creati dalle fasi |
+| `level.phase_node` | La fase in esecuzione (la usa il bot di collaudo) |
+| `level.solved_count` | Prove superate, mostrate nel riepilogo finale |
+| `set_phase_header` · `set_objective` · `set_hint` · `toast` · `show_banner` · `penalty` | Come negli altri livelli |
+
+### `Lvl3PhaseBase`
+
+`await complete(messaggio)` · `await _wait(secondi)` · `_is_over()` · `_score()` registra una prova superata · segnale `helper_done` per il pattern `await` · penalità `PENALTY_STEP` (6 s), `PENALTY_CHOICE` (10 s), `PENALTY_SYNTAX` (8 s), `PENALTY_WRONG` (12 s)
+
+### `Automaton`
+
+`Automaton.make(stati, alfabeto, iniziale, finali)` · `add_transition(da, simbolo, a)` · `targets(stato, simbolo)` · `step_dfa(stato, simbolo)` · `run_dfa(parola)` traccia · `accepts(parola)` (vale anche per NFA) · `epsilon_closure(insieme)` · `move(insieme, simbolo)` con ε-chiusura · `sort_states(insieme)` · `subset_construction()` · statici `set_label(insieme)`, `symbols_of(parola)` · costante `EPSILON`
+
+### `TuringMachine`
+
+`set_rule(stato, letto, scritto, direzione, nuovo_stato)` · `load_input(parola)` · `read_symbol()` · `current_rule()` · `step()` · `run(max_passi)` → `{halted, steps, accepted, tape}` · `is_halted()` · `cell(posizione)` · `tape_string()` · costanti `BLANK`, `LEFT`, `RIGHT`, `STAY`
+
+### `WhileInterpreter` e `WhileTask`
+
+`WhileInterpreter.run(sorgente, stato_iniziale, max_passi)` → `{ok, error, state, steps, terminated}` — `terminated == false` significa «per quanto ne sappiamo cicla».
+`WhileTask.make(richiesta, soluzione, casi, variabili_uscita, suggerimento, spiegazione)` · `WhileTask.check(task, sorgente)` → `{status, message}` · `WhileTask.preview(sorgente, stato)` esegue senza giudicare.
+
 ---
 
-## 7. Trappole già incontrate (leggile, fanno risparmiare ore)
+## 8. Trappole già incontrate (leggile, fanno risparmiare ore)
 
 | Sintomo | Causa | Rimedio |
 |---|---|---|
@@ -654,7 +784,7 @@ Per aggiungerne uno, una riga in `Sfx._ready()`: `_streams["nuovo"] = _tone([440
 
 ---
 
-## 8. Un livello "da tastiera" invece che "da mouse"
+## 9. Un livello "da tastiera" invece che "da mouse"
 
 Il Livello 2 mostra la seconda famiglia possibile di livelli: il giocatore non manipola oggetti, **scrive**. Se il tuo Livello 3 è di questo tipo, riusa questi tre pezzi:
 
@@ -706,7 +836,7 @@ Aggiungere un esercizio significa aggiungere cinque stringhe: nessuna logica nuo
 
 ---
 
-## 9. Checklist finale prima di dire "fatto"
+## 10. Checklist finale prima di dire "fatto"
 
 - [ ] Il model non contiene nessun riferimento a nodi Godot
 - [ ] Ogni messaggio d'errore spiega il **perché**, con i numeri della partita
@@ -727,4 +857,5 @@ E se invece hai **ampliato un livello esistente**:
 - [ ] `PHASE_SCRIPTS` e `PHASE_BANNERS` hanno ancora la stessa lunghezza
 - [ ] Se hai cambiato i dati iniziali, nessun esercizio è diventato banale o impossibile
 - [ ] Se hai aggiunto una fase o una pagina di manuale, l'introduzione le cita
+- [ ] Se hai toccato il Livello 3: i 66 test dei modelli passano e il bot arriva in fondo
 - [ ] Hai committato con percorsi espliciti, dopo aver controllato che non ci siano cancellazioni impreviste
