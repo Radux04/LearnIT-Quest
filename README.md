@@ -9,7 +9,7 @@ Ogni livello è una "missione informatica" da completare in **5 minuti**: niente
 | **Engine** | Godot 4.5 (Forward+) |
 | **Risoluzione** | 1280×720, stretch `canvas_items` / `expand` |
 | **Lingua** | Italiano |
-| **Livelli disponibili** | 1 — Binary Search Tree Network |
+| **Livelli disponibili** | 1 — Binary Search Tree Network · 2 — Database Recovery (MySQL) |
 
 ---
 
@@ -68,29 +68,41 @@ Dettagli che rendono l'esperienza didattica e non un quiz:
 res://
 ├── scenes/
 │   ├── main_menu.tscn          scena principale del gioco
-│   ├── introduction.tscn       spiegazione teorica a 3 pagine
-│   └── level.tscn              Livello 1 (HUD + rete + overlay)
+│   ├── introduction.tscn       teoria Livello 1 (4 pagine)
+│   ├── level.tscn              Livello 1 — rete di router
+│   ├── introduction2.tscn      teoria Livello 2 (6 pagine)
+│   └── level2.tscn             Livello 2 — database MySQL
 ├── scripts/
 │   ├── global/
 │   │   ├── GameManager.gd      autoload: timer, penalità, cambio scena
 │   │   └── Sfx.gd              autoload: audio sintetizzato a runtime
-│   ├── bst/
-│   │   └── BSTModel.gd         il BST puro (nessuna grafica)
-│   ├── graph/
-│   │   └── NetworkGraph.gd     grafo pesato + algoritmo di Dijkstra
+│   ├── bst/BSTModel.gd         il BST puro (nessuna grafica)
+│   ├── graph/NetworkGraph.gd   grafo pesato + algoritmo di Dijkstra
+│   ├── sql/
+│   │   ├── SqlTokenizer.gd     da testo a token
+│   │   ├── SqlParser.gd        da token ad albero sintattico
+│   │   ├── SqlEngine.gd        esegue l'albero sul database
+│   │   ├── SqlDatabase.gd      tabelle, righe, confronti, snapshot
+│   │   └── SqlTask.gd          obiettivi e correzione per equivalenza
 │   ├── ui/
 │   │   ├── NetworkView.gd      disegna la rete: cavi, slot, pacchetti
-│   │   └── RouterNode.gd       un router: stati, drag & drop, clic
+│   │   ├── RouterNode.gd       un router: stati, drag & drop, clic
+│   │   ├── SqlTableView.gd     una tabella con colonne e righe
+│   │   ├── SqlConsole.gd       editor di query + griglia risultato
+│   │   └── SqlManual.gd        manuale in sovraimpressione (-10 s)
 │   ├── phases/
-│   │   ├── PhaseBase.gd        i mini-giochi riusabili
-│   │   └── Phase1..5.gd        le cinque fasi del Livello 1
+│   │   ├── PhaseBase.gd        mini-giochi riusabili del Livello 1
+│   │   ├── Phase1..5.gd        le cinque fasi del Livello 1
+│   │   └── lvl2/               SqlPhaseBase.gd + le cinque fasi SQL
 │   └── scenes/
 │       ├── MainMenu.gd
-│       ├── IntroductionScreen.gd
-│       └── Level.gd            orchestratore del livello + HUD
+│       ├── IntroductionScreen.gd · Introduction2Screen.gd
+│       └── Level.gd · Level2.gd    orchestratori + HUD
 ├── tests/
-│   ├── autoplay.tscn           bot che gioca il livello intero
-│   └── timeout.tscn            verifica la schermata "tempo scaduto"
+│   ├── autoplay.tscn           bot che gioca il Livello 1
+│   ├── autoplay_level2.tscn    bot che gioca il Livello 2
+│   ├── timeout.tscn            verifica la schermata "tempo scaduto"
+│   └── test_sql_engine.gd      52 test del motore SQL
 └── assets/generated/           sprite pixel art generati
 ```
 
@@ -133,8 +145,10 @@ Il progetto include due scene di verifica, utili dopo ogni modifica:
 
 | Scena | Cosa fa |
 |---|---|
-| `res://tests/autoplay.tscn` | Istanzia il livello e lo **gioca da solo in modo sempre corretto**, attraversando tutte e 4 le fasi fino alla vittoria. Stampa in console ogni mossa. |
+| `res://tests/autoplay.tscn` | Istanzia il Livello 1 e lo **gioca da solo in modo sempre corretto**, attraversando tutte e 5 le fasi fino alla vittoria. Stampa in console ogni mossa. |
+| `res://tests/autoplay_level2.tscn` | Gioca il Livello 2 inviando alla console le soluzioni dei 19 obiettivi, e verifica anche penalità e manuale. |
 | `res://tests/timeout.tscn` | Porta il cronometro a zero e verifica la schermata *Tempo Scaduto* con i due pulsanti. |
+| `res://tests/test_sql_engine.gd` | 52 test del motore SQL, eseguibili senza aprire l'editor (vedi sopra). |
 
 Esegui `autoplay.tscn` con **F6**: se arriva a `RETE RIPRISTINATA` senza errori runtime, l'intera catena (modello, vista, fasi, HUD) è sana. Alza `TIME_SCALE` in `AutoPlayHarness.gd` per accelerare la verifica.
 
@@ -144,7 +158,10 @@ Tutte le manopole sono raccolte in pochi punti:
 
 | Cosa | Dove |
 |---|---|
-| Durata del livello | `GameManager.LEVEL_DURATION` |
+| Durata dei livelli | `GameManager.LEVEL_DURATION`, `LEVEL2_DURATION` |
+| Costo del manuale | `SqlManual.COST_SECONDS` |
+| Penalità del Livello 2 | `Level2Controller.PENALTY_SYNTAX`, `PENALTY_WRONG` |
+| Obiettivi del Livello 2 | le liste `SqlTask.make(...)` in `scripts/phases/lvl2/Phase1..5.gd` |
 | Penalità delle 4 fasi | `PhaseBase.PENALTY_PLACE / ROUTE / SCAN / ATTACK` |
 | Router da posizionare | `Phase1.ROUTERS_TO_PLACE` |
 | Numero di pacchetti e valori assenti | `Phase2.PRESENT_PACKETS`, `ABSENT_PACKETS`, `ABSENT_CANDIDATES` |
@@ -154,12 +171,60 @@ Tutte le manopole sono raccolte in pochi punti:
 
 ---
 
+---
+
+## Livello 2 · Database Recovery (MySQL)
+
+Il database della LearnIT Corp è stato attaccato. Qui non si clicca: **si scrive SQL**. Durata **6 minuti**.
+
+Lo schermo è diviso in due: in alto le **tabelle sempre visibili** (nome, colonne con il loro tipo, righe), in basso la **console** in cui scrivere le query, con la griglia del risultato accanto all'editor. Le righe nuove o modificate lampeggiano in verde, le eliminazioni tingono di rosso il titolo della tabella.
+
+### Le cinque fasi (19 obiettivi)
+
+| Fase | Comandi | Esempi di obiettivo |
+|---|---|---|
+| **1 · Interrogazione** | `SELECT`, `WHERE`, `ORDER BY`, `COUNT` | *"Mostra nome ed eta dei clienti con più di 30 anni, dal più vecchio"* |
+| **2 · Ricostruzione** | `CREATE TABLE`, `INSERT INTO` | *"La tabella prodotti è andata perduta: ricreala con id, nome, prezzo"* |
+| **3 · Correzione** | `UPDATE ... SET ... WHERE` | *"Tutti i clienti di Roma hanno compiuto gli anni"* → `SET eta = eta + 1` |
+| **4 · Bonifica** | `DELETE`, `DROP TABLE` | *"La tabella temp_backup è spazzatura: eliminala completamente"* |
+| **5 · Query nidificate** | subquery scalari, `IN`, `NOT IN` | *"I clienti più vecchi della media"* → `WHERE eta > (SELECT AVG(eta) ...)` |
+
+### Il manuale a pagamento
+
+In alto c'è il pulsante **MANUALE**: apre in sovraimpressione la sintassi completa su 4 pagine, **al costo di 10 secondi di cronometro per ogni apertura** — l'idea è quella del manuale di *Keep Talking and Nobody Explodes*. Si apre già sulla pagina utile alla fase in corso, e il pulsante mostra quante volte l'hai consultato. Sapere la sintassi a memoria è un vantaggio concreto in secondi.
+
+### Come vengono corrette le query
+
+La correzione **non confronta il testo** della query. La query del giocatore e una soluzione di riferimento vengono eseguite su due copie identiche del database, poi si confrontano:
+
+- per le `SELECT` → il **risultato** (colonne e righe; l'ordine conta solo se la soluzione usa `ORDER BY`);
+- per le modifiche → lo **stato finale del database**.
+
+Quindi ogni formulazione corretta è accettata: condizioni in ordine diverso, `IN (...)` invece di una catena di `OR`, alias, maiuscole/minuscole, spazi e a capo. Una modifica sbagliata **non viene applicata**, così il database non resta in uno stato incoerente.
+
+Penalità: **−8 s** per una query con errore di sintassi, **−12 s** per una query valida che non risolve l'obiettivo, **−10 s** per ogni apertura del manuale.
+
+### Il motore SQL
+
+`scripts/sql/` contiene un interprete SQL scritto da zero in GDScript (tokenizer → parser a discesa recursiva → esecutore), che supporta:
+
+`SELECT` (con `*`, elenco di colonne, alias, `DISTINCT`) · `WHERE` con `AND`/`OR`/`NOT`/parentesi, `=` `!=` `<` `<=` `>` `>=`, `IN`, `NOT IN`, `BETWEEN`, `LIKE` (`%` e `_`), `IS NULL` · aggregati `COUNT`/`SUM`/`AVG`/`MIN`/`MAX` con `GROUP BY` · `ORDER BY` e `LIMIT` · **subquery** scalari e di colonna · espressioni aritmetiche · `INSERT INTO` (con e senza elenco colonne) · `UPDATE ... SET` · `DELETE` · `CREATE TABLE` · `DROP TABLE`.
+
+Gli errori sono messaggi didattici in italiano, non stack trace. È coperto da **52 test**:
+
+```
+godot --headless --script res://tests/run_sql_tests.gd
+```
+
+---
+
 ## Roadmap
 
-- [x] Livello 1 — Binary Search Tree
-- [ ] Menu principale completo con selezione livelli e progressi
-- [ ] Livello 2 — argomento da definire
-- [ ] Schermata di riepilogo con statistiche (confronti risparmiati, errori)
+- [x] Livello 1 — Binary Search Tree e Dijkstra
+- [x] Livello 2 — Database relazionali e SQL
+- [ ] Menu principale completo con progressi e punteggi
+- [ ] Livello 3 — argomento da definire
+- [ ] Schermata di riepilogo con statistiche (confronti risparmiati, errori, manuale)
 
 ## Licenza
 

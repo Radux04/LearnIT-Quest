@@ -45,6 +45,7 @@ const PHASE_BANNERS: Array = [
 var model: BSTModel = BSTModel.new()
 var is_over: bool = false
 var current_phase: int = 0
+var pause_menu: PauseMenu = null
 
 var _toast_tween: Tween = null
 var _alert_mode: bool = false
@@ -60,6 +61,10 @@ func _ready() -> void:
 	GameManager.time_updated.connect(_on_time_updated)
 	GameManager.time_expired.connect(_on_time_expired)
 
+	pause_menu = PauseMenu.new()
+	pause_menu.restart_requested.connect(func(): GameManager.restart_game())
+	$Overlays.add_child(pause_menu)
+
 	model.clear()
 	model.insert(ROOT_VALUE)
 	network.setup(model)
@@ -69,6 +74,16 @@ func _ready() -> void:
 
 	GameManager.start_level()
 	_run_level()
+
+
+## ESC apre il menu di pausa: da lì si può sempre tornare al menu principale
+## e scegliere un altro livello.
+func _unhandled_input(event: InputEvent) -> void:
+	if is_over or pause_menu == null:
+		return
+	if event.is_action_pressed("ui_cancel"):
+		pause_menu.toggle()
+		get_viewport().set_input_as_handled()
 
 
 func _process(delta: float) -> void:

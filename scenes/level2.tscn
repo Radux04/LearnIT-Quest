@@ -1,0 +1,312 @@
+[gd_scene load_steps=7 format=3 uid="uid://mdm8oekdyasq"]
+
+[ext_resource type="Script" path="res://scripts/scenes/Level2.gd" id="1_level2"]
+[ext_resource type="Script" path="res://scripts/ui/SqlConsole.gd" id="2_console"]
+[ext_resource type="Script" path="res://scripts/ui/SqlManual.gd" id="3_manual"]
+[ext_resource type="Texture2D" uid="uid://ba5x5y6v05mrb" path="res://assets/generated/circuit_bg_frame_0.png" id="4_circuit"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
+bg_color = Color(0.043, 0.075, 0.145, 0.94)
+border_width_bottom = 2
+border_color = Color(0.15, 0.55, 0.9, 0.7)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_banner"]
+bg_color = Color(0.031, 0.055, 0.11, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.6, 0.95, 0.55)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0, 0.02, 0.06, 0.65)
+shadow_size = 26
+
+[node name="Level2" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_level2")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.024, 0.043, 0.09, 1)
+
+[node name="Circuit" type="TextureRect" parent="."]
+modulate = Color(1, 1, 1, 0.25)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("4_circuit")
+stretch_mode = 1
+
+[node name="TablesScroll" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 20.0
+offset_top = 108.0
+offset_right = -20.0
+offset_bottom = 366.0
+grow_horizontal = 2
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 0
+
+[node name="TablesBox" type="HBoxContainer" parent="TablesScroll"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Console" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 376.0
+offset_right = -20.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_console")
+
+[node name="HUD" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="Panel" parent="HUD"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 100.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
+
+[node name="PhaseTitle" type="Label" parent="HUD"]
+layout_mode = 1
+offset_left = 26.0
+offset_top = 10.0
+offset_right = 800.0
+offset_bottom = 40.0
+text = "FASE 1"
+
+[node name="Objective" type="Label" parent="HUD"]
+layout_mode = 1
+offset_left = 26.0
+offset_top = 44.0
+offset_right = 790.0
+offset_bottom = 96.0
+text = "Obiettivo"
+
+[node name="ManualButton" type="Button" parent="HUD"]
+layout_mode = 1
+offset_left = 806.0
+offset_top = 26.0
+offset_right = 1046.0
+offset_bottom = 78.0
+text = "MANUALE"
+
+[node name="TimerLabel" type="Label" parent="HUD"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 10.0
+offset_right = -26.0
+offset_bottom = 58.0
+grow_horizontal = 0
+text = "06:00"
+horizontal_alignment = 2
+
+[node name="TimerBar" type="ProgressBar" parent="HUD"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 64.0
+offset_right = -26.0
+offset_bottom = 78.0
+grow_horizontal = 0
+mouse_filter = 2
+max_value = 1.0
+value = 1.0
+show_percentage = false
+
+[node name="Toast" type="Label" parent="HUD"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -520.0
+offset_top = -84.0
+offset_right = 520.0
+offset_bottom = -46.0
+grow_horizontal = 2
+grow_vertical = 0
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="HUD"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -560.0
+offset_top = -44.0
+offset_right = 560.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+horizontal_alignment = 1
+
+[node name="Overlays" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Banner" type="Panel" parent="Overlays"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -470.0
+offset_top = -96.0
+offset_right = 470.0
+offset_bottom = 96.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_banner")
+
+[node name="BannerTitle" type="Label" parent="Overlays/Banner"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 26.0
+offset_top = 30.0
+offset_right = -26.0
+offset_bottom = 92.0
+grow_horizontal = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BannerSub" type="Label" parent="Overlays/Banner"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 34.0
+offset_top = 98.0
+offset_right = -34.0
+offset_bottom = 176.0
+grow_horizontal = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Manual" type="Control" parent="Overlays"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_manual")
+
+[node name="EndScreen" type="Control" parent="Overlays"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Overlays/EndScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.03, 0.07, 0.96)
+
+[node name="Title" type="Label" parent="Overlays/EndScreen"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -500.0
+offset_top = 140.0
+offset_right = 500.0
+offset_bottom = 216.0
+grow_horizontal = 2
+text = "TEMPO SCADUTO"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Overlays/EndScreen"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -460.0
+offset_top = 240.0
+offset_right = 460.0
+offset_bottom = 420.0
+grow_horizontal = 2
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="Overlays/EndScreen"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -330.0
+offset_top = 460.0
+offset_right = -20.0
+offset_bottom = 522.0
+grow_horizontal = 2
+text = "Ricomincia il livello"
+
+[node name="MenuButton" type="Button" parent="Overlays/EndScreen"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 20.0
+offset_top = 460.0
+offset_right = 330.0
+offset_bottom = 522.0
+grow_horizontal = 2
+text = "Torna al Menu Principale"
