@@ -1,0 +1,185 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/scenes/Introduction3Screen.gd" id="1_intro3"]
+[ext_resource type="Texture2D" path="res://assets/generated/circuit_bg_frame_0.png" id="2_circuit"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.043, 0.055, 0.157, 0.88)
+border_width_left = 3
+border_color = Color(0.55, 0.42, 1, 0.85)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
+bg_color = Color(0.22, 0.14, 0.44, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.7, 0.55, 1, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.34, 0.22, 0.62, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.85, 0.72, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="Introduction3Screen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_intro3")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.031, 0.027, 0.075, 1)
+
+[node name="Circuit" type="TextureRect" parent="."]
+modulate = Color(0.8, 0.75, 1, 0.28)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_circuit")
+stretch_mode = 1
+
+[node name="Kicker" type="Label" parent="."]
+layout_mode = 1
+offset_left = 48.0
+offset_top = 30.0
+offset_right = 800.0
+offset_bottom = 54.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.72, 0.6, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "LEARNIT QUEST  ·  LIVELLO 3"
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 1
+offset_left = 48.0
+offset_top = 56.0
+offset_right = 1232.0
+offset_bottom = 104.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.04, 0, 0.12, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 40
+text = "LABORATORIO DI CALCOLABILITÀ"
+
+[node name="PageTitle" type="Label" parent="."]
+layout_mode = 1
+offset_left = 50.0
+offset_top = 110.0
+offset_right = 1232.0
+offset_bottom = 138.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.78, 0.68, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "1 · Automi di riconoscimento"
+
+[node name="Card" type="Panel" parent="."]
+layout_mode = 1
+offset_left = 44.0
+offset_top = 144.0
+offset_right = 1236.0
+offset_bottom = 604.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="Body" type="RichTextLabel" parent="."]
+layout_mode = 1
+offset_left = 70.0
+offset_top = 156.0
+offset_right = 1212.0
+offset_bottom = 596.0
+mouse_filter = 2
+theme_override_colors/default_color = Color(0.85, 0.9, 1, 1)
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 15
+theme_override_font_sizes/italics_font_size = 15
+theme_override_font_sizes/mono_font_size = 15
+bbcode_enabled = true
+scroll_active = false
+
+[node name="BackButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -400.0
+offset_top = -96.0
+offset_right = -110.0
+offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.9, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "◀  Indietro"
+
+[node name="PageLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -70.0
+offset_top = -96.0
+offset_right = 70.0
+offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.7, 0.62, 0.95, 1)
+theme_override_font_sizes/font_size = 18
+text = "1 / 7"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NextButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 110.0
+offset_top = -96.0
+offset_right = 460.0
+offset_bottom = -36.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.95, 0.92, 1, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
+text = "Avanti  ▶"

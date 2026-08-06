@@ -46,20 +46,20 @@ static func check(task: WhileTask, player_source: String) -> Dictionary:
 				"message": "Con %s il programma non si ferma. Un programma WHILE che cicla calcola una funzione PARZIALE: qui serve che termini sempre." % _describe(initial_state),
 				"trace": mine}
 
-		var reference: Dictionary = WhileInterpreter.run(task.solution, initial_state, STEP_LIMIT)
-		if not bool(reference["ok"]) or not bool(reference["terminated"]):
+		var expected: Dictionary = WhileInterpreter.run(task.solution, initial_state, STEP_LIMIT)
+		if not bool(expected["ok"]) or not bool(expected["terminated"]):
 			# Non deve mai capitare: vuol dire che la soluzione del livello è sbagliata.
 			return {"status": "error",
-				"message": "Soluzione di riferimento non valida: %s" % reference.get("error", "non termina"),
+				"message": "Soluzione di riferimento non valida: %s" % expected.get("error", "non termina"),
 				"trace": mine}
 
-		for name in task.outputs:
-			var got: int = int(mine["state"].get(name, 0))
-			var want: int = int(reference["state"].get(name, 0))
+		for var_name in task.outputs:
+			var got: int = int(mine["state"].get(var_name, 0))
+			var want: int = int(expected["state"].get(var_name, 0))
 			if got != want:
 				return {"status": "wrong",
 					"message": "Con %s la variabile %s vale %d, ma doveva valere %d." % [
-						_describe(initial_state), name, got, want],
+						_describe(initial_state), var_name, got, want],
 					"trace": mine}
 
 	return {"status": "ok", "message": "", "trace": {}}

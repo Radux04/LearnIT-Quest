@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/BotLevel3.gd" id="1_bot3"]
+
+[node name="AutoPlayLevel3" type="Node"]
+script = ExtResource("1_bot3")
