@@ -57,18 +57,7 @@ Compila questa tabella **prima** di scrivere codice. Se una casella resta vuota,
 | Come si vede l'errore? | Cavo rosso, router che trema, spiegazione col perché |
 | Come si vede il costo dell'algoritmo? | «trovato in 2 confronti invece di 9 router» |
 
-Lo stesso schema compilato per il **Livello 2**, che è di natura diversa (si scrive invece di cliccare):
-
-| Domanda | Livello 2 |
-|---|---|
-| Struttura dati | Database relazionale (tabelle, righe, chiavi) |
-| Metafora visiva | Il pannello di amministrazione di un DBMS |
-| Operazioni | SELECT/WHERE/ORDER BY/COUNT, CREATE, INSERT, UPDATE, DELETE, DROP, subquery |
-| Gesto fisico | **Scrivere una query** ed eseguirla |
-| Errore | Messaggio del database in console + penalità di tempo |
-| Costo dell'algoritmo | Il tempo: consultare il manuale costa 10 s |
-
-Idee ancora libere per i livelli futuri:
+Idee già mappate per i livelli futuri:
 
 | Argomento | Metafora | Gesto |
 |---|---|---|
@@ -375,59 +364,7 @@ Per aggiungerne uno, una riga in `Sfx._ready()`: `_streams["nuovo"] = _tone([440
 
 ---
 
-## 6. Un livello "da tastiera" invece che "da mouse"
-
-Il Livello 2 mostra la seconda famiglia possibile di livelli: il giocatore non manipola oggetti, **scrive**. Se il tuo Livello 3 è di questo tipo, riusa questi tre pezzi:
-
-- **`SqlConsole`** → l'editor di testo con pulsante Esegui, Ctrl+Invio, messaggi di stato e griglia del risultato. Emette `query_submitted(testo)`: ti basta collegarti.
-- **`SqlManual`** → il manuale in sovraimpressione a pagine. Cambiando la costante `MANUAL_PAGES` diventa il manuale di qualunque argomento; il costo in secondi è in `COST_SECONDS`.
-- **`SqlTask`** → il pattern di correzione **per equivalenza**, il pezzo più importante da copiare.
-
-### Il pattern «correggi l'effetto, non il testo»
-
-Mai confrontare quello che il giocatore ha scritto con la soluzione carattere per carattere: esistono decine di formulazioni corrette e il giocatore si sentirebbe truffato. Confronta invece il **risultato**:
-
-```gdscript
-static func check(state, player_input: String, task) -> Dictionary:
-	var sandbox = state.clone()            # copia dello stato
-	var mine = esegui(sandbox, player_input)
-	if not mine.ok:
-		return {"status": "error", "message": mine.error}   # penalità piccola
-
-	var expected_state = state.clone()
-	var theirs = esegui(expected_state, task.solution)      # soluzione di riferimento
-
-	if uguali(mine, theirs):                                # oppure sandbox == expected_state
-		return {"status": "ok"}
-	return {"status": "wrong", "message": "spiegazione del perché"}
-```
-
-Tre regole che rendono il pattern equo:
-1. **Tre esiti distinti**, non due: `error` (input non valido), `wrong` (valido ma non risolve), `ok`. Penalità diverse, messaggi diversi.
-2. **Nulla viene applicato se non è corretto**: si lavora su una copia, così una mossa sbagliata non lascia lo stato incoerente.
-3. **Tolleranza dove non conta**: maiuscole, spazi, ordine delle righe se non hai chiesto un ordinamento, alias sui nomi. Rigore solo su ciò che l'esercizio vuole insegnare.
-
-### Obiettivi come dati, non come codice
-
-Una fase del Livello 2 è solo un elenco dichiarativo:
-
-```gdscript
-var tasks: Array = [
-	SqlTask.make(
-		"Mostra nome e citta dei clienti di Roma.",          # richiesta
-		"SELECT nome, citta FROM clienti WHERE citta='Roma'", # soluzione di riferimento
-		SqlTask.KIND_SELECT,
-		"Filtra con WHERE. Il testo va fra apici singoli.",   # suggerimento
-		"WHERE filtra le righe, l'elenco dopo SELECT le colonne."),  # spiegazione finale
-]
-await do_tasks(tasks)
-```
-
-Aggiungere un esercizio significa aggiungere cinque stringhe: nessuna logica nuova, nessun rischio di rompere il resto.
-
----
-
-## 7. Checklist finale prima di dire "fatto"
+## 6. Checklist finale prima di dire "fatto"
 
 - [ ] Il model non contiene nessun riferimento a nodi Godot
 - [ ] Ogni messaggio d'errore spiega il **perché**, con i numeri della partita
@@ -438,4 +375,3 @@ Aggiungere un esercizio significa aggiungere cinque stringhe: nessuna logica nuo
 - [ ] La scena di timeout mostra i due pulsanti e funzionano entrambi
 - [ ] Un giocatore esperto finisce in circa metà del tempo disponibile
 - [ ] La scansione del progetto non produce errori né warning
-- [ ] Se il livello si gioca scrivendo: la correzione accetta ogni formulazione corretta

@@ -87,7 +87,7 @@ offset_right = 780.0
 offset_bottom = 300.0
 theme_override_colors/font_color = Color(0.45, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 22
-text = "Livello 1 · Binary Search Tree   ·   Livello 2 · Database MySQL"
+text = "Livello 1 · Binary Search Tree Network"
 
 [node name="Buttons" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -107,17 +107,6 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
 text = "▶  Gioca il Livello 1"
-
-[node name="Level2Button" type="Button" parent="Buttons"]
-custom_minimum_size = Vector2(360, 68)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 0.98, 1, 1)
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
-theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "▶  Gioca il Livello 2"
 
 [node name="QuitButton" type="Button" parent="Buttons"]
 custom_minimum_size = Vector2(360, 56)
