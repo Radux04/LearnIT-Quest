@@ -243,7 +243,7 @@ Il motore non solleva mai eccezioni: ogni funzione ritorna `{"ok": false, "error
 
 | Costante | File | Oggi |
 |---|---|---|
-| `LEVEL2_DURATION` | `GameManager.gd` | 540 s (9 minuti) |
+| `LEVEL2_DURATION` | `GameManager.gd` | 600 s (10 minuti) |
 | `PENALTY_SYNTAX` | `Level2.gd` | 8 s — query non valida |
 | `PENALTY_WRONG` | `Level2.gd` | 12 s — query valida ma che non risolve |
 | `COST_SECONDS` | `SqlManual.gd` | 10 s per apertura del manuale |

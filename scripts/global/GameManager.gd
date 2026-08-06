@@ -7,7 +7,7 @@ signal time_expired
 signal penalty_applied(seconds: float)
 
 const LEVEL_DURATION := 300.0          # 5 minuti — Livello 1
-const LEVEL2_DURATION := 540.0         # 9 minuti — Livello 2 (si scrive, non si clicca)
+const LEVEL2_DURATION := 600.0         # 10 minuti — Livello 2 (si scrive, non si clicca)
 const WRONG_ANSWER_PENALTY := 10.0
 
 const SCENE_MENU := "res://scenes/main_menu.tscn"

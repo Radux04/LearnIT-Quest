@@ -175,7 +175,7 @@ Tutte le manopole sono raccolte in pochi punti:
 
 ## Livello 2 · Database Recovery (MySQL)
 
-Il database della LearnIT Corp è stato attaccato. Qui non si clicca: **si scrive SQL**. Durata **9 minuti**.
+Il database della LearnIT Corp è stato attaccato. Qui non si clicca: **si scrive SQL**. Durata **10 minuti**.
 
 Lo schermo è diviso in due: in alto le **tabelle sempre visibili** (nome, colonne con il loro tipo, righe), in basso la **console** in cui scrivere le query, con la griglia del risultato accanto all'editor. Le righe nuove o modificate lampeggiano in verde, le eliminazioni tingono di rosso il titolo della tabella.
 
