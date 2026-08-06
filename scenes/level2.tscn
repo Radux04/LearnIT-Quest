@@ -1,8 +1,8 @@
 [gd_scene load_steps=7 format=3 uid="uid://mdm8oekdyasq"]
 
-[ext_resource type="Script" path="res://scripts/scenes/Level2.gd" id="1_level2"]
-[ext_resource type="Script" path="res://scripts/ui/SqlConsole.gd" id="2_console"]
-[ext_resource type="Script" path="res://scripts/ui/SqlManual.gd" id="3_manual"]
+[ext_resource type="Script" uid="uid://djgqcq8c38r0e" path="res://scripts/scenes/Level2.gd" id="1_level2"]
+[ext_resource type="Script" uid="uid://c8fl32r8rynvs" path="res://scripts/ui/SqlConsole.gd" id="2_console"]
+[ext_resource type="Script" uid="uid://btota620d3gs0" path="res://scripts/ui/SqlManual.gd" id="3_manual"]
 [ext_resource type="Texture2D" uid="uid://ba5x5y6v05mrb" path="res://assets/generated/circuit_bg_frame_0.png" id="4_circuit"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
@@ -136,7 +136,7 @@ offset_top = 10.0
 offset_right = -26.0
 offset_bottom = 58.0
 grow_horizontal = 0
-text = "06:00"
+text = "09:00"
 horizontal_alignment = 2
 
 [node name="TimerBar" type="ProgressBar" parent="HUD"]

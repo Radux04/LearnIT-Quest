@@ -116,7 +116,7 @@ confronti ([code]=[/code], [code]>[/code], [code]<[/code]), una colonna intera p
 	{
 		"title": "6 · La missione",
 		"body": """[b][color=#ff8f8f]Database Recovery[/color][/b]
-Il database della LearnIT Corp è stato attaccato. Hai [b]6 MINUTI[/b] per rimetterlo in sesto scrivendo query nella console. A cronometro scaduto la partita è persa.
+Il database della LearnIT Corp è stato attaccato. Hai [b]9 MINUTI[/b] per rimetterlo in sesto scrivendo query nella console. A cronometro scaduto la partita è persa.
 Le tabelle sono sempre visibili in alto: guardale, ti dicono colonne, tipi e dati.
 
 [b][color=#7fd8ff]FASE 1 · Interrogazione[/color][/b]  Leggere i dati: SELECT, WHERE, ORDER BY, COUNT.
