@@ -176,9 +176,12 @@ func _play_phase3() -> void:
 		if phase._waiting:
 			phase._on_rule_clicked(phase._expected_key)
 			continue
-		# Scelta della regola mancante: il pulsante corretto è il primo.
+		# Scelta della regola mancante: la fase espone il testo dell'alternativa
+		# corretta, così il bot funziona con qualunque esercizio del catalogo.
+		if String(phase._correct_option) == "":
+			continue
 		for child in level.action_bar.get_children():
-			if child is Button and (child as Button).text.contains("1, •, qf"):
+			if child is Button and (child as Button).text == String(phase._correct_option):
 				(child as Button).pressed.emit()
 				break
 	print("[L3] fase 3 completata")
@@ -210,14 +213,6 @@ func _play_phase4() -> void:
 
 # ------------------------------------------------------------------ fase 5 --
 
-const SOLUTIONS := [
-	"if x < y then m := y else m := x end",
-	"s := 0; i := n; while i != 0 do s := s + i; i := i - 1 end",
-	"q := 0; r := x; while r >= y do r := r - y; q := q + 1 end",
-	"f := 1; i := n; while i != 0 do f := f * i; i := i - 1 end",
-]
-
-
 func _play_phase5() -> void:
 	# Prima una prova di errore di sintassi e una di programma sbagliato.
 	await get_tree().create_timer(0.6).timeout
@@ -227,20 +222,23 @@ func _play_phase5() -> void:
 		phase._on_code_submitted("m := ")
 		await _wait()
 		print("[L3] prova programma valido ma sbagliato")
-		phase._on_code_submitted("m := 0")
+		phase._on_code_submitted("zzz := 0")
 		await _wait()
 
+	# Gli esercizi sono pescati a caso, quindi il bot non può avere soluzioni
+	# fisse: usa la soluzione di riferimento dell'obiettivo corrente.
 	var solved: int = 0
 	var guard: int = 0
-	while level.current_phase == 5 and not level.is_over and guard < 400 and solved < SOLUTIONS.size():
+	while level.current_phase == 5 and not level.is_over and guard < 600:
 		guard += 1
 		await _wait()
 		phase = _phase()
 		if phase == null or phase._task == null or phase._solved:
 			continue
-		phase._on_code_submitted(SOLUTIONS[solved])
-		print("[L3] fase 5 — risolto: %s" % SOLUTIONS[solved])
+		var solution: String = String(phase._task.solution)
+		phase._on_code_submitted(solution)
 		solved += 1
+		print("[L3] fase 5 — risolto: %s" % solution)
 		await get_tree().create_timer(1.2).timeout
 	print("[L3] fase 5 completata")
 

@@ -6,6 +6,9 @@ extends Lvl3PhaseBase
 ## sequenza, ciclo while) si calcola tutto ciò che calcola una macchina di
 ## Turing. La correzione è per equivalenza: qualunque algoritmo corretto passa.
 
+## Quanti programmi per partita, pescati a caso da Lvl3Pools.WHILE_POOL.
+const PROGRAMS_PER_GAME := 4
+
 var _console: CodeConsole = null
 var _task: WhileTask = null
 var _solved: bool = false
@@ -23,36 +26,9 @@ func _start() -> void:
 	_console.offset_bottom = -20.0
 	_console.focus_editor()
 
-	var tasks: Array = [
-		WhileTask.make(
-			"Metti in m il più grande fra x e y.",
-			"if x < y then m := y else m := x end",
-			[{"x": 3, "y": 8}, {"x": 9, "y": 2}, {"x": 5, "y": 5}, {"x": 0, "y": 0}],
-			["m"],
-			"if <condizione> then ... else ... end   ·   i confronti sono =, !=, <, <=, >, >=",
-			"Il costrutto if sceglie fra due strade: nessun ciclo, quindi termina sempre."),
-		WhileTask.make(
-			"Metti in s la somma di tutti i numeri da 1 a n (con n = 0 la somma è 0).",
-			"s := 0; i := n; while i != 0 do s := s + i; i := i - 1 end",
-			[{"n": 0}, {"n": 1}, {"n": 5}, {"n": 10}],
-			["s"],
-			"Serve un ciclo: while <condizione> do ... end. Usa una variabile che scende fino a 0.",
-			"Il ciclo termina perché il contatore cala di 1 a ogni giro: è una funzione TOTALE."),
-		WhileTask.make(
-			"Metti in q il quoziente intero di x diviso y, e in r il resto. Puoi assumere y > 0.",
-			"q := 0; r := x; while r >= y do r := r - y; q := q + 1 end",
-			[{"x": 0, "y": 3}, {"x": 7, "y": 2}, {"x": 12, "y": 4}, {"x": 5, "y": 9}],
-			["q", "r"],
-			"La divisione non esiste nel linguaggio: sottrai y finché puoi e conta quante volte.",
-			"Hai costruito un operatore che il linguaggio non ha: è così che si estende la calcolabilità."),
-		WhileTask.make(
-			"Metti in f il fattoriale di n (0! vale 1).",
-			"f := 1; i := n; while i != 0 do f := f * i; i := i - 1 end",
-			[{"n": 0}, {"n": 1}, {"n": 4}, {"n": 6}],
-			["f"],
-			"Parti da f := 1 e moltiplica per i valori che scendono da n a 1.",
-			"Con assegnamento, sequenza e while si calcola tutto il calcolabile: è la tesi di Church-Turing."),
-	]
+	var tasks: Array = []
+	for entry in Lvl3Pools.pick(Lvl3Pools.WHILE_POOL, PROGRAMS_PER_GAME):
+		tasks.append(Lvl3Pools.build_task(entry))
 
 	for i in range(tasks.size()):
 		if _is_over():
