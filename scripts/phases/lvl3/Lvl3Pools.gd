@@ -221,6 +221,20 @@ const TM_POOL: Array = [
 		"hint": "Due regole diverse portano allo stesso stato: cambia solo il simbolo scritto.",
 	},
 	{
+		# Esercizio 1.6 del libro di esercizi del corso.
+		"name": "raddoppia un numero binario",
+		"start": "q0", "accept": "", "input": "101",
+		"rules": [
+			["q0", "0", "0", R, "q0"],
+			["q0", "1", "1", R, "q1"],
+			["q1", "0", "0", R, "q1"],
+			["q1", "1", "1", R, "q1"],
+			["q1", "□", "0", R, "q0"],
+		],
+		"result": "101 (cinque) è diventato 1010 (dieci)",
+		"hint": "Raddoppiare in binario vuol dire aggiungere uno 0 in fondo. q0 serve a non toccare lo zero.",
+	},
+	{
 		"name": "incrementa un numero binario",
 		"start": "q0", "accept": "qf", "input": "1011",
 		"rules": [
@@ -304,6 +318,33 @@ const WHILE_POOL: Array = [
 		"outputs": ["s"],
 		"hint": "Serve un ciclo: while <condizione> do ... end. Usa una variabile che scende fino a 0.",
 		"explain": "Il ciclo termina perché il contatore cala di 1 a ogni giro: è una funzione TOTALE.",
+	},
+	{
+		# Esercizio 5.1 del libro, con i nomi di variabile del testo originale.
+		"prompt": "Divisione con resto: dividendo A, divisore B. Metti il quoziente in Q e il resto in R (B > 0).",
+		"solution": "Q := 0; while A >= B do A := A - B; Q := Q + 1 end; R := A",
+		"cases": [{"A": 17, "B": 5}, {"A": 0, "B": 3}, {"A": 12, "B": 4}, {"A": 3, "B": 9}],
+		"outputs": ["Q", "R"],
+		"hint": "Togli B da A finché ci sta, contando quante volte: quello che resta è il resto.",
+		"explain": "È l'esercizio 5.1 del corso: la divisione non è primitiva, si costruisce con un ciclo.",
+	},
+	{
+		# Esercizio 5.2 del libro.
+		"prompt": "Moltiplicazione fra naturali: metti in Z il prodotto di X per Y.",
+		"solution": "Z := 0; while Y > 0 do Z := Z + X; Y := Y - 1 end",
+		"cases": [{"X": 6, "Y": 7}, {"X": 6, "Y": 0}, {"X": 0, "Y": 4}, {"X": 9, "Y": 1}],
+		"outputs": ["Z"],
+		"hint": "Il prodotto è una somma ripetuta: somma X per Y volte.",
+		"explain": "È l'esercizio 5.2 del corso: ogni operazione nasce iterando quella precedente.",
+	},
+	{
+		# Esercizio 5.5 del libro.
+		"prompt": "Metti in M il valore 1 se X è multiplo di Y, altrimenti 0. Puoi assumere Y > 0.",
+		"solution": "T := X; while T >= Y do T := T - Y end; if T = 0 then M := 1 else M := 0 end",
+		"cases": [{"X": 12, "Y": 4}, {"X": 13, "Y": 4}, {"X": 0, "Y": 5}, {"X": 7, "Y": 7}],
+		"outputs": ["M"],
+		"hint": "Senza usare la divisione: sottrai Y finché puoi e guarda che cosa resta.",
+		"explain": "È l'esercizio 5.5 del corso: il resto zero è la definizione stessa di multiplo.",
 	},
 	{
 		"prompt": "Metti in q il quoziente intero di x diviso y, e in r il resto. Puoi assumere y > 0.",

@@ -97,19 +97,18 @@ Le funzioni parziali ricorsive sono [b]esattamente[/b] le funzioni calcolabili d
 		"body": """Terzo modello, ancora equivalente agli altri due, ma stavolta è un vero [b]linguaggio di programmazione[/b]. Bastano [b]tre costrutti[/b].
 
 [b][color=#c0a8ff]Sintassi[/color][/b]
-[code]x := espressione[/code]                        assegnamento
-[code]P1 ; P2[/code]                                 sequenza
-[code]while condizione do P end[/code]           ciclo
-[code]if condizione then P else Q end[/code]     (comodo, non indispensabile)
+[code]x := espressione[/code]  assegnamento   ·   [code]P1 ; P2[/code]  sequenza
+[code]while condizione do P end[/code]  ciclo   ·   [code]if c then P else Q end[/code]
 
-Le variabili contengono [b]numeri naturali[/b] e valgono [b]0[/b] se non le hai mai assegnate. Operatori: [code]+[/code] [code]-[/code] [code]*[/code] e confronti [code]=[/code] [code]!=[/code] [code]<[/code] [code]<=[/code] [code]>[/code] [code]>=[/code].
-La sottrazione è [b]troncata[/b]: [code]3 - 5[/code] fa [b]0[/b], non -2, perché si resta nei naturali.
+Le variabili contengono [b]numeri naturali[/b] e valgono [b]0[/b] se non le hai mai assegnate. Operatori [code]+[/code] [code]-[/code] [code]*[/code], confronti [code]=[/code] [code]!=[/code] [code]<[/code] [code]<=[/code] [code]>[/code] [code]>=[/code]. La sottrazione è [b]troncata[/b]: [code]3 - 5[/code] fa [b]0[/b], non -2, perché si resta nei naturali.
+
+[b][color=#7ffcc0]Va bene anche la notazione del corso[/color][/b]
+L'interprete accetta [b]entrambe[/b] le scritture, puoi usare quella che preferisci:
+[code]begin INPUT(X); while X > 0 do begin Z := s(Z); X := pd(X) end end[/code]
+[code]begin[/code]…[code]end[/code] raggruppa comandi · [code]INPUT[/code]/[code]OUTPUT[/code] dichiarano ingressi e uscite · [code]s(x)[/code] è il successore, [code]pd(x)[/code] il predecessore. Dopo un [code]end[/code] il [code];[/code] può mancare.
 
 [b][color=#c0a8ff]Semantica[/color][/b]
-Un programma trasforma uno [b]stato[/b] (i valori delle variabili) in un altro stato. [code]while[/code] ripete il corpo finché la condizione è vera; se non diventa mai falsa, il programma [b]non termina[/b] e la funzione calcolata è [b]parziale[/b] su quell'input.
-
-[b][color=#7ffcc0]Esempio: somma senza usare +[/color][/b]
-[code]z := x;  while y != 0 do z := z + 1;  y := y - 1 end[/code]
+Un programma trasforma uno [b]stato[/b] (i valori delle variabili) in un altro stato. [code]while[/code] ripete il corpo finché la condizione è vera; se non diventa mai falsa il programma [b]non termina[/b] e la funzione calcolata è [b]parziale[/b] su quell'input.
 
 [b][color=#ffd166]Perché è importante[/color][/b]
 Il solo [code]while[/code] fa la parte della [b]minimalizzazione μ[/b]: è il costrutto che introduce la possibile non terminazione, ed è ciò che rende il linguaggio [b]Turing-completo[/b]. Un linguaggio con soli cicli limitati calcolerebbe solo funzioni primitive ricorsive.""",
