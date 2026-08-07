@@ -11,6 +11,8 @@ var _rules: RuleTableView = null
 var _machine: TuringMachine = null
 var _expected_key: String = ""
 var _waiting: bool = false
+## Testo dell'alternativa corretta nel giro di progettazione (lo legge il bot).
+var _correct_option: String = ""
 
 
 func _start() -> void:
@@ -43,19 +45,15 @@ func _start() -> void:
 	await complete("Una macchina di Turing è solo un nastro e una tabella: eppure calcola tutto ciò che è calcolabile.")
 
 
-## Giro 1: esegui la macchina che inverte i bit.
+## Giro 1: esegui una macchina pescata dal catalogo.
 func _execute_round() -> void:
-	_machine = TuringMachine.new()
-	_machine.start_state = "q0"
-	_machine.accept_state = "qf"
-	_machine.set_rule("q0", "0", "1", TuringMachine.RIGHT, "q0")
-	_machine.set_rule("q0", "1", "0", TuringMachine.RIGHT, "q0")
-	_machine.set_rule("q0", TuringMachine.BLANK, TuringMachine.BLANK, TuringMachine.STAY, "qf")
-	_machine.load_input("101")
+	var entry: Dictionary = Lvl3Pools.pick_one(Lvl3Pools.TM_POOL)
+	var input: String = String(entry["input"])
+	_machine = Lvl3Pools.build_machine(entry)
 
 	_tape.setup(_machine)
-	_rules.setup(_machine, ["q0|0", "q0|1", "q0|" + TuringMachine.BLANK])
-	level.set_hint("La regola da applicare dipende SOLO da due cose: lo stato corrente e il simbolo sotto la testina.")
+	_rules.setup(_machine, _machine.rules.keys())
+	level.set_hint(String(entry["hint"]))
 
 	var step: int = 0
 	while not _machine.is_halted() and not _is_over():
@@ -73,41 +71,34 @@ func _execute_round() -> void:
 		return
 	_rules.set_enabled(false)
 	Sfx.play("correct")
-	level.toast("Macchina ferma in %s. Il nastro è passato da 101 a %s: ogni bit invertito." % [
-		_machine.state, _machine.tape_string()], COLOR_OK)
+	level.toast("Macchina ferma in %s. Il nastro è passato da %s a %s: %s." % [
+		_machine.state, input, _machine.tape_string(), String(entry["result"])], COLOR_OK)
 	await _wait(1.8)
 
 
 ## Giro 2: progetta la regola mancante.
 func _design_round() -> void:
-	# Successore in unario: scorre a destra finché trova celle piene, poi
-	# scrive un altro 1. Manca proprio la regola che scrive.
-	_machine = TuringMachine.new()
-	_machine.start_state = "q0"
-	_machine.accept_state = "qf"
-	_machine.set_rule("q0", "1", "1", TuringMachine.RIGHT, "q0")
-	_machine.load_input("111")
+	var entry: Dictionary = Lvl3Pools.pick_one(Lvl3Pools.DESIGN_POOL)
+	_machine = Lvl3Pools.build_machine(entry)
 
 	_tape.setup(_machine)
-	_rules.setup(_machine, ["q0|1"])
-	level.set_objective("Questa macchina deve calcolare il SUCCESSORE in unario: 111 → 1111. Manca una regola.")
-	level.set_hint("Quando la testina esce dal numero legge un blank □. Che cosa deve fare in quel momento?")
+	_rules.setup(_machine, _machine.rules.keys())
+	level.set_objective(String(entry["goal"]))
+	level.set_hint(String(entry["hint"]))
 
-	var options: Array = [
-		{"text": "δ(q0, □) = (1, •, qf)", "correct": true,
-			"why": "scrive il simbolo mancante e si ferma: 111 diventa 1111."},
-		{"text": "δ(q0, □) = (□, →, q0)", "correct": false,
-			"why": "non scrive nulla e continua a destra: la macchina non si fermerebbe mai."},
-		{"text": "δ(q0, □) = (1, ←, q0)", "correct": false,
-			"why": "scrive l'1 ma poi torna indietro e rilegge un 1, ripartendo a destra: ciclo infinito."},
-	]
+	# Le alternative vengono mescolate: la risposta giusta non è sempre la prima.
+	var options: Array = entry["options"].duplicate()
+	options.shuffle()
+	for option in options:
+		if bool(option["correct"]):
+			_correct_option = String(option["text"])
 
 	var chosen: Array = [false]
 	var middle_y: float = level.size.y - 150.0
 	for i in range(options.size()):
 		var option: Dictionary = options[i]
 		var button: Button = level.make_action_button(String(option["text"]),
-			Vector2(level.size.x * 0.5, middle_y - float(2 - i) * 62.0), Vector2(420.0, 52.0))
+			Vector2(level.size.x * 0.5, middle_y - float(2 - i) * 62.0), Vector2(430.0, 52.0))
 		button.pressed.connect(func() -> void: _on_option(option, chosen))
 
 	await helper_done
@@ -115,9 +106,11 @@ func _design_round() -> void:
 	if _is_over():
 		return
 
-	# La macchina completata gira da sola: il giocatore vede il nastro crescere.
-	_machine.set_rule("q0", TuringMachine.BLANK, "1", TuringMachine.STAY, "qf")
-	_rules.setup(_machine, ["q0|1", "q0|" + TuringMachine.BLANK])
+	# La macchina completata gira da sola: il giocatore vede il nastro cambiare.
+	var missing: Array = entry["missing"]
+	_machine.set_rule(String(missing[0]), String(missing[1]), String(missing[2]),
+		int(missing[3]), String(missing[4]))
+	_rules.setup(_machine, _machine.rules.keys())
 	_rules.set_enabled(false)
 	level.set_objective("Regola inserita. La macchina gira da sola...")
 	while not _machine.is_halted() and not _is_over():
@@ -129,7 +122,9 @@ func _design_round() -> void:
 		return
 	_tape.flash(Color(0.35, 1.0, 0.6))
 	Sfx.play("correct")
-	level.toast("Nastro finale: %s. La macchina calcola il successore." % _machine.tape_string(), COLOR_OK)
+	var tape: String = _machine.tape_string()
+	level.toast("Nastro finale: %s. La macchina fa quello che doveva." % (
+		tape if tape != "" else "vuoto"), COLOR_OK)
 	await _wait(1.8)
 
 

@@ -30,6 +30,12 @@ func run_all() -> void:
 	test_while_errors()
 	test_while_task_equivalence()
 	test_while_task_wrong()
+	test_pool_dfa()
+	test_pool_nfa()
+	test_pool_turing()
+	test_pool_design()
+	test_pool_while()
+	test_pool_pick()
 	print("\n[LVL3-TEST] %d passati, %d falliti" % [_passed, _failed])
 
 
@@ -282,3 +288,169 @@ func test_while_task_wrong() -> void:
 	var looping: Dictionary = WhileTask.check(task, "while 1 = 1 do z := 0 end")
 	_equal(String(looping["status"]), "wrong", "un programma che cicla non risolve")
 	_check(String(looping["message"]).contains("PARZIALE"), "il messaggio parla di funzione parziale")
+
+
+# ---------------------------------------------- validazione del catalogo ----
+#
+# Questi test controllano OGNI esercizio del pool: servono a chi aggiunge
+# esercizi nuovi, perché segnalano subito una voce mal formata o irrisolvibile.
+
+func test_pool_dfa() -> void:
+	_check(Lvl3Pools.DFA_POOL.size() >= 2, "il catalogo dei DFA ha almeno 2 voci")
+	for entry in Lvl3Pools.DFA_POOL:
+		var label: String = String(entry["name"])
+		var dfa: Automaton = Lvl3Pools.build_automaton(entry)
+
+		_check(dfa.is_deterministic(), "[%s] è deterministico" % label)
+		_check(dfa.states.size() <= 5, "[%s] non ha più di 5 stati (ci devono stare a schermo)" % label)
+		_check(dfa.states.has(dfa.start_state), "[%s] lo stato iniziale esiste" % label)
+
+		# Completo: da ogni stato, per ogni simbolo, esattamente una transizione.
+		var complete: bool = true
+		for state in dfa.states:
+			for symbol in dfa.alphabet:
+				if dfa.targets(state, symbol).size() != 1:
+					complete = false
+		_check(complete, "[%s] è completo: una transizione per ogni stato e simbolo" % label)
+
+		for state in entry["accepting"]:
+			_check(dfa.states.has(String(state)), "[%s] lo stato finale %s esiste" % [label, state])
+
+		# Le parole devono usare solo simboli dell'alfabeto, e non essere vuote.
+		_check(entry["words"].size() >= 2, "[%s] ha almeno 2 parole" % label)
+		for word in entry["words"]:
+			var text: String = String(word)
+			_check(text.length() > 0, "[%s] la parola non è vuota" % label)
+			var valid: bool = true
+			for symbol in Automaton.symbols_of(text):
+				if not dfa.alphabet.has(symbol):
+					valid = false
+			_check(valid, "[%s] la parola '%s' usa solo simboli dell'alfabeto" % [label, text])
+
+
+func test_pool_nfa() -> void:
+	var with_epsilon: int = 0
+	var without_epsilon: int = 0
+	for entry in Lvl3Pools.NFA_POOL:
+		var label: String = String(entry["name"])
+		var nfa: Automaton = Lvl3Pools.build_automaton(entry)
+
+		if bool(entry["epsilon"]):
+			with_epsilon += 1
+			_check(nfa.has_epsilon(), "[%s] dichiara ε e ha davvero transizioni ε" % label)
+		else:
+			without_epsilon += 1
+			_check(not nfa.has_epsilon(), "[%s] non dichiara ε e non ne ha" % label)
+
+		_check(entry["steps"].size() >= 1, "[%s] ha almeno un passo" % label)
+		for step in entry["steps"]:
+			var source: Array = step[0]
+			var symbol: String = String(step[1])
+			for state in source:
+				_check(nfa.states.has(String(state)),
+					"[%s] lo stato %s del passo esiste" % [label, state])
+			_check(nfa.alphabet.has(symbol),
+				"[%s] il simbolo '%s' è nell'alfabeto" % [label, symbol])
+			# Un passo che non porta da nessuna parte non insegna niente.
+			_check(not nfa.move(source, symbol).is_empty(),
+				"[%s] il passo %s con '%s' porta a un insieme non vuoto" % [
+					label, Automaton.set_label(source), symbol])
+			_check(String(step[2]).length() > 10, "[%s] il passo ha un suggerimento" % label)
+
+	# La Fase 2 pesca un automa di ciascun tipo: servono entrambi.
+	_check(with_epsilon >= 1, "il catalogo ha almeno un automa con ε")
+	_check(without_epsilon >= 1, "il catalogo ha almeno un automa senza ε")
+
+
+func test_pool_turing() -> void:
+	for entry in Lvl3Pools.TM_POOL:
+		var label: String = String(entry["name"])
+		var machine: TuringMachine = Lvl3Pools.build_machine(entry)
+		var result: Dictionary = machine.run(500)
+		# Se una macchina del catalogo non si ferma, il giocatore resterebbe
+		# a cliccare all'infinito: è l'errore più grave possibile qui.
+		_check(bool(result["halted"]), "[%s] la macchina si ferma" % label)
+		_check(int(result["steps"]) >= 2, "[%s] fa almeno due passi" % label)
+		_check(int(result["steps"]) <= 40, "[%s] non è troppo lunga da eseguire a mano" % label)
+		_check(String(entry["input"]).length() > 0, "[%s] ha un input" % label)
+
+
+func test_pool_design() -> void:
+	for entry in Lvl3Pools.DESIGN_POOL:
+		var label: String = String(entry["name"])
+
+		# Senza la regola mancante la macchina si deve bloccare: è il motivo
+		# per cui esiste l'esercizio.
+		var incomplete: TuringMachine = Lvl3Pools.build_machine(entry)
+		var before: Dictionary = incomplete.run(200)
+		_check(bool(before["halted"]), "[%s] senza la regola la macchina si blocca" % label)
+		_check(String(incomplete.state) != String(entry["accept"]),
+			"[%s] e si blocca PRIMA dello stato finale" % label)
+
+		# Con la regola mancante deve arrivare in fondo.
+		var fixed: TuringMachine = Lvl3Pools.build_machine(entry)
+		var missing: Array = entry["missing"]
+		fixed.set_rule(String(missing[0]), String(missing[1]), String(missing[2]),
+			int(missing[3]), String(missing[4]))
+		var after: Dictionary = fixed.run(500)
+		_check(bool(after["halted"]), "[%s] con la regola la macchina termina" % label)
+		_check(bool(after["accepted"]), "[%s] e termina nello stato finale" % label)
+
+		# Esattamente una alternativa corretta, e tutte con la spiegazione.
+		var correct: int = 0
+		for option in entry["options"]:
+			if bool(option["correct"]):
+				correct += 1
+			_check(String(option["why"]).length() > 10,
+				"[%s] ogni alternativa spiega il perché" % label)
+		_equal(correct, 1, "[%s] ha esattamente una alternativa corretta" % label)
+		_check(entry["options"].size() >= 3, "[%s] ha almeno tre alternative" % label)
+
+
+func test_pool_while() -> void:
+	_check(Lvl3Pools.WHILE_POOL.size() >= 4, "il catalogo WHILE ha almeno 4 voci")
+	for entry in Lvl3Pools.WHILE_POOL:
+		var label: String = String(entry["prompt"]).substr(0, 40)
+		var task: WhileTask = Lvl3Pools.build_task(entry)
+
+		_check(task.cases.size() >= 3, "[%s] ha almeno 3 casi di prova" % label)
+		_check(task.outputs.size() >= 1, "[%s] dichiara le variabili di uscita" % label)
+		_check(task.hint.length() > 10, "[%s] ha un suggerimento" % label)
+		_check(task.explain.length() > 10, "[%s] ha una spiegazione" % label)
+
+		# La soluzione di riferimento deve compilare e terminare su OGNI caso.
+		var parsed: Dictionary = WhileInterpreter.parse(task.solution)
+		_check(bool(parsed["ok"]), "[%s] la soluzione compila" % label)
+		for initial_state in task.cases:
+			var run: Dictionary = WhileInterpreter.run(task.solution, initial_state)
+			_check(bool(run["terminated"]), "[%s] la soluzione termina su ogni caso" % label)
+
+		# La soluzione deve superare la propria correzione.
+		var verdict: Dictionary = WhileTask.check(task, task.solution)
+		_equal(String(verdict["status"]), "ok", "[%s] la soluzione supera la correzione" % label)
+
+		# Un programma che non fa nulla NON deve passare: se passasse,
+		# l'esercizio sarebbe banale (risultato atteso sempre zero).
+		var lazy: Dictionary = WhileTask.check(task, "zzz := 0")
+		_equal(String(lazy["status"]), "wrong", "[%s] un programma vuoto non passa" % label)
+
+
+func test_pool_pick() -> void:
+	var pool: Array = [{"a": 1}, {"a": 2}, {"a": 3}, {"a": 4}, {"a": 5}]
+	var drawn: Array = Lvl3Pools.pick(pool, 3)
+	_equal(drawn.size(), 3, "pick restituisce il numero richiesto")
+
+	# Senza ripetizioni: tre voci pescate devono essere tre voci diverse.
+	var seen: Array = []
+	for entry in drawn:
+		_check(not seen.has(entry["a"]), "pick non ripete la stessa voce")
+		seen.append(entry["a"])
+
+	# Se si chiede più di quanto c'è, restituisce tutto senza rompersi.
+	_equal(Lvl3Pools.pick(pool, 99).size(), 5, "pick non supera la dimensione del catalogo")
+	_equal(Lvl3Pools.pick([], 3).size(), 0, "pick su catalogo vuoto non esplode")
+
+	# pick_where filtra davvero.
+	var filtered: Array = Lvl3Pools.pick_where(Lvl3Pools.NFA_POOL, "epsilon", true, 5)
+	for entry in filtered:
+		_check(bool(entry["epsilon"]), "pick_where restituisce solo voci con ε")

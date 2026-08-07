@@ -6,6 +6,11 @@ extends Lvl3PhaseBase
 ## alla volta e clicca lo stato in cui la macchina finisce, poi decide se la
 ## parola è accettata. È la definizione di "riconoscimento" trasformata in gesto.
 
+## Quanti automi e quante parole per automa. Gli automi sono pescati a caso da
+## Lvl3Pools.DFA_POOL, quindi ogni partita è diversa.
+const AUTOMATA_PER_GAME := 2
+const WORDS_PER_AUTOMATON := 2
+
 var _view: AutomatonView = null
 var _automaton: Automaton = null
 var _expected: String = ""
@@ -19,40 +24,15 @@ func _start() -> void:
 	_view.state_clicked.connect(_on_state_clicked)
 	level.mount(_view)
 
-	# Primo automa: parole su {0,1} con un numero PARI di 1.
-	var parity: Automaton = Automaton.make(["q0", "q1"], ["0", "1"], "q0", ["q0"])
-	parity.add_transition("q0", "0", "q0")
-	parity.add_transition("q0", "1", "q1")
-	parity.add_transition("q1", "0", "q1")
-	parity.add_transition("q1", "1", "q0")
+	for entry in Lvl3Pools.pick(Lvl3Pools.DFA_POOL, AUTOMATA_PER_GAME):
+		var automaton: Automaton = Lvl3Pools.build_automaton(entry)
+		for word in Lvl3Pools.pick(entry["words"], WORDS_PER_AUTOMATON):
+			if _is_over():
+				return
+			await _round(automaton, String(word), String(entry["hint"]))
 
-	await _round(parity, "1011",
-		"Accetta le parole con un numero PARI di 1. Lo stato finale è q0.")
 	if _is_over():
 		return
-	await _round(parity, "110",
-		"Stesso automa: conta i cambi di stato provocati dagli 1.")
-	if _is_over():
-		return
-
-	# Secondo automa: parole che CONTENGONO la sottostringa "ab".
-	var contains_ab: Automaton = Automaton.make(["s0", "s1", "s2"], ["a", "b"], "s0", ["s2"])
-	contains_ab.add_transition("s0", "a", "s1")
-	contains_ab.add_transition("s0", "b", "s0")
-	contains_ab.add_transition("s1", "a", "s1")
-	contains_ab.add_transition("s1", "b", "s2")
-	contains_ab.add_transition("s2", "a", "s2")
-	contains_ab.add_transition("s2", "b", "s2")
-
-	await _round(contains_ab, "baab",
-		"Accetta le parole che contengono 'ab'. s2 è una trappola: una volta dentro non si esce.")
-	if _is_over():
-		return
-	await _round(contains_ab, "bba",
-		"Attento: arrivare in s1 non basta, serve una 'b' subito dopo.")
-	if _is_over():
-		return
-
 	await complete("Hai eseguito un automa deterministico: da ogni stato, per ogni simbolo, una sola strada.")
 
 

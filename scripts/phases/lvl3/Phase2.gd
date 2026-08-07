@@ -19,41 +19,21 @@ func _start() -> void:
 	_view.state_clicked.connect(_on_state_clicked)
 	level.mount(_view)
 
-	# NFA che accetta le parole che FINISCONO per "ab".
-	# Da q0 leggendo 'a' si può restare in q0 oppure andare in q1: è la scelta
-	# non deterministica che il giocatore deve imparare a considerare tutta insieme.
-	var nfa: Automaton = Automaton.make(["q0", "q1", "q2"], ["a", "b"], "q0", ["q2"])
-	nfa.add_transition("q0", "a", "q0")
-	nfa.add_transition("q0", "b", "q0")
-	nfa.add_transition("q0", "a", "q1")
-	nfa.add_transition("q1", "b", "q2")
+	# Un automa non deterministico "normale" e uno con ε-transizioni, pescati
+	# a caso: il secondo serve a far entrare in gioco la ε-chiusura.
+	var chosen: Array = []
+	chosen.append_array(Lvl3Pools.pick_where(Lvl3Pools.NFA_POOL, "epsilon", false, 1))
+	chosen.append_array(Lvl3Pools.pick_where(Lvl3Pools.NFA_POOL, "epsilon", true, 1))
 
-	await _build(nfa,
-		[["q0"], "a"],
-		"Da q0 con 'a' l'automa può fare DUE cose: restare o avanzare. Selezionale entrambe.")
+	for entry in chosen:
+		var automaton: Automaton = Lvl3Pools.build_automaton(entry)
+		for step in entry["steps"]:
+			if _is_over():
+				return
+			await _build(automaton, [step[0], String(step[1])], String(step[2]))
+
 	if _is_over():
 		return
-	await _build(nfa, [["q0", "q1"], "b"],
-		"Considera ogni stato dell'insieme, uno per uno, e unisci i risultati.")
-	if _is_over():
-		return
-	await _build(nfa, [["q0", "q2"], "a"],
-		"q2 non ha frecce uscenti con 'a': non contribuisce nulla.")
-	if _is_over():
-		return
-
-	# Secondo automa, con transizioni ε: la ε-chiusura entra nel gioco.
-	var eps: Automaton = Automaton.make(["p0", "p1", "p2"], ["a", "b"], "p0", ["p2"])
-	eps.add_transition("p0", Automaton.EPSILON, "p1")
-	eps.add_transition("p0", "a", "p0")
-	eps.add_transition("p1", "b", "p2")
-	eps.add_transition("p2", "a", "p2")
-
-	await _build(eps, [["p0", "p1"], "a"],
-		"Dopo la mossa aggiungi sempre la ε-chiusura: da p0 si scivola in p1 senza leggere nulla.")
-	if _is_over():
-		return
-
 	await complete("Ogni automa non deterministico ha un equivalente deterministico: cambia la comodità, non la potenza.")
 
 
