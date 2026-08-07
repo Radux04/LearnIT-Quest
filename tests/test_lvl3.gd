@@ -28,6 +28,8 @@ func run_all() -> void:
 	test_while_if()
 	test_while_nontermination()
 	test_while_errors()
+	test_while_course_notation()
+	test_while_course_programs()
 	test_while_task_equivalence()
 	test_while_task_wrong()
 	test_pool_dfa()
@@ -249,6 +251,120 @@ func test_while_errors() -> void:
 
 	var colon: Dictionary = WhileInterpreter.run("x : 1", {})
 	_check(String(colon["error"]).contains(":="), "':' da solo spiega ':='")
+
+
+## La notazione usata a lezione (begin/end, INPUT/OUTPUT, s(), pd()) deve essere
+## accettata esattamente come quella compatta.
+func test_while_course_notation() -> void:
+	var block: Dictionary = WhileInterpreter.run("begin X := 1; Y := 2 end", {})
+	_check(bool(block["ok"]), "il blocco begin ... end è valido")
+	_equal(int(block["state"]["Y"]), 2, "i comandi dentro al blocco vengono eseguiti")
+
+	var empty_block: Dictionary = WhileInterpreter.run("begin end", {})
+	_check(bool(empty_block["ok"]), "'begin end' è il programma vuoto")
+
+	var io: Dictionary = WhileInterpreter.run("begin INPUT(X); Y := X + 1; OUTPUT(Y) end", {"X": 4})
+	_equal(int(io["state"]["Y"]), 5, "INPUT e OUTPUT non alterano lo stato")
+
+	var succ: Dictionary = WhileInterpreter.run("X := s(s(X))", {"X": 3})
+	_equal(int(succ["state"]["X"]), 5, "s(x) è il successore")
+
+	var pred: Dictionary = WhileInterpreter.run("X := pd(X)", {"X": 3})
+	_equal(int(pred["state"]["X"]), 2, "pd(x) è il predecessore")
+
+	var pred_zero: Dictionary = WhileInterpreter.run("X := pd(X)", {"X": 0})
+	_equal(int(pred_zero["state"]["X"]), 0, "pd(0) vale 0: si resta nei naturali")
+
+	# while con corpo a blocco: non serve un 'end' in più.
+	var loop: Dictionary = WhileInterpreter.run(
+		"while X > 0 do begin Y := s(Y); X := pd(X) end", {"X": 4})
+	_equal(int(loop["state"]["Y"]), 4, "while con corpo begin ... end")
+
+	# if con rami a blocco.
+	var branch: Dictionary = WhileInterpreter.run(
+		"if X = 0 then begin Y := 1 end else begin Y := 2 end", {"X": 0})
+	_equal(int(branch["state"]["Y"]), 1, "if con rami begin ... end")
+
+	# Dopo un 'end' il ';' può mancare, come nel libro di esercizi.
+	var no_semicolon: Dictionary = WhileInterpreter.run(
+		"while X > 0 do begin X := pd(X) end Y := 9", {"X": 2})
+	_check(bool(no_semicolon["ok"]), "dopo 'end' il ';' può mancare")
+	_equal(int(no_semicolon["state"]["Y"]), 9, "il comando dopo 'end' viene eseguito")
+
+	# Fra due assegnamenti invece il ';' resta obbligatorio.
+	var missing: Dictionary = WhileInterpreter.run("X := 1 Y := 2", {})
+	_check(not bool(missing["ok"]), "fra due assegnamenti il ';' serve ancora")
+
+	# Commenti in stile C.
+	var comment: Dictionary = WhileInterpreter.run("X := 1; /* nota */ Y := 2", {})
+	_equal(int(comment["state"]["Y"]), 2, "i commenti /* */ vengono ignorati")
+
+	var unclosed: Dictionary = WhileInterpreter.run("X := 1 /* mai chiuso", {})
+	_check(not bool(unclosed["ok"]), "commento non chiuso segnalato")
+
+	var unknown: Dictionary = WhileInterpreter.run("X := foo(1)", {})
+	_check(not bool(unknown["ok"]), "funzione sconosciuta rifiutata")
+	_check(String(unknown["error"]).contains("s(x)"), "l'errore ricorda quali funzioni esistono")
+
+	var unclosed_block: Dictionary = WhileInterpreter.run("begin X := 1", {})
+	_check(not bool(unclosed_block["ok"]), "blocco non chiuso segnalato")
+	_check(String(unclosed_block["error"]).contains("begin"), "l'errore nomina il blocco")
+
+
+## Programmi presi dal libro di esercizi del corso, trascritti tali e quali.
+func test_while_course_programs() -> void:
+	# Esercizio 5.1 — divisione con resto.
+	var division: String = """
+begin
+INPUT(A);
+INPUT(B);
+Q := 0;
+while A >= B do
+	 begin
+	 A := A - B;
+	 Q := Q + 1
+	 end
+R := A;
+OUTPUT(Q);
+OUTPUT(R)
+end"""
+	var d1: Dictionary = WhileInterpreter.run(division, {"A": 17, "B": 5})
+	_check(bool(d1["ok"]), "il programma 5.1 del libro compila")
+	_equal(int(d1["state"]["Q"]), 3, "17 diviso 5 fa 3")
+	_equal(int(d1["state"]["R"]), 2, "con resto 2")
+
+	# Esercizio 5.2 — moltiplicazione fra naturali.
+	var product: String = """
+begin
+INPUT(X);
+INPUT(Y);
+Z := 0;
+while Y > 0 do
+	  begin
+			Z := Z + X;
+			Y := Y - 1
+	  end
+OUTPUT(Z)
+end"""
+	var p1: Dictionary = WhileInterpreter.run(product, {"X": 6, "Y": 7})
+	_check(bool(p1["ok"]), "il programma 5.2 del libro compila")
+	_equal(int(p1["state"]["Z"]), 42, "6 per 7 fa 42")
+
+	var p0: Dictionary = WhileInterpreter.run(product, {"X": 6, "Y": 0})
+	_equal(int(p0["state"]["Z"]), 0, "moltiplicare per zero dà zero")
+
+	# Nucleo minimo del linguaggio: solo := 0, s() e pd().
+	var minimal: String = """
+begin
+Z := 0;
+while Y > 0 do
+	  begin
+	  Z := s(Z);
+	  Y := pd(Y)
+	  end
+end"""
+	var m1: Dictionary = WhileInterpreter.run(minimal, {"Y": 5})
+	_equal(int(m1["state"]["Z"]), 5, "copia Y in Z usando solo s() e pd()")
 
 
 func test_while_task_equivalence() -> void:
