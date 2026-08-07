@@ -87,54 +87,54 @@ offset_right = 780.0
 offset_bottom = 300.0
 theme_override_colors/font_color = Color(0.45, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 22
-text = "Livello 1 · Binary Search Tree   ·   Livello 2 · Database MySQL"
+text = "Impara strutture dati, database e calcolabilità giocando"
 
 [node name="Buttons" type="VBoxContainer" parent="."]
 layout_mode = 1
 offset_left = 92.0
-offset_top = 360.0
-offset_right = 452.0
-offset_bottom = 520.0
-theme_override_constants/separation = 18
+offset_top = 340.0
+offset_right = 560.0
+offset_bottom = 640.0
+theme_override_constants/separation = 14
 
 [node name="PlayButton" type="Button" parent="Buttons"]
-custom_minimum_size = Vector2(360, 68)
+custom_minimum_size = Vector2(468, 62)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.92, 0.98, 1, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 21
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "▶  Gioca il Livello 1"
+text = "▶  Livello 1 · Binary Search Tree"
 
 [node name="Level2Button" type="Button" parent="Buttons"]
-custom_minimum_size = Vector2(360, 68)
+custom_minimum_size = Vector2(468, 62)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.92, 0.98, 1, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 21
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "▶  Gioca il Livello 2"
+text = "▶  Livello 2 · Database MySQL"
 
 [node name="Level3Button" type="Button" parent="Buttons"]
-custom_minimum_size = Vector2(360, 68)
+custom_minimum_size = Vector2(468, 62)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.92, 0.98, 1, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 21
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "▶  Gioca il Livello 3"
+text = "▶  Livello 3 · Calcolabilità"
 
 [node name="QuitButton" type="Button" parent="Buttons"]
-custom_minimum_size = Vector2(360, 56)
+custom_minimum_size = Vector2(468, 54)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.86, 0.95, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 19
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
@@ -153,5 +153,5 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.4, 0.55, 0.72, 1)
 theme_override_font_sizes/font_size = 15
-text = "Altri livelli in arrivo"
+text = "Durante una partita premi Esc per mettere in pausa o cambiare livello"
 horizontal_alignment = 1
