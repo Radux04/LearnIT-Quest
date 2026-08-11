@@ -11,6 +11,10 @@ const STEP := 0.10
 ## 0 = gioca tutto il livello. N = si ferma all'inizio della fase N e resta lì,
 ## a velocità normale: serve per guardare (e fotografare) quella fase.
 const STOP_AT_PHASE := 0
+## Secondi di attesa prima di rispondere a una scelta multipla. A 0 il bot
+## risponde subito; alzandolo si fa in tempo a guardare (e fotografare) le
+## alternative mostrate a schermo.
+const CHOICE_DELAY := 0.0
 
 var level: Node = null
 
@@ -26,7 +30,8 @@ func _ready() -> void:
 
 func _play() -> void:
 	await get_tree().create_timer(2.4).timeout
-	for phase_index in range(1, 6):
+	# Quattro fasi: la fase sul problema dell'arresto è fuori rotazione.
+	for phase_index in range(1, 5):
 		if level.is_over:
 			break
 		var started: bool = await _await_phase(phase_index)
@@ -45,9 +50,7 @@ func _play() -> void:
 			3:
 				await _play_phase3()
 			4:
-				await _play_phase4()
-			5:
-				await _play_phase5()
+				await _play_while()
 	await get_tree().create_timer(2.0).timeout
 	_report()
 
@@ -180,6 +183,8 @@ func _play_phase3() -> void:
 		# corretta, così il bot funziona con qualunque esercizio del catalogo.
 		if String(phase._correct_option) == "":
 			continue
+		if CHOICE_DELAY > 0.0:
+			await get_tree().create_timer(CHOICE_DELAY).timeout
 		for child in level.action_bar.get_children():
 			if child is Button and (child as Button).text == String(phase._correct_option):
 				(child as Button).pressed.emit()
@@ -187,11 +192,14 @@ func _play_phase3() -> void:
 	print("[L3] fase 3 completata")
 
 
-# ------------------------------------------------------------------ fase 4 --
+# --------------------------------------------- fase diagonale (disattivata) --
+#
+# Serve solo se si rimette Phase4.gd in PHASE_SCRIPTS di Level3.gd: in quel caso
+# va richiamata con il numero di fase che le spetta.
 
-func _play_phase4() -> void:
+func _play_diagonal(index: int) -> void:
 	var guard: int = 0
-	while level.current_phase == 4 and not level.is_over and guard < 300:
+	while level.current_phase == index and not level.is_over and guard < 300:
 		guard += 1
 		await _wait()
 		var phase: Node = _phase()
@@ -208,12 +216,12 @@ func _play_phase4() -> void:
 		if phase._picking_row:
 			phase._on_cell_clicked(phase._row_target, phase._row_target)
 			continue
-	print("[L3] fase 4 completata")
+	print("[L3] fase diagonale completata")
 
 
-# ------------------------------------------------------------------ fase 5 --
+# -------------------------------------------------- fase 4: linguaggio WHILE --
 
-func _play_phase5() -> void:
+func _play_while() -> void:
 	# Prima una prova di errore di sintassi e una di programma sbagliato.
 	await get_tree().create_timer(0.6).timeout
 	var phase: Node = _phase()
@@ -227,9 +235,9 @@ func _play_phase5() -> void:
 
 	# Gli esercizi sono pescati a caso, quindi il bot non può avere soluzioni
 	# fisse: usa la soluzione di riferimento dell'obiettivo corrente.
-	var solved: int = 0
+	var solved: int = 0  # quanti programmi risolti
 	var guard: int = 0
-	while level.current_phase == 5 and not level.is_over and guard < 600:
+	while level.current_phase == 4 and not level.is_over and guard < 600:
 		guard += 1
 		await _wait()
 		phase = _phase()
@@ -238,9 +246,9 @@ func _play_phase5() -> void:
 		var solution: String = String(phase._task.solution)
 		phase._on_code_submitted(solution)
 		solved += 1
-		print("[L3] fase 5 — risolto: %s" % solution)
+		print("[L3] fase 4 — risolto il programma %d (%d righe)" % [solved, solution.split("\n").size()])
 		await get_tree().create_timer(1.2).timeout
-	print("[L3] fase 5 completata")
+	print("[L3] fase 4 completata")
 
 
 func _report() -> void:

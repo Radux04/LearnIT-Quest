@@ -288,7 +288,12 @@ const DESIGN_POOL: Array = [
 ]
 
 
-# ================================================= FASE 5: programmi WHILE ===
+# ================================================= FASE 4: programmi WHILE ===
+#
+# Le soluzioni sono scritte nella NOTAZIONE ACCADEMICA del corso, la stessa del
+# libro di esercizi: blocchi begin ... end, INPUT/OUTPUT a dichiarare ingressi e
+# uscite, variabili in maiuscolo. Il giocatore può rispondere anche nella forma
+# compatta, perché la correzione confronta l'effetto e non il testo.
 #
 # Regola d'oro nello scegliere un esercizio: NON deve essere risolvibile con un
 # solo operatore del linguaggio, altrimenti il ciclo non serve e l'esercizio non
@@ -296,33 +301,21 @@ const DESIGN_POOL: Array = [
 
 const WHILE_POOL: Array = [
 	{
-		"prompt": "Metti in m il più grande fra x e y.",
-		"solution": "if x < y then m := y else m := x end",
-		"cases": [{"x": 3, "y": 8}, {"x": 9, "y": 2}, {"x": 5, "y": 5}, {"x": 0, "y": 0}],
-		"outputs": ["m"],
-		"hint": "if <condizione> then ... else ... end   ·   i confronti sono =, !=, <, <=, >, >=",
-		"explain": "Il costrutto if sceglie fra due strade: nessun ciclo, quindi termina sempre.",
-	},
-	{
-		"prompt": "Metti in m il più piccolo fra x e y.",
-		"solution": "if x < y then m := x else m := y end",
-		"cases": [{"x": 3, "y": 8}, {"x": 9, "y": 2}, {"x": 4, "y": 4}, {"x": 0, "y": 7}],
-		"outputs": ["m"],
-		"hint": "Come il massimo, ma con i rami scambiati.",
-		"explain": "Stesso schema del massimo: cambiare il ramo cambia la funzione calcolata.",
-	},
-	{
-		"prompt": "Metti in s la somma di tutti i numeri da 1 a n (con n = 0 la somma è 0).",
-		"solution": "s := 0; i := n; while i != 0 do s := s + i; i := i - 1 end",
-		"cases": [{"n": 0}, {"n": 1}, {"n": 5}, {"n": 10}],
-		"outputs": ["s"],
-		"hint": "Serve un ciclo: while <condizione> do ... end. Usa una variabile che scende fino a 0.",
-		"explain": "Il ciclo termina perché il contatore cala di 1 a ogni giro: è una funzione TOTALE.",
-	},
-	{
-		# Esercizio 5.1 del libro, con i nomi di variabile del testo originale.
+		# Esercizio 5.1 del libro.
 		"prompt": "Divisione con resto: dividendo A, divisore B. Metti il quoziente in Q e il resto in R (B > 0).",
-		"solution": "Q := 0; while A >= B do A := A - B; Q := Q + 1 end; R := A",
+		"solution": """begin
+INPUT(A);
+INPUT(B);
+Q := 0;
+while A >= B do
+	 begin
+	 A := A - B;
+	 Q := Q + 1
+	 end
+R := A;
+OUTPUT(Q);
+OUTPUT(R)
+end""",
 		"cases": [{"A": 17, "B": 5}, {"A": 0, "B": 3}, {"A": 12, "B": 4}, {"A": 3, "B": 9}],
 		"outputs": ["Q", "R"],
 		"hint": "Togli B da A finché ci sta, contando quante volte: quello che resta è il resto.",
@@ -331,7 +324,17 @@ const WHILE_POOL: Array = [
 	{
 		# Esercizio 5.2 del libro.
 		"prompt": "Moltiplicazione fra naturali: metti in Z il prodotto di X per Y.",
-		"solution": "Z := 0; while Y > 0 do Z := Z + X; Y := Y - 1 end",
+		"solution": """begin
+INPUT(X);
+INPUT(Y);
+Z := 0;
+while Y > 0 do
+	 begin
+	 Z := Z + X;
+	 Y := Y - 1
+	 end
+OUTPUT(Z)
+end""",
 		"cases": [{"X": 6, "Y": 7}, {"X": 6, "Y": 0}, {"X": 0, "Y": 4}, {"X": 9, "Y": 1}],
 		"outputs": ["Z"],
 		"hint": "Il prodotto è una somma ripetuta: somma X per Y volte.",
@@ -340,67 +343,140 @@ const WHILE_POOL: Array = [
 	{
 		# Esercizio 5.5 del libro.
 		"prompt": "Metti in M il valore 1 se X è multiplo di Y, altrimenti 0. Puoi assumere Y > 0.",
-		"solution": "T := X; while T >= Y do T := T - Y end; if T = 0 then M := 1 else M := 0 end",
+		"solution": """begin
+INPUT(X);
+INPUT(Y);
+while X >= Y do
+	 begin X := X - Y end
+if X != 0 then
+	 begin M := 0 end
+else
+	 begin M := 1 end
+OUTPUT(M)
+end""",
 		"cases": [{"X": 12, "Y": 4}, {"X": 13, "Y": 4}, {"X": 0, "Y": 5}, {"X": 7, "Y": 7}],
 		"outputs": ["M"],
 		"hint": "Senza usare la divisione: sottrai Y finché puoi e guarda che cosa resta.",
 		"explain": "È l'esercizio 5.5 del corso: il resto zero è la definizione stessa di multiplo.",
 	},
 	{
-		"prompt": "Metti in q il quoziente intero di x diviso y, e in r il resto. Puoi assumere y > 0.",
-		"solution": "q := 0; r := x; while r >= y do r := r - y; q := q + 1 end",
-		"cases": [{"x": 0, "y": 3}, {"x": 7, "y": 2}, {"x": 12, "y": 4}, {"x": 5, "y": 9}],
-		"outputs": ["q", "r"],
-		"hint": "La divisione non esiste nel linguaggio: sottrai y finché puoi e conta quante volte.",
-		"explain": "Hai costruito un operatore che il linguaggio non ha: è così che si estende la calcolabilità.",
+		"prompt": "Copia il valore di Y dentro Z usando SOLO il successore s() e il predecessore pd().",
+		"solution": """begin
+INPUT(Y);
+Z := 0;
+while Y > 0 do
+	 begin
+	 Z := s(Z);
+	 Y := pd(Y)
+	 end
+OUTPUT(Z)
+end""",
+		"cases": [{"Y": 0}, {"Y": 1}, {"Y": 5}, {"Y": 12}],
+		"outputs": ["Z"],
+		"hint": "s(X) vale X+1, pd(X) vale X-1 (e pd(0) resta 0). Sono le uniche operazioni del nucleo minimo.",
+		"explain": "Il nucleo del linguaggio WHILE ha solo := 0, s() e pd(): tutto il resto sono macro-istruzioni.",
 	},
 	{
-		"prompt": "Metti in f il fattoriale di n (0! vale 1).",
-		"solution": "f := 1; i := n; while i != 0 do f := f * i; i := i - 1 end",
-		"cases": [{"n": 0}, {"n": 1}, {"n": 4}, {"n": 6}],
-		"outputs": ["f"],
-		"hint": "Parti da f := 1 e moltiplica per i valori che scendono da n a 1.",
+		"prompt": "Metti in M il più grande fra X e Y.",
+		"solution": """begin
+INPUT(X);
+INPUT(Y);
+if X < Y then
+	 begin M := Y end
+else
+	 begin M := X end
+OUTPUT(M)
+end""",
+		"cases": [{"X": 3, "Y": 8}, {"X": 9, "Y": 2}, {"X": 5, "Y": 5}, {"X": 0, "Y": 0}],
+		"outputs": ["M"],
+		"hint": "if <condizione> then begin ... end else begin ... end   ·   confronti: =, !=, <, <=, >, >=",
+		"explain": "Il costrutto if sceglie fra due strade: nessun ciclo, quindi termina sempre.",
+	},
+	{
+		"prompt": "Metti in S la somma di tutti i numeri da 1 a N (con N = 0 la somma è 0).",
+		"solution": """begin
+INPUT(N);
+S := 0;
+while N > 0 do
+	 begin
+	 S := S + N;
+	 N := N - 1
+	 end
+OUTPUT(S)
+end""",
+		"cases": [{"N": 0}, {"N": 1}, {"N": 5}, {"N": 10}],
+		"outputs": ["S"],
+		"hint": "Serve un ciclo: while <condizione> do begin ... end. Usa una variabile che scende fino a 0.",
+		"explain": "Il ciclo termina perché il contatore cala di 1 a ogni giro: è una funzione TOTALE.",
+	},
+	{
+		"prompt": "Metti in F il fattoriale di N (0! vale 1).",
+		"solution": """begin
+INPUT(N);
+F := 1;
+while N > 0 do
+	 begin
+	 F := F * N;
+	 N := N - 1
+	 end
+OUTPUT(F)
+end""",
+		"cases": [{"N": 0}, {"N": 1}, {"N": 4}, {"N": 6}],
+		"outputs": ["F"],
+		"hint": "Parti da F := 1 e moltiplica per i valori che scendono da N a 1.",
 		"explain": "Con assegnamento, sequenza e while si calcola tutto il calcolabile: è la tesi di Church-Turing.",
 	},
 	{
-		"prompt": "Metti in p il valore di b elevato alla e (con e = 0 il risultato è 1).",
-		"solution": "p := 1; i := e; while i != 0 do p := p * b; i := i - 1 end",
-		"cases": [{"b": 2, "e": 0}, {"b": 2, "e": 5}, {"b": 3, "e": 3}, {"b": 7, "e": 1}],
-		"outputs": ["p"],
+		"prompt": "Metti in P il valore di B elevato alla E (con E = 0 il risultato è 1).",
+		"solution": """begin
+INPUT(B);
+INPUT(E);
+P := 1;
+while E > 0 do
+	 begin
+	 P := P * B;
+	 E := E - 1
+	 end
+OUTPUT(P)
+end""",
+		"cases": [{"B": 2, "E": 0}, {"B": 2, "E": 5}, {"B": 3, "E": 3}, {"B": 7, "E": 1}],
+		"outputs": ["P"],
 		"hint": "La potenza è una moltiplicazione ripetuta, come il prodotto è una somma ripetuta.",
 		"explain": "Ogni operazione nasce iterando quella precedente: è l'idea della ricorsione primitiva.",
 	},
 	{
-		"prompt": "Metti in e il valore 1 se x è uguale a y, altrimenti 0.",
-		"solution": "if x = y then e := 1 else e := 0 end",
-		"cases": [{"x": 4, "y": 4}, {"x": 0, "y": 0}, {"x": 3, "y": 9}, {"x": 9, "y": 3}],
-		"outputs": ["e"],
-		"hint": "Il risultato è un numero, non un valore di verità: 1 sta per vero, 0 per falso.",
-		"explain": "Codificare vero/falso come 1/0 è il modo in cui i predicati diventano funzioni calcolabili.",
-	},
-	{
-		"prompt": "Metti in p il valore 1 se x è pari, altrimenti 0.",
-		"solution": "r := x; while r >= 2 do r := r - 2 end; p := 1 - r",
-		"cases": [{"x": 0}, {"x": 1}, {"x": 8}, {"x": 7}],
-		"outputs": ["p"],
+		"prompt": "Metti in P il valore 1 se X è pari, altrimenti 0.",
+		"solution": """begin
+INPUT(X);
+while X >= 2 do
+	 begin X := X - 2 end
+P := 1 - X;
+OUTPUT(P)
+end""",
+		"cases": [{"X": 0}, {"X": 1}, {"X": 8}, {"X": 7}],
+		"outputs": ["P"],
 		"hint": "Togli 2 finché puoi: quello che resta (0 o 1) ti dice tutto. Ricorda che 1 - 1 fa 0.",
 		"explain": "La sottrazione troncata permette di calcolare un predicato senza costrutti aggiuntivi.",
 	},
 	{
-		"prompt": "Metti in g il massimo comun divisore di x e y. Puoi assumere x > 0 e y > 0.",
-		"solution": "while x != y do if x > y then x := x - y else y := y - x end end; g := x",
-		"cases": [{"x": 12, "y": 18}, {"x": 7, "y": 7}, {"x": 9, "y": 3}, {"x": 5, "y": 8}],
-		"outputs": ["g"],
+		"prompt": "Metti in G il massimo comun divisore di X e Y. Puoi assumere X > 0 e Y > 0.",
+		"solution": """begin
+INPUT(X);
+INPUT(Y);
+while X != Y do
+	 begin
+	 if X > Y then
+		  begin X := X - Y end
+	 else
+		  begin Y := Y - X end
+	 end
+G := X;
+OUTPUT(G)
+end""",
+		"cases": [{"X": 12, "Y": 18}, {"X": 7, "Y": 7}, {"X": 9, "Y": 3}, {"X": 5, "Y": 8}],
+		"outputs": ["G"],
 		"hint": "Algoritmo di Euclide per sottrazioni: togli il più piccolo dal più grande finché non sono uguali.",
-		"explain": "Il ciclo termina perché a ogni giro la somma x+y cala: è la dimostrazione di terminazione.",
-	},
-	{
-		"prompt": "Metti in c quante volte y sta dentro x, fermandoti prima di superarlo. Assumi y > 0.",
-		"solution": "c := 0; t := x; while t >= y do t := t - y; c := c + 1 end",
-		"cases": [{"x": 10, "y": 3}, {"x": 0, "y": 5}, {"x": 8, "y": 8}, {"x": 4, "y": 9}],
-		"outputs": ["c"],
-		"hint": "È il quoziente, ma senza tenere il resto: conta le sottrazioni riuscite.",
-		"explain": "Contare le iterazioni di un ciclo è il modo più semplice di definire una funzione nuova.",
+		"explain": "Il ciclo termina perché a ogni giro la somma X+Y cala: è la dimostrazione di terminazione.",
 	},
 ]
 

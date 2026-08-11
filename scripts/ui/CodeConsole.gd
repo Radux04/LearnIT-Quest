@@ -157,6 +157,7 @@ func show_message(text: String, color: Color) -> void:
 
 func clear_result() -> void:
 	for child in _result_box.get_children():
+		_result_box.remove_child(child)
 		child.queue_free()
 
 

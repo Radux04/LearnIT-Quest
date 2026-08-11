@@ -7,8 +7,14 @@ extends Control
 
 signal rule_clicked(key: String)
 
+const ROW_HEIGHT := 34.0
+const ROW_SEPARATION := 5.0
+const TITLE_HEIGHT := 26.0
+const PADDING := 24.0
+
 var _box: VBoxContainer = null
 var _buttons: Dictionary = {}          # chiave regola -> Button
+var _row_count: int = 0
 
 
 func _ready() -> void:
@@ -26,14 +32,18 @@ func _ready() -> void:
 	add_child(panel)
 
 	_box = VBoxContainer.new()
-	_box.add_theme_constant_override("separation", 6)
+	_box.add_theme_constant_override("separation", int(ROW_SEPARATION))
 	_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(_box)
 
 
 ## `keys` elenca le regole da mostrare, nell'ordine desiderato.
 func setup(machine: TuringMachine, keys: Array) -> void:
+	# queue_free() libera il nodo solo a fine frame: finché non succede il
+	# contenitore continua a disporlo, e le regole nuove finirebbero sopra le
+	# vecchie. remove_child() lo toglie subito dall'albero.
 	for child in _box.get_children():
+		_box.remove_child(child)
 		child.queue_free()
 	_buttons.clear()
 
@@ -50,8 +60,8 @@ func setup(machine: TuringMachine, keys: Array) -> void:
 			continue
 		var button: Button = Button.new()
 		button.text = describe(rule)
-		button.custom_minimum_size = Vector2(340.0, 38.0)
-		button.add_theme_font_size_override("font_size", 16)
+		button.custom_minimum_size = Vector2(340.0, ROW_HEIGHT)
+		button.add_theme_font_size_override("font_size", 15)
 		button.focus_mode = Control.FOCUS_NONE
 		button.mouse_filter = Control.MOUSE_FILTER_STOP
 		_style(button, Color(0.10, 0.18, 0.30), Color(0.35, 0.65, 0.95))
@@ -59,6 +69,14 @@ func setup(machine: TuringMachine, keys: Array) -> void:
 		button.pressed.connect(func() -> void: rule_clicked.emit(rule_key))
 		_box.add_child(button)
 		_buttons[rule_key] = button
+	_row_count = _buttons.size()
+
+
+## Altezza che serve davvero: le macchine hanno un numero di regole diverso e
+## una tabella a dimensione fissa finirebbe fuori dallo schermo.
+func preferred_height() -> float:
+	var rows: float = float(maxi(_row_count, 1))
+	return TITLE_HEIGHT + rows * ROW_HEIGHT + (rows - 1.0) * ROW_SEPARATION + PADDING
 
 
 ## δ(stato, letto) = (scrive, direzione, nuovo stato)
