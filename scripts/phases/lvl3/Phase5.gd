@@ -7,7 +7,11 @@ extends Lvl3PhaseBase
 ## Turing. La correzione è per equivalenza: qualunque algoritmo corretto passa.
 
 ## Quanti programmi per partita, pescati a caso da Lvl3Pools.WHILE_POOL.
-const PROGRAMS_PER_GAME := 4
+## Sono due soli perché scrivere un programma WHILE corretto è la richiesta più
+## impegnativa del livello: meglio due esercizi affrontati con calma che quattro
+## di corsa. Il catalogo ne contiene dieci, quindi la varietà fra una partita e
+## l'altra resta alta.
+const PROGRAMS_PER_GAME := 2
 
 var _console: CodeConsole = null
 var _task: WhileTask = null
