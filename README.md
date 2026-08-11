@@ -73,7 +73,9 @@ res://
 │   ├── introduction2.tscn      teoria Livello 2 (6 pagine)
 │   ├── level2.tscn             Livello 2 — database MySQL
 │   ├── introduction3.tscn      teoria Livello 3 (7 pagine)
-│   └── level3.tscn             Livello 3 — calcolabilità
+│   ├── level3.tscn             Livello 3 — calcolabilità
+│   ├── introduction4.tscn      teoria Livello 4 (4 pagine)
+│   └── level4.tscn             Livello 4 — code review Java
 ├── scripts/
 │   ├── global/
 │   │   ├── GameManager.gd      autoload: timer, penalità, cambio scena
@@ -162,7 +164,7 @@ Tutte le manopole sono raccolte in pochi punti:
 
 | Cosa | Dove |
 |---|---|
-| Durata dei livelli | `GameManager.LEVEL_DURATION`, `LEVEL2_DURATION`, `LEVEL3_DURATION` |
+| Durata dei livelli | `GameManager.LEVEL_DURATION`, `LEVEL2_DURATION`, `LEVEL3_DURATION`, `LEVEL4_DURATION` |
 | Costo del manuale | `SqlManual.COST_SECONDS` |
 | Penalità del Livello 2 | `Level2Controller.PENALTY_SYNTAX`, `PENALTY_WRONG` |
 | Obiettivi del Livello 2 | le liste `SqlTask.make(...)` in `scripts/phases/lvl2/Phase1..5.gd` |
@@ -283,11 +285,55 @@ godot --headless --script res://tests/run_lvl3_tests.gd
 
 ---
 
+## Livello 4 · Code Review (metodologie di programmazione)
+
+Sei il revisore di una base di codice **Java** che deve andare in produzione. Durata **14 minuti**.
+
+### Introduzione teorica (4 pagine)
+
+Clean code (nomi, numeri magici, metodi corti, commenti inutili, duplicazione) · i cinque principi **SOLID** con un esempio concreto ciascuno · manutenibilità: incapsulamento, coesione e accoppiamento, i tre strati (dominio, interfaccia, persistenza) · JavaFX e persistenza in sintesi · la missione.
+
+### Le quattro fasi
+
+| Fase | Argomento | Che cosa fa il giocatore |
+|---|---|---|
+| 1 · Clean code | nomi, numeri magici, duplicazione | Il codice è a schermo con i numeri di riga: **clicca le righe difettose** e conferma |
+| 2 · Principi SOLID | SRP, OCP, DIP | Individua la violazione, poi **separa una classe che fa troppe cose** assegnando ogni metodo alla classe giusta |
+| 3 · Riscrivi il codice | refactoring | Riceve codice con difetti e lo **riscrive** nell'editor |
+| 4 · Scrivi il codice | classi, JavaFX, persistenza | Scrive una **classe incapsulata**, una **schermata JavaFX** e una **mappatura persistente** (JPA/Hibernate o XML con JAXB) |
+
+Penalità: **−8 s** per una riga segnalata a torto, **−10 s** per una scelta sbagliata, **−8 s** per codice che non sta in piedi, **−12 s** per controlli non superati.
+
+### Come viene corretto il Java
+
+Questo livello **non compila il codice**: scrivere un compilatore Java è fuori scala. `scripts/java/JavaCode.gd` è un **analizzatore strutturale** che estrae classi, campi con i loro modificatori, metodi con lunghezza e parametri, annotazioni, numeri magici, nomi troppo corti e righe duplicate. La parte delicata è la pulizia preliminare: commenti e stringhe vengono sostituiti con spazi mantenendo il numero di righe, così una graffa dentro un commento non falsa l'analisi.
+
+`scripts/java/JavaTask.gd` corregge con **regole dichiarative**, ognuna col proprio messaggio che spiega il perché invece di dire «sbagliato»:
+
+```gdscript
+{"kind": "field_private", "field": "saldo"}
+{"kind": "max_method_lines", "max": 12}
+{"kind": "no_magic_numbers"}
+```
+
+> **Il limite, dichiarato anche nell'introduzione:** si giudica la *struttura*, non la sintassi. Codice ben strutturato che non compilerebbe viene accettato. Per clean code e SOLID è la scelta giusta — un metodo di 40 righe è un difetto anche se compila — ma non è un compilatore.
+
+Il riquadro laterale mostra sempre **che cosa l'analizzatore ha capito** del codice scritto: classe, campi con la loro visibilità, metodi con il numero di righe, numeri magici trovati. Vedere il proprio codice riassunto così è già metà della revisione.
+
+Coperto da **167 test**, fra cui la validazione di ogni voce del catalogo:
+
+```
+godot --headless --script res://tests/run_lvl4_tests.gd
+```
+
+---
+
 ## Roadmap
 
 - [x] Livello 1 — Binary Search Tree e Dijkstra
 - [x] Livello 2 — Database relazionali e SQL
 - [x] Livello 3 — Calcolabilità: automi, macchine di Turing, WHILE
+- [x] Livello 4 — Metodologie di programmazione: clean code, SOLID, Java
 - [ ] Menu principale completo con progressi e punteggi
 - [ ] Schermata di riepilogo con statistiche (confronti risparmiati, errori, manuale)
 

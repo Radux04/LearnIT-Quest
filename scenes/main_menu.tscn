@@ -70,9 +70,9 @@ mouse_filter = 2
 [node name="Title" type="Label" parent="."]
 layout_mode = 1
 offset_left = 90.0
-offset_top = 180.0
+offset_top = 148.0
 offset_right = 760.0
-offset_bottom = 262.0
+offset_bottom = 230.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0.05, 0.12, 1)
 theme_override_constants/outline_size = 10
@@ -82,20 +82,20 @@ text = "LEARNIT QUEST"
 [node name="Subtitle" type="Label" parent="."]
 layout_mode = 1
 offset_left = 94.0
-offset_top = 268.0
-offset_right = 780.0
-offset_bottom = 300.0
+offset_top = 236.0
+offset_right = 800.0
+offset_bottom = 268.0
 theme_override_colors/font_color = Color(0.45, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 22
-text = "Impara strutture dati, database e calcolabilità giocando"
+text = "Strutture dati, database, calcolabilità e scrittura del codice"
 
 [node name="Buttons" type="VBoxContainer" parent="."]
 layout_mode = 1
 offset_left = 92.0
-offset_top = 340.0
+offset_top = 292.0
 offset_right = 560.0
-offset_bottom = 640.0
-theme_override_constants/separation = 14
+offset_bottom = 656.0
+theme_override_constants/separation = 12
 
 [node name="PlayButton" type="Button" parent="Buttons"]
 custom_minimum_size = Vector2(468, 62)
