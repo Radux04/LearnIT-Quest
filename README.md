@@ -150,7 +150,7 @@ Il progetto include due scene di verifica, utili dopo ogni modifica:
 |---|---|
 | `res://tests/autoplay.tscn` | Istanzia il Livello 1 e lo **gioca da solo in modo sempre corretto**, attraversando tutte e 5 le fasi fino alla vittoria. Stampa in console ogni mossa. |
 | `res://tests/autoplay_level2.tscn` | Gioca il Livello 2 inviando alla console le soluzioni dei 19 obiettivi, e verifica anche penalità e manuale. |
-| `res://tests/autoplay_level3.tscn` | Gioca il Livello 3: esegue automi, determinizza, fa girare le macchine di Turing, costruisce la diagonale e scrive i programmi WHILE. La costante `STOP_AT_PHASE` lo ferma su una fase per guardarla. |
+| `res://tests/autoplay_level3.tscn` | Gioca il Livello 3: esegue automi, determinizza, fa girare le macchine di Turing e scrive i programmi WHILE. `STOP_AT_PHASE` lo ferma su una fase per guardarla, `CHOICE_DELAY` ritarda la risposta alle scelte multiple. |
 | `res://tests/timeout.tscn` | Porta il cronometro a zero e verifica la schermata *Tempo Scaduto* con i due pulsanti. |
 | `res://tests/test_sql_engine.gd` | 52 test del motore SQL, eseguibili senza aprire l'editor (vedi sopra). |
 
