@@ -130,6 +130,17 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
 text = "▶  Livello 3 · Calcolabilità"
 
+[node name="Level4Button" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(468, 62)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 21
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
+text = "▶  Livello 4 · Metodologie di programmazione"
+
 [node name="QuitButton" type="Button" parent="Buttons"]
 custom_minimum_size = Vector2(468, 54)
 layout_mode = 2

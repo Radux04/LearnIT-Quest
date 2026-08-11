@@ -9,6 +9,7 @@ signal penalty_applied(seconds: float)
 const LEVEL_DURATION := 300.0          # 5 minuti — Livello 1
 const LEVEL2_DURATION := 600.0         # 10 minuti — Livello 2 (si scrive, non si clicca)
 const LEVEL3_DURATION := 720.0         # 12 minuti — Livello 3 (teoria: serve pensare)
+const LEVEL4_DURATION := 840.0         # 14 minuti — Livello 4 (si legge e si scrive codice)
 const WRONG_ANSWER_PENALTY := 10.0
 
 const SCENE_MENU := "res://scenes/main_menu.tscn"
@@ -18,6 +19,8 @@ const SCENE_INTRO_2 := "res://scenes/introduction2.tscn"
 const SCENE_LEVEL_2 := "res://scenes/level2.tscn"
 const SCENE_INTRO_3 := "res://scenes/introduction3.tscn"
 const SCENE_LEVEL_3 := "res://scenes/level3.tscn"
+const SCENE_INTRO_4 := "res://scenes/introduction4.tscn"
+const SCENE_LEVEL_4 := "res://scenes/level4.tscn"
 
 var time_left: float = LEVEL_DURATION
 var level_duration: float = LEVEL_DURATION
@@ -115,3 +118,12 @@ func go_to_intro_3() -> void:
 
 func go_to_level_3() -> void:
 	get_tree().change_scene_to_file(SCENE_LEVEL_3)
+
+
+func go_to_intro_4() -> void:
+	stop_timer()
+	get_tree().change_scene_to_file(SCENE_INTRO_4)
+
+
+func go_to_level_4() -> void:
+	get_tree().change_scene_to_file(SCENE_LEVEL_4)

@@ -10,6 +10,12 @@ const OK_COLOR := Color(0.35, 1.0, 0.6)
 const ERR_COLOR := Color(1.0, 0.42, 0.45)
 const INFO_COLOR := Color(0.6, 0.82, 1.0)
 
+## Personalizzabili PRIMA di aggiungere la console alla scena: il Livello 3 la
+## usa per il linguaggio WHILE, il Livello 4 per Java.
+var title_text: String = "INTERPRETE WHILE"
+var placeholder: String = "Scrivi qui il programma e premi Esegui (Ctrl+Invio)"
+var run_label: String = "▶  Esegui"
+
 var editor: TextEdit
 var run_button: Button
 var clear_button: Button
@@ -25,7 +31,7 @@ func _ready() -> void:
 	add_child(root)
 
 	var title: Label = Label.new()
-	title.text = "INTERPRETE WHILE"
+	title.text = title_text
 	title.add_theme_font_size_override("font_size", 16)
 	title.add_theme_color_override("font_color", Color(0.45, 0.85, 1.0))
 	root.add_child(title)
@@ -45,7 +51,7 @@ func _ready() -> void:
 	editor = TextEdit.new()
 	editor.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	editor.custom_minimum_size = Vector2(0.0, 110.0)
-	editor.placeholder_text = "Scrivi qui il programma e premi Esegui (Ctrl+Invio)"
+	editor.placeholder_text = placeholder
 	editor.add_theme_font_size_override("font_size", 16)
 	editor.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
 	_style_editor()
@@ -56,7 +62,7 @@ func _ready() -> void:
 	left.add_child(buttons)
 
 	run_button = Button.new()
-	run_button.text = "▶  Esegui"
+	run_button.text = run_label
 	run_button.custom_minimum_size = Vector2(150.0, 44.0)
 	run_button.add_theme_font_size_override("font_size", 18)
 	run_button.focus_mode = Control.FOCUS_NONE
@@ -102,7 +108,7 @@ func _ready() -> void:
 	_result_box.add_theme_constant_override("separation", 4)
 	scroll.add_child(_result_box)
 
-	show_message("Scrivi un programma WHILE e premi Esegui.", INFO_COLOR)
+	show_message("Scrivi il codice e premi il pulsante, oppure Ctrl+Invio.", INFO_COLOR)
 
 
 func _style_editor() -> void:
@@ -211,6 +217,58 @@ func show_state(initial_state: Dictionary, result: Dictionary) -> void:
 		steps.add_theme_font_size_override("font_size", 13)
 		steps.add_theme_color_override("font_color", Color(0.6, 0.68, 0.8))
 		_result_box.add_child(steps)
+
+
+## Riquadro per il codice Java: invece dello stato delle variabili mostra la
+## STRUTTURA che l'analizzatore ha riconosciuto. Vedere il proprio codice
+## riassunto in campi e metodi è già metà della revisione.
+func show_analysis(source: String) -> void:
+	clear_result()
+	var code: JavaCode = JavaCode.parse(source)
+
+	_add_caption("Struttura riconosciuta")
+
+	if not code.has_type():
+		_add_note("nessuna classe trovata", ERR_COLOR)
+		return
+	_add_note("%s %s" % [code.type_kind, code.type_name], Color(0.75, 0.9, 1.0))
+	if code.extends_name != "":
+		_add_note("estende %s" % code.extends_name, Color(0.7, 0.8, 0.95))
+
+	_add_caption("Campi (%d)" % code.fields.size())
+	for field in code.fields:
+		var visibility: String = "private" if field["modifiers"].has("private") else "esposto"
+		_add_note("%s %s  ·  %s" % [String(field["type"]), String(field["name"]), visibility],
+			Color(0.8, 0.9, 1.0) if visibility == "private" else ERR_COLOR)
+
+	_add_caption("Metodi (%d)" % code.methods.size())
+	for method in code.methods:
+		var length: int = int(method["length"])
+		_add_note("%s()  ·  %d righe" % [String(method["name"]), length],
+			Color(0.8, 0.9, 1.0) if length <= 12 else Color(1.0, 0.8, 0.4))
+
+	var magic: Array = code.magic_numbers()
+	if not magic.is_empty():
+		_add_caption("Numeri magici (%d)" % magic.size())
+		for entry in magic:
+			_add_note("%s in %s()" % [String(entry["value"]), String(entry["method"])], Color(1.0, 0.8, 0.4))
+
+
+func _add_caption(text: String) -> void:
+	var label: Label = Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", Color(0.55, 0.75, 0.95))
+	_result_box.add_child(label)
+
+
+func _add_note(text: String, color: Color) -> void:
+	var label: Label = Label.new()
+	label.text = "   " + text
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_color_override("font_color", color)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_result_box.add_child(label)
 
 
 func _cell(text: String, background: Color) -> PanelContainer:

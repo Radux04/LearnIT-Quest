@@ -30,6 +30,10 @@ func run_all() -> void:
 	test_task_errors()
 	test_task_encapsulation()
 	test_task_refactoring()
+	test_pool_review()
+	test_pool_split()
+	test_pool_refactor()
+	test_pool_write()
 	print("\n[LVL4-TEST] %d passati, %d falliti" % [_passed, _failed])
 
 
@@ -324,3 +328,92 @@ func test_task_refactoring() -> void:
 }"""
 	var good: Dictionary = JavaTask.check(task, clean)
 	_equal(String(good["status"]), "ok", "il codice ripulito passa")
+
+
+# ---------------------------------------------- validazione del catalogo ----
+#
+# Servono a chi aggiunge esercizi: segnalano subito una voce incoerente.
+
+func test_pool_review() -> void:
+	var topics: Dictionary = {}
+	for entry in Lvl4Pools.REVIEW_POOL:
+		var label: String = String(entry["name"])
+		var lines: PackedStringArray = String(entry["code"]).split("\n")
+		topics[String(entry["topic"])] = true
+
+		_check(entry["bad"].size() > 0, "[%s] indica almeno una riga difettosa" % label)
+		for index in entry["bad"]:
+			_check(int(index) >= 0 and int(index) < lines.size(),
+				"[%s] la riga %d esiste davvero" % [label, int(index)])
+			_check(String(lines[int(index)]).strip_edges() != "",
+				"[%s] la riga %d non è vuota" % [label, int(index)])
+		# Non deve essere difettoso tutto: se no non c'è niente da distinguere.
+		_check(entry["bad"].size() < lines.size(),
+			"[%s] non sono difettose tutte le righe" % label)
+		_check(String(entry["question"]).length() > 20, "[%s] ha una domanda" % label)
+		_check(String(entry["hint"]).length() > 20, "[%s] ha un suggerimento" % label)
+		_check(String(entry["explain"]).length() > 20, "[%s] ha una spiegazione" % label)
+
+	# La Fase 1 pesca dai due argomenti: servono entrambi nel catalogo.
+	_check(topics.has("clean"), "il catalogo ha esercizi di clean code")
+	_check(topics.has("solid"), "il catalogo ha esercizi sui principi SOLID")
+
+
+func test_pool_split() -> void:
+	for entry in Lvl4Pools.SPLIT_POOL:
+		var label: String = String(entry["name"])
+		var targets: Array = entry["targets"]
+		_equal(targets.size(), 2, "[%s] ha due classi di destinazione" % label)
+		_check(entry["methods"].size() >= 3, "[%s] ha almeno tre metodi" % label)
+
+		var used: Dictionary = {}
+		for method in entry["methods"]:
+			var target: int = int(method[1])
+			_check(target >= 0 and target < targets.size(),
+				"[%s] la destinazione di «%s» è valida" % [label, String(method[0])])
+			used[target] = true
+		# Se tutti i metodi vanno nella stessa classe non c'è niente da separare.
+		_equal(used.size(), 2, "[%s] entrambe le classi ricevono almeno un metodo" % label)
+
+
+func test_pool_refactor() -> void:
+	for entry in Lvl4Pools.REFACTOR_POOL:
+		var label: String = String(entry["prompt"]).substr(0, 40)
+		var task: JavaTask = Lvl4Pools.build_task(entry)
+
+		_check(task.checks.size() > 0, "[%s] ha dei controlli" % label)
+		_check(task.hint.length() > 10, "[%s] ha un suggerimento" % label)
+		_check(task.explain.length() > 10, "[%s] ha una spiegazione" % label)
+
+		# Il codice di partenza NON deve gia' superare i controlli: altrimenti
+		# l'esercizio sarebbe risolto in partenza.
+		var start: Dictionary = JavaTask.check(task, task.starting_code)
+		_check(String(start["status"]) != "ok",
+			"[%s] il codice di partenza non è già corretto" % label)
+
+		# La soluzione di riferimento deve superarli tutti.
+		var solution: Dictionary = JavaTask.check(task, String(entry["solution"]))
+		_equal(String(solution["status"]), "ok",
+			"[%s] la soluzione di riferimento passa (%s)" % [label, String(solution["message"])])
+
+
+func test_pool_write() -> void:
+	var topics: Dictionary = {}
+	for entry in Lvl4Pools.WRITE_POOL:
+		var label: String = String(entry["prompt"]).substr(0, 40)
+		var task: JavaTask = Lvl4Pools.build_task(entry)
+		topics[String(entry["topic"])] = true
+
+		_check(task.checks.size() > 0, "[%s] ha dei controlli" % label)
+		var solution: Dictionary = JavaTask.check(task, String(entry["solution"]))
+		_equal(String(solution["status"]), "ok",
+			"[%s] la soluzione di riferimento passa (%s)" % [label, String(solution["message"])])
+
+		if task.starting_code.strip_edges() != "":
+			var start: Dictionary = JavaTask.check(task, task.starting_code)
+			_check(String(start["status"]) != "ok",
+				"[%s] il codice di partenza non è già corretto" % label)
+
+	_check(topics.has("classe"), "c'è un esercizio di scrittura di una classe")
+	_check(topics.has("javafx"), "c'è un esercizio su JavaFX")
+	_check(topics.has("persistenza"), "c'è un esercizio sulla persistenza")
