@@ -282,83 +282,133 @@ Dove sta cosa:
 | `scripts/computability/TuringMachine.gd` | Nastro, quintuple, `step()`, `run()` con limite di passi |
 | `scripts/computability/WhileInterpreter.gd` | Tokenizer, parser e semantica del linguaggio WHILE |
 | `scripts/computability/WhileTask.gd` | Correzione per equivalenza dei programmi |
-| `scripts/phases/lvl3/Phase1.gd` … `Phase5.gd` | Le cinque fasi |
+| `scripts/phases/lvl3/Lvl3Pools.gd` | **Il catalogo degli esercizi**: è qui che se ne aggiungono |
+| `scripts/phases/lvl3/Phase1.gd` … `Phase5.gd` | Le fasi (Phase4, il problema dell'arresto, è fuori rotazione) |
 | `scripts/ui/AutomatonView.gd`, `StateNode.gd` | Stati e archi etichettati |
 | `scripts/ui/TapeView.gd`, `RuleTableView.gd` | Nastro e tabella delle quintuple |
 | `scripts/ui/DiagonalTable.gd`, `CodeConsole.gd` | Tabella diagonale e console WHILE |
 
 Questo livello è diverso dagli altri due: **non c'è una struttura unica** che si trasforma. Ogni fase porta in scena il proprio strumento su un «palco» (`level.stage`) che il controller svuota a ogni cambio. Per aggiungere una fase basta quindi montare la propria vista con `level.mount(view)`.
 
-### 4.1 Aggiungere un automa o una parola alla Fase 1
+### 4.0 Il catalogo: dove stanno gli esercizi
 
-Il caso più economico: sono dati dichiarativi dentro `Phase1._start()`.
+Gli esercizi **non sono nel codice delle fasi**: sono dati dichiarativi in `scripts/phases/lvl3/Lvl3Pools.gd`, e ogni fase ne pesca a caso a ogni partita. Aggiungere un esercizio significa aggiungere una voce a un array, senza toccare nessuna fase.
+
+I test di `tests/test_lvl3.gd` **validano ogni voce del catalogo**: se aggiungi un automa non deterministico dove serve un DFA, una macchina di Turing che non si ferma o un programma la cui soluzione non gira, te lo dicono subito. Sono la rete di sicurezza di chi aggiunge esercizi — usali.
+
+### 4.1 Aggiungere un automa alla Fase 1
+
+Una voce in `DFA_POOL`:
 
 ```gdscript
-	var divisibile: Automaton = Automaton.make(["r0", "r1", "r2"], ["0", "1"], "r0", ["r0"])
-	divisibile.add_transition("r0", "0", "r0")
-	# ... una add_transition per ogni freccia ...
-	await _round(divisibile, "1101", "Riga di suggerimento mostrata in basso.")
+	{
+		"name": "finisce per 0",
+		"states": ["t0", "t1"], "alphabet": ["0", "1"],
+		"start": "t0", "accepting": ["t1"],
+		"transitions": [
+			["t0", "0", "t1"], ["t0", "1", "t0"],
+			["t1", "0", "t1"], ["t1", "1", "t0"],
+		],
+		"words": ["1010", "1101", "010", "011"],
+		"hint": "Riga di suggerimento mostrata in basso.",
+	},
 ```
 
-Tre vincoli:
-1. Per la Fase 1 l'automa deve essere **completo e deterministico**: da ogni stato, per ogni simbolo dell'alfabeto, esattamente una freccia. Altrimenti l'esecuzione si blocca a metà parola.
-2. **Massimo 4-5 stati**: la vista li dispone in fila orizzontale e oltre non ci stanno.
-3. La parola deve usare solo simboli dell'alfabeto dichiarato.
+Tre vincoli (li controllano i test):
+1. L'automa deve essere **completo e deterministico**: da ogni stato, per ogni simbolo dell'alfabeto, esattamente una freccia. Altrimenti l'esecuzione si blocca a metà parola.
+2. **Massimo 5 stati**: la vista li dispone in fila orizzontale e oltre non ci stanno.
+3. Le parole devono usare solo simboli dell'alfabeto dichiarato, e servono almeno due parole.
 
 ### 4.2 Aggiungere un passo di determinizzazione (Fase 2)
 
-Una riga per passo, dentro `Phase2._start()`:
+Una voce in `NFA_POOL`, con i passi che il giocatore dovrà rifare:
 
 ```gdscript
-	await _build(nfa, [["q0", "q1"], "b"], "Suggerimento per questo passo.")
+		"steps": [
+			[["q0"], "a", "Suggerimento per questo passo."],
+			[["q0", "q1"], "b", "Un altro suggerimento."],
+		],
 ```
 
-Il primo elemento è l'insieme di partenza, il secondo il simbolo. **La risposta attesa non si scrive**: la calcola il model con `automaton.move(insieme, simbolo)`, ε-chiusura compresa. Se sbagli l'insieme di partenza il gioco resta comunque coerente, ma il passo perde senso didattico: falli seguire l'uno all'altro come nella costruzione vera.
+Il primo elemento è l'insieme di partenza, il secondo il simbolo. **La risposta attesa non si scrive**: la calcola il model con `automaton.move(insieme, simbolo)`, ε-chiusura compresa. Fai in modo che i passi si susseguano come nella costruzione vera, altrimenti perdono senso didattico.
+
+Il campo `"epsilon"` dice se l'automa ha ε-transizioni: la Fase 2 pesca **un automa di ciascun tipo**, quindi il catalogo deve contenerne sempre almeno uno per tipo.
 
 ### 4.3 Aggiungere una macchina di Turing (Fase 3)
 
+Una voce in `TM_POOL` (da eseguire) o in `DESIGN_POOL` (da completare):
+
 ```gdscript
-	_machine = TuringMachine.new()
-	_machine.start_state = "q0"
-	_machine.accept_state = "qf"
-	_machine.set_rule("q0", "0", "1", TuringMachine.RIGHT, "q0")   # δ(q0,0) = (1, →, q0)
-	_machine.load_input("101")
-	_tape.setup(_machine)
-	_rules.setup(_machine, ["q0|0", "q0|1", "q0|" + TuringMachine.BLANK])
+	{
+		"name": "inverte i bit",
+		"start": "q0", "accept": "qf", "input": "101",
+		"rules": [                       # [stato, letto, scritto, direzione, nuovo stato]
+			["q0", "0", "1", R, "q0"],   # R = destra, L = sinistra, S = ferma
+			["q0", "1", "0", R, "q0"],
+			["q0", "□", "□", S, "qf"],
+		],
+		"result": "ogni bit invertito",  # compare nel messaggio finale
+		"hint": "Suggerimento.",
+	},
 ```
 
-La chiave di una regola è `"stato|simbolo"`. `RuleTableView.setup` riceve l'elenco delle chiavi da mostrare: mettine anche qualcuna **non** applicabile, sono le distrazioni che rendono la scelta significativa.
+Due avvertenze:
+- ⚠️ **La macchina deve fermarsi**, e in pochi passi: il giocatore clicca una regola a ogni passo, quindi oltre la ventina diventa una tortura. I test verificano l'arresto e il numero di passi.
+- **Poche regole**: la tabella cresce verso l'alto in base a quante ne ha (`RuleTableView.preferred_height()`), ma oltre le 7-8 lo spazio finisce.
 
-⚠️ Prova sempre la macchina prima, con `run()` in un test: se non si ferma, il giocatore resterà a cliccare all'infinito.
+Per `DESIGN_POOL` serve anche `"missing"` (la regola che manca) e `"options"` con **esattamente una** alternativa `"correct": true`; le alternative vengono mescolate a ogni partita.
 
-### 4.4 Aggiungere un programma WHILE (Fase 5)
+### 4.4 Aggiungere un programma WHILE (Fase 4)
 
-Come nel Livello 2, un obiettivo è **solo dati**:
+Una voce in `WHILE_POOL`. Le soluzioni di riferimento si scrivono nella **notazione accademica del corso**:
 
 ```gdscript
-		WhileTask.make(
-			"Metti in r il resto di x diviso y.",        # richiesta
-			"r := x; while r >= y do r := r - y end",    # soluzione di riferimento
-			[{"x": 0, "y": 3}, {"x": 7, "y": 2}],       # stati iniziali di prova
-			["r"],                                       # variabili da confrontare
-			"Suggerimento.", "Spiegazione dopo il successo."),
+	{
+		"prompt": "Metti in R il resto di X diviso Y (Y > 0).",
+		"solution": """begin
+INPUT(X);
+INPUT(Y);
+while X >= Y do
+	 begin X := X - Y end
+R := X;
+OUTPUT(R)
+end""",
+		"cases": [{"X": 0, "Y": 3}, {"X": 7, "Y": 2}, {"X": 8, "Y": 8}],
+		"outputs": ["R"],
+		"hint": "Suggerimento.", "explain": "Spiegazione dopo il successo.",
+	},
 ```
 
 Quattro regole:
-- **Scegli esercizi che il linguaggio non risolve con un operatore.** Massimo, divisione, resto, fattoriale vanno bene; «somma di x e y» no, perché `z := x + y` è una risposta legittima e il ciclo non serve.
-- **Metti fra i casi di prova quelli limite**: zero, uguali, primo minore del secondo. La correzione prova tutti i casi e si ferma al primo che fallisce.
+- **Scegli esercizi che il linguaggio non risolve con un operatore.** Divisione, resto, MCD, fattoriale vanno bene; «somma di X e Y» no, perché `Z := X + Y` è una risposta legittima e il ciclo non serve.
+- **Metti fra i casi di prova quelli limite**: zero, valori uguali, primo minore del secondo. La correzione li prova tutti e si ferma al primo che fallisce.
 - **La soluzione di riferimento deve terminare** su ogni caso, altrimenti il giocatore riceve «Soluzione di riferimento non valida».
-- **Non serve prevedere le varianti**: si confronta l'effetto, non il testo.
+- **Non serve prevedere le varianti**: si confronta l'effetto, non il testo, quindi il giocatore può rispondere anche nella notazione compatta.
 
-Il linguaggio accetta: `x := e` · `;` · `while c do ... end` (anche `od`) · `if c then ... else ... end` (anche `fi`, `else` facoltativo) · `skip` · `+ - *` (la sottrazione è troncata a 0) · `= != < <= > >=` · una condizione senza confronto significa «≠ 0» · commenti con `#`. Non esistono divisione, resto, array o funzioni: se ti servono, § 4.5.
+Il linguaggio accetta **due scritture equivalenti**:
+
+| | Compatta | Accademica (del corso) |
+|---|---|---|
+| Raggruppare | `;` | `begin ... end` |
+| Ciclo | `while c do P end` (anche `od`) | `while c do begin P end` |
+| Condizione | `if c then P else Q end` (anche `fi`) | `if c then begin P end else begin Q end` |
+| Ingressi/uscite | — | `INPUT(X)` · `OUTPUT(Y)` |
+| Successore/predecessore | `x + 1` · `x - 1` | `s(x)` · `pd(x)` |
+| Commenti | `# ...` | `/* ... */` |
+
+In entrambe: variabili sui **naturali** (valgono 0 se mai assegnate), operatori `+ - *` con **sottrazione troncata**, confronti `= != < <= > >=`, e una condizione senza confronto significa «≠ 0». Dopo un `end` il `;` può mancare. Non esistono divisione, resto, array o funzioni diverse da `s` e `pd`: se ti servono, § 4.5.
 
 ### 4.5 Estendere l'interprete WHILE
 
 Stessa procedura in tre stadi del motore SQL (§ 3.5): `tokenize()` per i simboli nuovi, la classe `Parser` per la grammatica, `_exec`/`_eval` per la semantica, e i casi in `tests/test_lvl3.gd`. I messaggi d'errore devono dire **la forma giusta**, non solo che c'è un errore: li legge il giocatore.
 
-### 4.6 Aggiungere una fase
+### 4.6 Aggiungere (o togliere) una fase
 
 Crea `scripts/phases/lvl3/Phase6.gd` che `extends Lvl3PhaseBase`, monta la sua vista con `level.mount(...)`, e aggiungi la voce a `PHASE_SCRIPTS` **e** a `PHASE_BANNERS` di `Level3.gd` (array paralleli). Poi aggiorna l'introduzione e insegna la fase al bot.
+
+Per **togliere** una fase basta rimuovere le sue due voci: il file resta sul disco e si riattiva rimettendole. È quello che è stato fatto con `Phase4.gd`, la fase sul problema dell'arresto.
+
+⚠️ Se una fase mostra pulsanti sopra una vista, ricorda che **le viste stanno dentro `Stage`, che non parte dal bordo dello schermo, mentre i pulsanti stanno in `ActionBar`, che è a schermo intero.** Per posizionare un pulsante rispetto a una vista usa il rettangolo di `Stage`, non `level.size` — vedi `Phase3._design_round()`.
 
 ### 4.7 Verifica
 
@@ -778,6 +828,8 @@ Per aggiungerne uno, una riga in `Sfx._ready()`: `_streams["nuovo"] = _tone([440
 | Il drag "si perde" muovendo veloce il mouse | Il rilascio arriva fuori dal controllo | Gestisci il rilascio in `_input()`, non in `_gui_input()` (vedi `RouterNode`) |
 | `Identifier not found: GameManager` nell'editor | Gli autoload si registrano all'avvio dell'editor | Riavvia l'editor dopo aver modificato gli autoload |
 | Modifiche a una `.tscn` che spariscono | L'editor tiene la scena aperta e la risalva sopra | Apri un'altra scena prima di modificare quel file da fuori |
+| Elementi nuovi disegnati **sopra** i vecchi, che non spariscono | `queue_free()` libera il nodo solo a fine frame: fino ad allora il contenitore continua a disporlo | `remove_child(nodo)` **prima** di `queue_free()` |
+| Un pulsante finisce sopra una vista | Le viste stanno in un contenitore che non parte dal bordo dello schermo, i pulsanti sì | Calcola la posizione dal rettangolo del contenitore, non da `level.size` |
 | Alberi profondi che escono dallo schermo | Layout a passo fisso | Passo verticale adattivo alla profondità (`NetworkView.compute_layout()`) |
 | Confronti fra `float` che falliscono | Errori di virgola mobile | Sempre `is_equal_approx(a, b)`, mai `a == b` |
 | Una fase continua ad agire a tempo scaduto | `await` sospeso quando è scattato il game over | `if _is_over(): return` dopo ogni `await` |

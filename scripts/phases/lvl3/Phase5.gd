@@ -15,7 +15,7 @@ var _solved: bool = false
 
 
 func _start() -> void:
-	level.set_phase_header("FASE 5 — IL LINGUAGGIO WHILE", Color(0.75, 0.65, 1.0))
+	level.set_phase_header("FASE 4 — IL LINGUAGGIO WHILE", Color(0.75, 0.65, 1.0))
 
 	_console = CodeConsole.new()
 	_console.code_submitted.connect(_on_code_submitted)

@@ -8,10 +8,6 @@
 # Plugin dell'editor Ziva: sta sul disco ma non fa parte del gioco
 /ziva_installer/
 
-# Materiale didattico di terzi usato come fonte degli esercizi: sta sul disco
-# ma non va pubblicato sul repository (e' un libro con autori e diritti).
-docs/esercizi_livello_3.pdf
-
 # File temporanei creati da Godot quando ricarica una GDExtension
 **/~*.dll
 **/*.TMP

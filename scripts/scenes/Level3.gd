@@ -7,11 +7,16 @@ extends Control
 ## tabella diagonale, interprete). Il controller espone quindi un "palco"
 ## (Stage) che le fasi riempiono e svuotano.
 
+## I due array sono PARALLELI: stessa lunghezza, stesso ordine.
+##
+## Phase4.gd (il problema dell'arresto con l'argomento diagonale) esiste ancora
+## ma è fuori rotazione: per rimetterlo in gioco basta aggiungere il suo
+## percorso qui sotto e il banner corrispondente. La teoria resta comunque
+## nell'introduzione, perché fa parte del programma.
 const PHASE_SCRIPTS: Array[String] = [
 	"res://scripts/phases/lvl3/Phase1.gd",
 	"res://scripts/phases/lvl3/Phase2.gd",
 	"res://scripts/phases/lvl3/Phase3.gd",
-	"res://scripts/phases/lvl3/Phase4.gd",
 	"res://scripts/phases/lvl3/Phase5.gd",
 ]
 
@@ -19,8 +24,7 @@ const PHASE_BANNERS: Array = [
 	["FASE 1 — AUTOMI DETERMINISTICI", "Esegui l'automa sulla parola: uno stato alla volta.", Color(0.4, 0.85, 1.0)],
 	["FASE 2 — NON DETERMINISMO", "Trasforma l'automa non deterministico nel suo equivalente deterministico.", Color(0.4, 1.0, 0.7)],
 	["FASE 3 — MACCHINE DI TURING", "Applica le quintuple e guarda il nastro cambiare.", Color(1.0, 0.82, 0.35)],
-	["FASE 4 — PROBLEMI SENZA SOLUZIONE", "Costruisci la macchina che nessun elenco può contenere.", Color(1.0, 0.5, 0.45)],
-	["FASE 5 — IL LINGUAGGIO WHILE", "Tre costrutti bastano per calcolare tutto il calcolabile.", Color(0.75, 0.65, 1.0)],
+	["FASE 4 — IL LINGUAGGIO WHILE", "Tre costrutti bastano per calcolare tutto il calcolabile.", Color(0.75, 0.65, 1.0)],
 ]
 
 var is_over: bool = false
@@ -103,7 +107,10 @@ func _run_level() -> void:
 
 ## Le fasi montano qui la loro vista. Il palco viene svuotato a ogni cambio.
 func clear_stage() -> void:
+	# remove_child() prima di queue_free(): altrimenti il nodo resta nell'albero
+	# fino a fine frame e la vista nuova si sovrappone alla vecchia.
 	for child in stage.get_children():
+		stage.remove_child(child)
 		child.queue_free()
 
 
@@ -127,6 +134,7 @@ func make_action_button(text: String, center: Vector2, button_size: Vector2 = Ve
 
 func clear_action_bar() -> void:
 	for child in action_bar.get_children():
+		action_bar.remove_child(child)
 		child.queue_free()
 
 
@@ -222,7 +230,7 @@ func _show_victory() -> void:
 	Sfx.play("victory")
 	end_title.text = "COLLAUDO COMPLETATO"
 	end_title.add_theme_color_override("font_color", Color(0.75, 0.65, 1.0))
-	end_subtitle.text = "Hai completato il Livello 3 con %s sul cronometro.\n\nHai eseguito automi deterministici, determinizzato un automa non deterministico,\nfatto girare macchine di Turing, costruito la macchina diagonale che dimostra\nl'indecidibilità dell'arresto e programmato in WHILE.\n\nProve superate: %d." % [
+	end_subtitle.text = "Hai completato il Livello 3 con %s sul cronometro.\n\nHai eseguito automi deterministici, determinizzato un automa non deterministico,\nfatto girare e progettato macchine di Turing e programmato nel linguaggio WHILE.\n\nProve superate: %d." % [
 		GameManager.formatted_time(), solved_count]
 	restart_button.text = "Gioca di nuovo"
 	_show_end_screen()

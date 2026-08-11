@@ -35,6 +35,7 @@ func setup(model: Automaton) -> void:
 	automaton = model
 	for node in nodes.values():
 		if is_instance_valid(node):
+			remove_child(node)
 			node.queue_free()
 	nodes.clear()
 	_edge_colors.clear()

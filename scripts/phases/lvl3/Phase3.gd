@@ -20,7 +20,6 @@ func _start() -> void:
 
 	_tape = TapeView.new()
 	level.mount(_tape)
-	_tape.offset_bottom = -190.0
 
 	_rules = RuleTableView.new()
 	_rules.rule_clicked.connect(_on_rule_clicked)
@@ -32,8 +31,8 @@ func _start() -> void:
 	_rules.anchor_bottom = 1.0
 	_rules.offset_left = -200.0
 	_rules.offset_right = 200.0
-	_rules.offset_top = -200.0
 	_rules.offset_bottom = -12.0
+	_layout_rules()
 
 	await _execute_round()
 	if _is_over():
@@ -45,6 +44,14 @@ func _start() -> void:
 	await complete("Una macchina di Turing è solo un nastro e una tabella: eppure calcola tutto ciò che è calcolabile.")
 
 
+## La tabella cresce verso l'alto in base a quante regole ha la macchina, e il
+## nastro si sposta per non finirci sotto.
+func _layout_rules() -> void:
+	var height: float = _rules.preferred_height()
+	_rules.offset_top = -height - 12.0
+	_tape.offset_bottom = -height - 46.0
+
+
 ## Giro 1: esegui una macchina pescata dal catalogo.
 func _execute_round() -> void:
 	var entry: Dictionary = Lvl3Pools.pick_one(Lvl3Pools.TM_POOL)
@@ -53,6 +60,7 @@ func _execute_round() -> void:
 
 	_tape.setup(_machine)
 	_rules.setup(_machine, _machine.rules.keys())
+	_layout_rules()
 	level.set_hint(String(entry["hint"]))
 
 	var step: int = 0
@@ -83,6 +91,7 @@ func _design_round() -> void:
 
 	_tape.setup(_machine)
 	_rules.setup(_machine, _machine.rules.keys())
+	_layout_rules()
 	level.set_objective(String(entry["goal"]))
 	level.set_hint(String(entry["hint"]))
 
@@ -93,12 +102,25 @@ func _design_round() -> void:
 		if bool(option["correct"]):
 			_correct_option = String(option["text"])
 
+	# Il palco può contenere ancora i pulsanti del giro precedente.
+	level.clear_action_bar()
+
+	# Le alternative vanno SOPRA la tabella delle regole, che resta visibile
+	# perché serve a ragionare: la tabella ha altezza variabile, quindi la
+	# posizione si calcola da lei e non da un numero fisso.
+	# Attenzione: la tabella sta dentro Stage (che non parte dal bordo dello
+	# schermo), mentre i pulsanti stanno in ActionBar, che è a schermo intero.
+	# La posizione va quindi calcolata dal rettangolo di Stage, non da level.size.
+	var spacing: float = 62.0
+	var stage_bottom: float = level.stage.position.y + level.stage.size.y
+	var table_top: float = stage_bottom - _rules.preferred_height() - 12.0
+	var lowest: float = table_top - 40.0
 	var chosen: Array = [false]
-	var middle_y: float = level.size.y - 150.0
 	for i in range(options.size()):
 		var option: Dictionary = options[i]
+		var y: float = lowest - float(options.size() - 1 - i) * spacing
 		var button: Button = level.make_action_button(String(option["text"]),
-			Vector2(level.size.x * 0.5, middle_y - float(2 - i) * 62.0), Vector2(430.0, 52.0))
+			Vector2(level.size.x * 0.5, y), Vector2(430.0, 52.0))
 		button.pressed.connect(func() -> void: _on_option(option, chosen))
 
 	await helper_done
@@ -111,6 +133,7 @@ func _design_round() -> void:
 	_machine.set_rule(String(missing[0]), String(missing[1]), String(missing[2]),
 		int(missing[3]), String(missing[4]))
 	_rules.setup(_machine, _machine.rules.keys())
+	_layout_rules()
 	_rules.set_enabled(false)
 	level.set_objective("Regola inserita. La macchina gira da sola...")
 	while not _machine.is_halted() and not _is_over():

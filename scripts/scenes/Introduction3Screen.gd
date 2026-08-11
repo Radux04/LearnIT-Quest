@@ -116,17 +116,18 @@ Il solo [code]while[/code] fa la parte della [b]minimalizzazione μ[/b]: è il c
 	{
 		"title": "7 · La missione",
 		"body": """[b][color=#c0a8ff]Laboratorio di Calcolabilità[/color][/b]
-Devi collaudare cinque macchine. Hai [b]12 MINUTI[/b]: a cronometro scaduto la prova è fallita. Non ti si chiede di ripetere definizioni, ma di [b]far girare[/b] le macchine.
+Devi collaudare quattro macchine. Hai [b]12 MINUTI[/b]: a cronometro scaduto la prova è fallita. Non ti si chiede di ripetere definizioni, ma di [b]far girare[/b] le macchine.
 
 [b][color=#7fd8ff]FASE 1 · Automi deterministici[/color][/b]  Esegui il DFA: leggi un simbolo, clicca lo stato di arrivo, poi dichiara se la parola è accettata.
 [b][color=#7ffcc0]FASE 2 · Determinizzazione[/color][/b]  Costruzione per sottoinsiemi: seleziona tutti gli stati raggiungibili, ε-chiusura compresa.
 [b][color=#ffd166]FASE 3 · Macchine di Turing[/color][/b]  Applica la quintupla giusta a ogni passo, poi progetta la regola mancante.
-[b][color=#ff9a9a]FASE 4 · Problema dell'arresto[/color][/b]  Costruisci la macchina diagonale D e trova la contraddizione.
-[b][color=#c0a8ff]FASE 5 · Linguaggio WHILE[/color][/b]  Scrivi programmi veri: li esegue un interprete, non un correttore di testo.
+[b][color=#c0a8ff]FASE 4 · Linguaggio WHILE[/color][/b]  Scrivi programmi veri, nella notazione del corso: li esegue un interprete, non un correttore di testo.
+
+Gli esercizi sono [b]sorteggiati a ogni partita[/b] da un catalogo: due volte di fila non trovi gli stessi.
 
 [b][color=#7fd8ff]Penalità[/color][/b]  Passo di esecuzione sbagliato [b]-6 s[/b]  ·  scelta sbagliata [b]-10 s[/b]  ·  programma che non compila [b]-8 s[/b]  ·  programma che non risolve [b]-12 s[/b].
 
-[b][color=#7fd8ff]Comandi[/color][/b]  Clic per stati, regole e celle. Nella Fase 5 scrivi nella console e premi [b]Esegui[/b] oppure [b]Ctrl+Invio[/b]. [b]Esc[/b] mette in pausa.""",
+[b][color=#7fd8ff]Comandi[/color][/b]  Clic per stati e regole. Nella Fase 4 scrivi nella console e premi [b]Esegui[/b] oppure [b]Ctrl+Invio[/b]. [b]Esc[/b] mette in pausa.""",
 	},
 ]
 

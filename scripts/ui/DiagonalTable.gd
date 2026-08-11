@@ -27,6 +27,7 @@ func _ready() -> void:
 
 func setup(row_names: Array, column_names: Array, table: Array) -> void:
 	for child in get_children():
+		remove_child(child)
 		child.queue_free()
 	_cells.clear()
 	rows.clear()

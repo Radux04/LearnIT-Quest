@@ -232,21 +232,44 @@ Il principio è sempre lo stesso: non si risponde a domande sulla teoria, **si e
 
 Automi di riconoscimento · non determinismo, ε-transizioni e costruzione per sottoinsiemi · macchine di Turing, funzioni calcolabili, linguaggi decidibili e semidecidibili, tesi di Church-Turing, macchine non deterministiche · macchina universale, problema dell'arresto, teoremi di Rice e Kleene, decimo problema di Hilbert · funzioni ricorsive, calcolabilità secondo Church, minimalizzazione μ e funzioni parziali ricorsive · sintassi e semantica del linguaggio WHILE · la missione.
 
-### Le cinque fasi
+### Le quattro fasi
 
 | Fase | Argomento | Che cosa fa il giocatore |
 |---|---|---|
 | 1 · Automi deterministici | DFA, linguaggi regolari | **Esegue** l'automa: legge un simbolo, clicca lo stato di arrivo, poi dichiara se la parola è accettata |
 | 2 · Determinizzazione | NFA, ε-chiusura, trasformazioni | Esegue a mano la **costruzione per sottoinsiemi**: seleziona tutti gli stati raggiungibili |
 | 3 · Macchine di Turing | nastro, quintuple, δ | Applica la **quintupla giusta** a ogni passo, poi progetta la regola mancante e guarda la macchina girare |
-| 4 · Problema dell'arresto | diagonalizzazione, indecidibilità | Costruisce la **macchina diagonale D** invertendo la diagonale e trova la contraddizione |
-| 5 · Linguaggio WHILE | calcolabilità e programmazione | **Scrive programmi veri**: massimo, somma 1..n, divisione intera con resto, fattoriale |
+| 4 · Linguaggio WHILE | calcolabilità e programmazione | **Scrive programmi veri** nella notazione del corso: divisione con resto, moltiplicazione, MCD, fattoriale |
+
+Gli esercizi sono **sorteggiati a ogni partita** da un catalogo (`scripts/phases/lvl3/Lvl3Pools.gd`): due partite di fila non propongono gli stessi.
+
+> La fase sul **problema dell'arresto** (argomento diagonale) è scritta e funzionante in `scripts/phases/lvl3/Phase4.gd`, ma è **fuori rotazione**: per rimetterla in gioco basta aggiungere il suo percorso a `PHASE_SCRIPTS` in `Level3.gd` e il banner corrispondente. La teoria resta comunque nell'introduzione.
 
 Penalità: **−6 s** per un passo di esecuzione sbagliato, **−10 s** per una scelta sbagliata, **−8 s** per un programma che non compila, **−12 s** per un programma che gira ma non risolve.
 
 ### L'interprete WHILE
 
 `scripts/computability/WhileInterpreter.gd` è un interprete completo (tokenizer → parser a discesa ricorsiva → semantica operazionale) del linguaggio WHILE: assegnamento, sequenza, `while`, `if`, aritmetica sui naturali con **sottrazione troncata** (`3 - 5` fa `0`).
+
+Accetta **due notazioni** per lo stesso linguaggio. Quella compatta:
+
+```
+z := x; while y != 0 do z := z + 1; y := y - 1 end
+```
+
+e quella **accademica del corso**, che è anche quella in cui sono scritte le soluzioni di riferimento:
+
+```
+begin
+INPUT(X); INPUT(Y);
+Z := 0;
+while Y > 0 do
+     begin Z := Z + X; Y := Y - 1 end
+OUTPUT(Z)
+end
+```
+
+con blocchi `begin`…`end`, `INPUT`/`OUTPUT`, il successore `s(x)` e il predecessore `pd(x)`, e il `;` facoltativo dopo un `end`. Gli esercizi provengono dall'eserciziario del corso (`docs/esercizi_livello_3.pdf`).
 
 Il **limite di passi** non è un dettaglio tecnico ma il cuore didattico del livello: un programma può non terminare, e in quel caso calcola una funzione **parziale**. L'interprete non può saperlo in anticipo — è esattamente il problema dell'arresto — quindi a un certo punto si arrende e lo dichiara.
 
