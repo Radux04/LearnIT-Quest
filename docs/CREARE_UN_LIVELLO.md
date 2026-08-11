@@ -20,8 +20,9 @@ Se è la prima volta che apri il progetto, leggi comunque il capitolo 1: sono le
 | far accettare un comando nuovo al motore SQL o all'interprete WHILE | **§ 3.5** e **§ 4.5** |
 | aggiungere una pagina al manuale | **§ 3.4** |
 | ritoccare difficoltà, penalità o durata | **§ 2.1**, **§ 3.6**, **§ 4.7** |
-| creare un Livello 4 da zero | **§ 5** e **§ 6** |
-| capire perché una modifica ha rotto qualcosa | **§ 8** — trappole già incontrate |
+| aggiungere un esercizio Java al Livello 4 | **§ 5** |
+| creare un Livello 5 da zero | **§ 6** e **§ 7** |
+| capire perché una modifica ha rotto qualcosa | **§ 9** — trappole già incontrate |
 
 > **Regola che vale per ogni modifica:** prima di dire «fatto», rilancia i controlli automatici del **§ 3.7** e del **§ 4.7**. Ci mettono meno di un minuto e ti dicono subito se hai rotto qualcosa altrove.
 
@@ -113,7 +114,7 @@ Lo stesso schema vale per qualsiasi altra sfida: **un metodo `_challenge_*` + un
 
 ### 2.3 Aggiungere una fase intera al Livello 1
 
-1. Crea `scripts/phases/Phase6.gd` che `extends PhaseBase`, sovrascrive `_start()` e chiude con `finished.emit()` (lo scheletro è al § 6, passo 4).
+1. Crea `scripts/phases/Phase6.gd` che `extends PhaseBase`, sovrascrive `_start()` e chiude con `finished.emit()` (lo scheletro è al § 7, passo 4).
 2. In `scripts/scenes/Level.gd` aggiungi **nella stessa posizione** una voce a `PHASE_SCRIPTS` e una a `PHASE_BANNERS`: sono due array paralleli, se le lunghezze non coincidono il livello va in errore all'avvio.
 3. Aggiungi la teoria all'introduzione (`scripts/scenes/IntroductionScreen.gd`, costante `PAGES`) e la nuova fase all'elenco nella pagina della missione.
 4. Estendi il bot di autoplay perché sappia giocarla, altrimenti il test automatico si blocca lì.
@@ -121,7 +122,7 @@ Lo stesso schema vale per qualsiasi altra sfida: **un metodo `_challenge_*` + un
 
 ### 2.4 Aggiungere un mini-gioco nuovo
 
-Se la meccanica è generica (vale per qualunque struttura ad albero) mettila in `PhaseBase`; se serve solo a una fase, tienila in quella fase. In entrambi i casi segui il pattern `await helper_done` descritto al § 6, passo 3, e rispetta le due regole non negoziabili: **`_is_over()` dopo ogni `await`** e **messaggi d'errore che spiegano il perché con i numeri veri**.
+Se la meccanica è generica (vale per qualunque struttura ad albero) mettila in `PhaseBase`; se serve solo a una fase, tienila in quella fase. In entrambi i casi segui il pattern `await helper_done` descritto al § 7, passo 3, e rispetta le due regole non negoziabili: **`_is_over()` dopo ogni `await`** e **messaggi d'errore che spiegano il perché con i numeri veri**.
 
 ### 2.5 Verifica dopo ogni modifica
 
@@ -144,7 +145,7 @@ Dove sta cosa:
 | `scripts/sql/SqlParser.gd` | Da token ad albero sintattico (AST) |
 | `scripts/sql/SqlEngine.gd` | Esegue l'AST sul database |
 | `scripts/sql/SqlDatabase.gd` | Tabelle, righe, `snapshot()`/`restore()` per il confronto |
-| `scripts/sql/SqlTask.gd` | La correzione **per equivalenza** (§ 9) |
+| `scripts/sql/SqlTask.gd` | La correzione **per equivalenza** (§ 10) |
 | `scripts/phases/lvl2/Phase1.gd` … `Phase5.gd` | Gli elenchi di obiettivi |
 | `scripts/scenes/Level2.gd` | Fasi, dati iniziali, penalità, HUD |
 | `scripts/ui/SqlConsole.gd`, `SqlManual.gd`, `SqlTableView.gd` | Console, manuale, viste delle tabelle |
@@ -421,7 +422,55 @@ Il bot ha una costante comoda: **`STOP_AT_PHASE`**. Messa a `N`, gioca le fasi p
 
 ---
 
-## 5. Anatomia di un livello
+## 5. Ampliare il Livello 4 (metodologie e Java)
+
+Il Livello 4 corregge in modo **strutturale**: non compila il Java, ne analizza la forma. Il catalogo è `scripts/phases/lvl4/Lvl4Pools.gd` e ha quattro elenchi.
+
+**`REVIEW_POOL`** — righe da cliccare. `"bad"` sono gli indici delle righe difettose, **contati da 0**:
+
+```gdscript
+	{
+		"topic": "clean",          # "clean" o "solid": la fase pesca da entrambi
+		"name": "nomi e numeri magici",
+		"question": "Clicca le righe con nomi che non spiegano nulla.",
+		"code": "public class Fattura {\n    private double t;\n}",
+		"bad": [1],
+		"hint": "...", "explain": "...",
+	},
+```
+
+⚠️ **Conta le righe con attenzione**: i test verificano che ogni indice esista e non sia una riga vuota, ed è l'errore che si fa più spesso.
+
+**`SPLIT_POOL`** — separazione delle responsabilità: due classi di destinazione e i metodi con l'indice della classe giusta. Entrambe le classi devono ricevere almeno un metodo, altrimenti non c'è niente da separare.
+
+**`REFACTOR_POOL`** e **`WRITE_POOL`** — esercizi da scrivere nell'editor:
+
+```gdscript
+	{
+		"prompt": "Riscrivi togliendo il numero magico.",
+		"code": "...codice di partenza...",       # "" per scrivere da zero
+		"checks": [
+			{"kind": "no_magic_numbers"},
+			{"kind": "contains", "text": "static final",
+				"message": "Messaggio che spiega perché serve."},
+		],
+		"solution": "...soluzione di riferimento...",
+		"hint": "...", "explain": "...",
+	},
+```
+
+Tre regole che i test verificano:
+- Il **codice di partenza non deve già superare i controlli**, altrimenti l'esercizio nasce risolto.
+- La **soluzione di riferimento deve superarli tutti** — la usa anche il bot per giocare.
+- Ogni controllo può portare un `"message"` proprio: usalo, perché il messaggio predefinito è generico e questo livello insegna proprio col messaggio d'errore.
+
+I tipi di controllo disponibili sono elencati in `JavaTask._run_check()`: `class_named`, `kind_is`, `extends`, `implements`, `has_field`, `field_private`, `no_public_fields`, `has_method`, `lacks_method`, `method_count_at_least`, `method_count_at_most`, `max_method_lines`, `no_magic_numbers`, `meaningful_names`, `no_duplicated_lines`, `contains`, `lacks`, `has_annotation`, `field_annotated`, `max_code_lines`.
+
+Per aggiungerne uno nuovo: un ramo nel `match` di `_run_check()`, l'interrogazione corrispondente in `JavaCode.gd` e i casi in `tests/test_lvl4.gd`.
+
+---
+
+## 6. Anatomia di un livello
 
 Cinque strati, ognuno ignaro di quello sopra. Questo è il motivo per cui si riusa quasi tutto.
 
@@ -447,7 +496,7 @@ Cinque strati, ognuno ignaro di quello sopra. Questo è il motivo per cui si riu
 
 ---
 
-## 6. Procedura passo-passo per un livello nuovo
+## 7. Procedura passo-passo per un livello nuovo
 
 ### Passo 0 — Scegli argomento e meccaniche (la parte più importante)
 
@@ -712,7 +761,7 @@ Eseguilo con **F6**: se arriva al messaggio di vittoria senza errori runtime, l'
 
 ---
 
-## 7. API di riferimento
+## 8. API di riferimento
 
 ### `level` (LevelController), disponibile in ogni fase
 
@@ -819,7 +868,7 @@ Per aggiungerne uno, una riga in `Sfx._ready()`: `_streams["nuovo"] = _tone([440
 
 ---
 
-## 8. Trappole già incontrate (leggile, fanno risparmiare ore)
+## 9. Trappole già incontrate (leggile, fanno risparmiare ore)
 
 | Sintomo | Causa | Rimedio |
 |---|---|---|
@@ -836,7 +885,7 @@ Per aggiungerne uno, una riga in `Sfx._ready()`: `_streams["nuovo"] = _tone([440
 
 ---
 
-## 9. Un livello "da tastiera" invece che "da mouse"
+## 10. Un livello "da tastiera" invece che "da mouse"
 
 Il Livello 2 mostra la seconda famiglia possibile di livelli: il giocatore non manipola oggetti, **scrive**. Se il tuo Livello 3 è di questo tipo, riusa questi tre pezzi:
 
@@ -888,7 +937,7 @@ Aggiungere un esercizio significa aggiungere cinque stringhe: nessuna logica nuo
 
 ---
 
-## 10. Checklist finale prima di dire "fatto"
+## 11. Checklist finale prima di dire "fatto"
 
 - [ ] Il model non contiene nessun riferimento a nodi Godot
 - [ ] Ogni messaggio d'errore spiega il **perché**, con i numeri della partita

@@ -1,7 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3 uid="uid://c1e13plrapqw0"]
 
-[ext_resource type="Script" path="res://scripts/scenes/Level4.gd" id="1_level4"]
-[ext_resource type="Texture2D" path="res://assets/generated/circuit_bg_frame_0.png" id="2_circuit"]
+[ext_resource type="Script" uid="uid://d0p2igpuerk2f" path="res://scripts/scenes/Level4.gd" id="1_level4"]
+[ext_resource type="Texture2D" uid="uid://ba5x5y6v05mrb" path="res://assets/generated/circuit_bg_frame_0.png" id="2_circuit"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
 bg_color = Color(0.043, 0.075, 0.145, 0.94)
