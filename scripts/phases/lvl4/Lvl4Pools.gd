@@ -214,43 +214,32 @@ const REFACTOR_POOL: Array = [
 		"explain": "Ora il codice si legge da solo: nessuno deve più chiedersi che cosa sia 1.22.",
 	},
 	{
-		"prompt": "Questo metodo fa tre cose. Spezzalo: il totale, le spese di spedizione e lo sconto devono stare in metodi separati.",
+		"prompt": "Questo metodo fa due cose: somma le righe e aggiunge la spedizione. Spezzalo in metodi separati e dai un nome al numero.",
 		"code": """public class Ordine {
 
-    public double totale(List<Riga> righe, boolean urgente, int puntiFedelta) {
-        double somma = 0;
-        for (Riga riga : righe) {
-            somma = somma + riga.getPrezzo() * riga.getQuantita();
-        }
-        double spedizione = 0;
-        if (urgente) {
-            spedizione = 15;
-        } else {
-            spedizione = 5;
-        }
-        double sconto = 0;
-        if (puntiFedelta > 100) {
-            sconto = somma * 0.1;
-        }
-        return somma + spedizione - sconto;
-    }
+	public double totale(List<Riga> righe, boolean urgente) {
+		double somma = 0;
+		for (Riga riga : righe) {
+			somma = somma + riga.getPrezzo() * riga.getQuantita();
+		}
+		if (urgente) {
+			somma = somma + 15;
+		}
+		return somma;
+	}
 }""",
 		"checks": [
-			{"kind": "method_count_at_least", "count": 4,
-				"message": "Servono almeno quattro metodi: quello principale più uno per ciascuna delle tre responsabilità."},
-			{"kind": "max_method_lines", "max": 10},
+			{"kind": "method_count_at_least", "count": 3,
+				"message": "Servono almeno tre metodi: quello principale più uno per ciascuna delle due responsabilità."},
+			{"kind": "max_method_lines", "max": 8},
 			{"kind": "no_magic_numbers"},
 		],
 		"solution": """public class Ordine {
 
 	private static final double SPEDIZIONE_URGENTE = 15;
-	private static final double SPEDIZIONE_STANDARD = 5;
-	private static final int PUNTI_PER_SCONTO = 100;
-	private static final double PERCENTUALE_SCONTO = 0.1;
 
-	public double totale(List<Riga> righe, boolean urgente, int puntiFedelta) {
-		double somma = sommaRighe(righe);
-		return somma + spedizione(urgente) - sconto(somma, puntiFedelta);
+	public double totale(List<Riga> righe, boolean urgente) {
+		return sommaRighe(righe) + spedizione(urgente);
 	}
 
 	private double sommaRighe(List<Riga> righe) {
@@ -265,17 +254,10 @@ const REFACTOR_POOL: Array = [
 		if (urgente) {
 			return SPEDIZIONE_URGENTE;
 		}
-		return SPEDIZIONE_STANDARD;
-	}
-
-	private double sconto(double somma, int puntiFedelta) {
-		if (puntiFedelta > PUNTI_PER_SCONTO) {
-			return somma * PERCENTUALE_SCONTO;
-		}
 		return 0;
 	}
 }""",
-		"hint": "Estrai tre metodi privati e falli chiamare dal metodo principale, che diventa il riassunto leggibile dell'algoritmo.",
+		"hint": "Estrai due metodi privati e falli chiamare dal metodo principale, che diventa il riassunto leggibile dell'algoritmo.",
 		"explain": "Un metodo che fa una cosa sola si prova, si legge e si cambia senza paura.",
 	},
 	{

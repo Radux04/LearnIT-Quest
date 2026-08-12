@@ -9,7 +9,7 @@ signal penalty_applied(seconds: float)
 const LEVEL_DURATION := 300.0          # 5 minuti — Livello 1
 const LEVEL2_DURATION := 600.0         # 10 minuti — Livello 2 (si scrive, non si clicca)
 const LEVEL3_DURATION := 720.0         # 12 minuti — Livello 3 (teoria: serve pensare)
-const LEVEL4_DURATION := 840.0         # 14 minuti — Livello 4 (si legge e si scrive codice)
+const LEVEL4_DURATION := 960.0         # 16 minuti — Livello 4 (si scrive codice: serve tempo)
 const WRONG_ANSWER_PENALTY := 10.0
 
 const SCENE_MENU := "res://scenes/main_menu.tscn"
