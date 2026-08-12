@@ -287,7 +287,7 @@ godot --headless --script res://tests/run_lvl3_tests.gd
 
 ## Livello 4 · Code Review (metodologie di programmazione)
 
-Sei il revisore di una base di codice **Java** che deve andare in produzione. Durata **14 minuti**.
+Sei il revisore di una base di codice **Java** che deve andare in produzione. Durata **16 minuti**.
 
 ### Introduzione teorica (4 pagine)
 

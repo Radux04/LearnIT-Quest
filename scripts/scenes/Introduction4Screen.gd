@@ -72,7 +72,7 @@ Con [b]JAXB[/b] lo stesso oggetto va in XML: [code]@XmlRootElement[/code] sulla 
 	{
 		"title": "4 · La missione",
 		"body": """[b][color=#7fd8ff]Code Review[/color][/b]
-Sei il revisore di una base di codice Java che deve andare in produzione. Hai [b]14 MINUTI[/b]: a cronometro scaduto la revisione è respinta.
+Sei il revisore di una base di codice Java che deve andare in produzione. Hai [b]16 MINUTI[/b]: a cronometro scaduto la revisione è respinta.
 
 [b][color=#7fd8ff]FASE 1 · Clean code[/color][/b]  Il codice è a schermo con i numeri di riga: [b]clicca le righe difettose[/b] e conferma.
 [b][color=#7ffcc0]FASE 2 · Principi SOLID[/color][/b]  Prima individua la violazione, poi [b]separa una classe che fa troppe cose[/b] assegnando ogni metodo alla classe giusta.
