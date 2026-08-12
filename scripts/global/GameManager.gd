@@ -79,6 +79,19 @@ func apply_penalty(seconds: float = WRONG_ANSWER_PENALTY) -> bool:
 	return false
 
 
+## Quanta parte del livello è già trascorsa, da 0 a 1.
+func elapsed_ratio() -> float:
+	if level_duration <= 0.0:
+		return 1.0
+	return clampf((level_duration - time_left) / level_duration, 0.0, 1.0)
+
+
+## Secondi che mancano perché sia trascorsa la frazione indicata del livello.
+## Zero se quel momento è già passato.
+func time_until_ratio(ratio: float) -> float:
+	return maxf(time_left - (1.0 - ratio) * level_duration, 0.0)
+
+
 func formatted_time() -> String:
 	var total: int = int(ceil(time_left))
 	@warning_ignore("integer_division")

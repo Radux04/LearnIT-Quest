@@ -32,8 +32,8 @@ Se è la prima volta che apri il progetto, leggi comunque il capitolo 1: sono le
 
 Prima del codice, i cinque principi a cui il Livello 1 obbedisce. Se il livello nuovo li rispetta, sembrerà parte dello stesso gioco.
 
-1. **L'algoritmo è il gameplay.** Non si chiede *"qual è la complessità della ricerca?"*. Si fa fare al giocatore la ricerca, e il gioco gli mostra a posteriori quanti confronti ha risparmiato. Se una meccanica si può sostituire con una domanda a risposta multipla, è la meccanica sbagliata.
-2. **Nessuna schermata di testo durante il gioco.** Tutta la teoria sta nell'introduzione. Durante il livello parlano solo l'obiettivo (una riga), il *toast* di feedback e il suggerimento in basso.
+1. **L'algoritmo è il gameplay.** Non si chiede *"qual è la complessità della ricerca?"*. Si fa fare al giocatore la ricerca, e il gioco gli mostra a posteriori quanti confronti ha risparmiato. Se una meccanica si può sostituire con una domanda a risposta mu2. **Nessuna schermata di testo durante il gioco.** Tutta la teoria sta nell'introduzione. Durante il livello parlano solo l'obiettivo (una riga), il *toast* di feedback e il suggerimento in basso.
+   Il suggerimento però **non si vede subito**: `HintGate` lo tiene nascosto finché il giocatore non ha commesso **5 errori nella fase corrente** o non è trascorso il **25% del tempo**. Scrivi quindi suggerimenti che diano davvero la mano a chi è bloccato — tanto chi risolve al primo colpo non li leggerà mai. Se una penalità non è uno sbaglio ma un costo scelto (aprire il manuale), passala come `penalty(secondi, false)`.eedback e il suggerimento in basso.
 3. **L'errore insegna.** Mai «Sbagliato!». Sempre «25.9 NON è minore di 25.5: non può stare a sinistra». Il messaggio deve contenere il *perché*, con i numeri veri della partita.
 4. **Fasi consecutive, zero caricamenti.** La struttura disegnata a schermo resta la stessa e si trasforma dal vivo. Il giocatore deve percepire una sola scena continua.
 5. **Cinque minuti, timer sempre visibile, penalità di tempo.** La pressione temporale è ciò che trasforma la conoscenza in automatismo.
@@ -754,7 +754,7 @@ func _process(_delta: float) -> void:
 		return
 	if _try_pick(phase):           # aspetta un clic su un nodo? cliccalo
 		return
-	_try_route(phase)              # aspetta una direzione? calcolala dal model
+	_try_route(phase)  | `set_hint(testo)` | Il suggerimento in basso — **non compare subito**: vedi § 1 |al model
 ```
 
 Eseguilo con **F6**: se arriva al messaggio di vittoria senza errori runtime, l'intera catena funziona. È il modo più veloce per accorgersi di una regressione dopo una modifica al bilanciamento.
