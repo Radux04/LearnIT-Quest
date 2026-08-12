@@ -36,6 +36,12 @@ var phase_node: Lvl3PhaseBase = null
 
 var _toast_tween: Tween = null
 
+const HINT_COLOR_OPEN := Color(0.72, 0.85, 1.0)
+const HINT_COLOR_LOCKED := Color(0.48, 0.54, 0.68)
+
+## Decide quando il suggerimento in basso diventa visibile.
+var hint_gate: HintGate = HintGate.new()
+
 @onready var stage: Control = $Stage
 @onready var action_bar: Control = $ActionBar
 @onready var hud: Control = $HUD
@@ -85,6 +91,7 @@ func _run_level() -> void:
 		if is_over:
 			return
 		current_phase = i + 1
+		hint_gate.reset_phase()
 		var data: Array = PHASE_BANNERS[i]
 		await show_banner(String(data[0]), String(data[1]), data[2])
 		if is_over:
@@ -150,7 +157,14 @@ func set_objective(text: String) -> void:
 
 
 func set_hint(text: String) -> void:
-	hint_label.text = text
+	hint_gate.text = text
+	_refresh_hint()
+## Il suggerimento resta nascosto finché il giocatore non è davvero in
+## difficoltà: la regola sta tutta in HintGate.
+func _refresh_hint() -> void:
+	hint_label.text = hint_gate.display()
+	hint_label.add_theme_color_override("font_color",
+		HINT_COLOR_OPEN if hint_gate.unlocked() else HINT_COLOR_LOCKED)
 
 
 func toast(text: String, color: Color = Color.WHITE) -> void:
@@ -179,8 +193,14 @@ func show_banner(title: String, subtitle: String, color: Color) -> void:
 	await tween.finished
 
 
-func penalty(seconds: float) -> void:
+## `is_error` distingue lo sbaglio del giocatore da un costo scelto
+## volontariamente (per esempio aprire il manuale): solo il primo
+## avvicina lo sblocco del suggerimento.
+func penalty(seconds: float, is_error: bool = true) -> void:
 	GameManager.apply_penalty(seconds)
+	if is_error:
+		hint_gate.register_error()
+		_refresh_hint()
 	var label: Label = Label.new()
 	label.text = "-%d s" % int(seconds)
 	label.add_theme_font_size_override("font_size", 32)
@@ -201,6 +221,7 @@ func penalty(seconds: float) -> void:
 
 func _on_time_updated(_time_left: float, ratio: float) -> void:
 	timer_label.text = GameManager.formatted_time()
+	_refresh_hint()
 	timer_bar.value = ratio
 	var color: Color = Color(0.3, 1.0, 0.55)
 	if ratio < 0.15:

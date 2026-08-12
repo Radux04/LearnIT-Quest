@@ -147,12 +147,16 @@ func _play_editor(index: int) -> void:
 	await get_tree().create_timer(0.6).timeout
 	var phase: Node = _phase()
 	if phase != null and not level.is_over:
+		print("[L4] suggerimento prima degli errori: %s" % level.hint_label.text)
 		print("[L4] prova codice con graffe sbilanciate")
 		phase._on_code_submitted("public class Rotta {")
 		await _wait()
-		print("[L4] prova codice valido ma non conforme")
-		phase._on_code_submitted("public class Vuota {\n}")
-		await _wait()
+		# Cinque errori in tutto: e' la soglia che sblocca il suggerimento.
+		for i in range(4):
+			phase._on_code_submitted("public class Vuota {\n}")
+			await _wait()
+		print("[L4] errori commessi nella fase: %d" % level.hint_gate.errors)
+		print("[L4] suggerimento dopo 5 errori: %s" % level.hint_label.text)
 
 	var solved: int = 0
 	var guard: int = 0
