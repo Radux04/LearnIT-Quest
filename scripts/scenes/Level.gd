@@ -22,6 +22,12 @@ const PHASE_BANNERS: Array = [
 	["FASE 5 — INSTRADAMENTO OTTIMALE", "La rete ha cavi ridondanti con latenze diverse: trova il percorso più veloce.", Color(0.7, 0.65, 1.0)],
 ]
 
+const HINT_COLOR_OPEN := Color(0.72, 0.85, 1.0)
+const HINT_COLOR_LOCKED := Color(0.48, 0.54, 0.68)
+
+## Decide quando il suggerimento in basso diventa visibile.
+var hint_gate: HintGate = HintGate.new()
+
 @onready var network: NetworkView = $NetworkView
 @onready var tray: Control = $Tray
 @onready var action_bar: Control = $ActionBar
@@ -100,6 +106,7 @@ func _run_level() -> void:
 		if is_over:
 			return
 		current_phase = i + 1
+		hint_gate.reset_phase()
 		var banner_data: Array = PHASE_BANNERS[i]
 		await show_banner(String(banner_data[0]), String(banner_data[1]), banner_data[2])
 		if is_over:
@@ -131,7 +138,16 @@ func set_objective(text: String) -> void:
 
 
 func set_hint(text: String) -> void:
-	hint_label.text = text
+	hint_gate.text = text
+	_refresh_hint()
+
+
+## Il suggerimento resta nascosto finche' il giocatore non e' davvero in
+## difficolta': la regola sta tutta in HintGate.
+func _refresh_hint() -> void:
+	hint_label.text = hint_gate.display()
+	hint_label.add_theme_color_override("font_color",
+		HINT_COLOR_OPEN if hint_gate.unlocked() else HINT_COLOR_LOCKED)
 
 
 func toast(text: String, color: Color = Color.WHITE) -> void:
@@ -195,9 +211,14 @@ func flash_slot(slot: Dictionary, color: Color) -> void:
 	tween.tween_callback(marker.queue_free)
 
 
-func penalty(seconds: float = GameManager.WRONG_ANSWER_PENALTY) -> void:
+## `is_error` distingue lo sbaglio del giocatore da un costo scelto
+## volontariamente: solo il primo avvicina lo sblocco del suggerimento.
+func penalty(seconds: float = GameManager.WRONG_ANSWER_PENALTY, is_error: bool = true) -> void:
 	GameManager.apply_penalty(seconds)
 	_spawn_penalty_text(seconds)
+	if is_error:
+		hint_gate.register_error()
+		_refresh_hint()
 
 
 func set_alert_mode(enabled: bool) -> void:
@@ -227,6 +248,7 @@ func _spawn_penalty_text(seconds: float) -> void:
 
 func _on_time_updated(_time_left: float, ratio: float) -> void:
 	timer_label.text = GameManager.formatted_time()
+	_refresh_hint()
 	timer_bar.value = ratio
 	var color: Color = Color(0.3, 1.0, 0.55)
 	if ratio < 0.15:
