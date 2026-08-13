@@ -174,7 +174,7 @@ func _play_editor(index: int) -> void:
 			break
 		phase._on_code_submitted(solution)
 		solved += 1
-		print("[L4] fase %d — risolto l'esercizio %d" % [index, solved])
+		print("[L4] fase %d — risolto: %s" % [index, phase._task.prompt.substr(0, 52)])
 		await get_tree().create_timer(1.0).timeout
 	print("[L4] fase %d completata" % index)
 

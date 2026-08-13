@@ -288,6 +288,127 @@ const REFACTOR_POOL: Array = [
 		"hint": "Campi private, e un metodo pubblico per leggere il saldo. Chi vuole modificarlo deve passare da metodi che controllano.",
 		"explain": "Con i campi pubblici chiunque può scrivere un saldo negativo. Con l'incapsulamento la classe difende le proprie regole.",
 	},
+	{
+		"prompt": "Questi due metodi hanno lo stesso corpo. Togli la duplicazione estraendo la parte comune.",
+		"code": """public class Report {
+
+	public double totaleOrdini(List<Riga> righe) {
+		double somma = 0;
+		for (Riga riga : righe) {
+			somma = somma + riga.getPrezzo() * riga.getQuantita();
+		}
+		return somma;
+	}
+
+	public double totaleConSconto(List<Riga> righe, double sconto) {
+		double somma = 0;
+		for (Riga riga : righe) {
+			somma = somma + riga.getPrezzo() * riga.getQuantita();
+		}
+		return somma - sconto;
+	}
+}""",
+		"checks": [
+			{"kind": "no_duplicated_lines"},
+			{"kind": "method_count_at_least", "count": 3,
+				"message": "La parte comune va estratta in un terzo metodo, chiamato da entrambi."},
+		],
+		"solution": """public class Report {
+
+	public double totaleOrdini(List<Riga> righe) {
+		return sommaRighe(righe);
+	}
+
+	public double totaleConSconto(List<Riga> righe, double sconto) {
+		return sommaRighe(righe) - sconto;
+	}
+
+	private double sommaRighe(List<Riga> righe) {
+		double somma = 0;
+		for (Riga riga : righe) {
+			somma = somma + riga.getPrezzo() * riga.getQuantita();
+		}
+		return somma;
+	}
+}""",
+		"hint": "Sposta il ciclo in un metodo privato e fallo chiamare da tutti e due.",
+		"explain": "Codice duplicato significa correzioni da fare due volte, e prima o poi te ne dimentichi una.",
+	},
+	{
+		"prompt": "Questo metodo è un labirinto di if annidati. Riscrivilo con uscite anticipate, in meno di 13 righe.",
+		"code": """public class Accesso {
+
+	public String stato(Utente utente) {
+		String risultato = "";
+		if (utente != null) {
+			if (utente.isAttivo()) {
+				if (utente.getRuolo().equals("ADMIN")) {
+					risultato = "amministratore";
+				} else {
+					risultato = "utente";
+				}
+			} else {
+				risultato = "disattivato";
+			}
+		} else {
+			risultato = "sconosciuto";
+		}
+		return risultato;
+	}
+}""",
+		"checks": [
+			{"kind": "max_method_lines", "max": 13},
+		],
+		"solution": """public class Accesso {
+
+	public String stato(Utente utente) {
+		if (utente == null) {
+			return "sconosciuto";
+		}
+		if (!utente.isAttivo()) {
+			return "disattivato";
+		}
+		if (utente.getRuolo().equals("ADMIN")) {
+			return "amministratore";
+		}
+		return "utente";
+	}
+}""",
+		"hint": "Tratta subito i casi limite e esci con return: quello che resta è il caso normale, senza annidamenti.",
+		"explain": "Le uscite anticipate tolgono un livello di indentazione per ogni caso trattato: il caso normale resta in fondo, in chiaro.",
+	},
+	{
+		"prompt": "Dai un nome ai numeri di questo calcolo: chi legge non può indovinare che cosa significano.",
+		"code": """public class Sconto {
+
+	public double prezzoFinale(double prezzo, int punti) {
+		if (punti > 500) {
+			return prezzo * 0.8;
+		}
+		return prezzo * 0.95;
+	}
+}""",
+		"checks": [
+			{"kind": "no_magic_numbers"},
+			{"kind": "contains", "text": "static final",
+				"message": "I numeri devono diventare costanti: usa static final e dai a ciascuna un nome che spieghi che cos'è."},
+		],
+		"solution": """public class Sconto {
+
+	private static final int PUNTI_CLIENTE_FEDELE = 500;
+	private static final double SCONTO_FEDELE = 0.8;
+	private static final double SCONTO_BASE = 0.95;
+
+	public double prezzoFinale(double prezzo, int punti) {
+		if (punti > PUNTI_CLIENTE_FEDELE) {
+			return prezzo * SCONTO_FEDELE;
+		}
+		return prezzo * SCONTO_BASE;
+	}
+}""",
+		"hint": "Tre numeri, tre costanti: la soglia dei punti e i due moltiplicatori.",
+		"explain": "Con i nomi al posto dei numeri la regola commerciale si legge nel codice, e cambiarla è un'unica modifica.",
+	},
 ]
 
 
@@ -342,6 +463,89 @@ const WRITE_POOL: Array = [
 		"explain": "Campi privati più getter: la classe controlla i propri dati e resta libera di cambiare come li conserva.",
 	},
 	{
+		"topic": "classe",
+		"prompt": "Scrivi la classe Rettangolo: base e altezza privati, un costruttore che li riceve, e i metodi area(), perimetro() e toString().",
+		"code": "",
+		"checks": [
+			{"kind": "class_named", "name": "Rettangolo"},
+			{"kind": "no_public_fields"},
+			{"kind": "field_private", "field": "base"},
+			{"kind": "field_private", "field": "altezza"},
+			{"kind": "has_method", "method": "area"},
+			{"kind": "has_method", "method": "perimetro"},
+			{"kind": "has_method", "method": "toString"},
+		],
+		"solution": """public class Rettangolo {
+
+	private double base;
+	private double altezza;
+
+	public Rettangolo(double base, double altezza) {
+		this.base = base;
+		this.altezza = altezza;
+	}
+
+	public double area() {
+		return base * altezza;
+	}
+
+	public double perimetro() {
+		return (base + altezza) * 2;
+	}
+
+	@Override
+	public String toString() {
+		return "Rettangolo " + base + "x" + altezza;
+	}
+}""",
+		"hint": "I dati restano privati; area e perimetro sono servizi che la classe offre a chi la usa.",
+		"explain": "Chi usa la classe non deve rifare i conti: li fa la classe, che è l'unica a conoscere i propri dati.",
+	},
+	{
+		"topic": "classe",
+		"prompt": "Scrivi la classe Studente: matricola, nome e media privati, un costruttore, i getter e un metodo promosso() che dice se la media è almeno 18.",
+		"code": "",
+		"checks": [
+			{"kind": "class_named", "name": "Studente"},
+			{"kind": "no_public_fields"},
+			{"kind": "field_private", "field": "matricola"},
+			{"kind": "field_private", "field": "nome"},
+			{"kind": "field_private", "field": "media"},
+			{"kind": "has_method", "method": "getNome"},
+			{"kind": "has_method", "method": "promosso"},
+			{"kind": "no_magic_numbers",
+				"message": "Il 18 è la soglia di promozione: dagli un nome con una costante static final invece di scriverlo nel metodo."},
+		],
+		"solution": """public class Studente {
+
+	private static final double VOTO_MINIMO = 18;
+
+	private String matricola;
+	private String nome;
+	private double media;
+
+	public Studente(String matricola, String nome, double media) {
+		this.matricola = matricola;
+		this.nome = nome;
+		this.media = media;
+	}
+
+	public String getMatricola() {
+		return matricola;
+	}
+
+	public String getNome() {
+		return nome;
+	}
+
+	public boolean promosso() {
+		return media >= VOTO_MINIMO;
+	}
+}""",
+		"hint": "La soglia 18 non va scritta dentro il metodo: private static final double VOTO_MINIMO = 18;",
+		"explain": "La regola («si passa da 18») vive in un punto solo, con un nome che la spiega: cambiarla è una riga.",
+	},
+	{
 		"topic": "javafx",
 		"prompt": "Scrivi una classe JavaFX che estende Application: nel metodo start crea un Button, collegagli un'azione, mettilo in una Scene e mostra la finestra.",
 		"code": """public class MiaApp extends Application {
@@ -377,6 +581,86 @@ const WRITE_POOL: Array = [
 }""",
 		"hint": "Ordine delle scatole: Button → contenitore → Scene → Stage. Poi stage.show().",
 		"explain": "Stage è la finestra, Scene il contenuto, i nodi sono l'albero della grafica: è la gerarchia di JavaFX.",
+	},
+	{
+		"topic": "javafx",
+		"prompt": "Scrivi una classe JavaFX: un TextField, una Label e un Button che, quando viene premuto, copia nella Label il testo scritto nel campo. Metti tutto in un VBox.",
+		"code": """public class SalutoApp extends Application {
+
+	@Override
+	public void start(Stage stage) {
+		// scrivi qui
+	}
+}""",
+		"checks": [
+			{"kind": "extends", "name": "Application"},
+			{"kind": "has_method", "method": "start"},
+			{"kind": "contains", "text": "new TextField",
+				"message": "Manca il campo di testo: TextField campo = new TextField();"},
+			{"kind": "contains", "text": "new Label",
+				"message": "Manca la Label dove scrivere il risultato."},
+			{"kind": "contains", "text": "new VBox",
+				"message": "I tre nodi vanno raccolti in un contenitore: new VBox(...)."},
+			{"kind": "contains", "text": "setOnAction",
+				"message": "Il bottone non fa niente: collega l'azione con setOnAction."},
+			{"kind": "contains", "text": "new Scene"},
+			{"kind": "contains", "text": "stage.show"},
+		],
+		"solution": """public class SalutoApp extends Application {
+
+	@Override
+	public void start(Stage stage) {
+		TextField campo = new TextField();
+		Label etichetta = new Label();
+		Button bottone = new Button("Saluta");
+		bottone.setOnAction(evento -> etichetta.setText(campo.getText()));
+		VBox radice = new VBox(campo, bottone, etichetta);
+		Scene scena = new Scene(radice);
+		stage.setScene(scena);
+		stage.show();
+	}
+}""",
+		"hint": "L'azione del bottone legge campo.getText() e la passa a etichetta.setText(...).",
+		"explain": "Il gestore del bottone collega due nodi fra loro: la logica sta fuori, lui si limita a chiamarla.",
+	},
+	{
+		"topic": "javafx",
+		"prompt": "Scrivi una classe JavaFX con due Button dentro un VBox, un titolo alla finestra e la Scene mostrata.",
+		"code": """public class MenuApp extends Application {
+
+	@Override
+	public void start(Stage stage) {
+		// scrivi qui
+	}
+}""",
+		"checks": [
+			{"kind": "extends", "name": "Application"},
+			{"kind": "has_method", "method": "start"},
+			{"kind": "contains", "text": "new Button"},
+			{"kind": "contains", "text": "new VBox"},
+			{"kind": "contains", "text": "setTitle",
+				"message": "Manca il titolo della finestra: stage.setTitle(\"...\")."},
+			{"kind": "contains", "text": "setOnAction"},
+			{"kind": "contains", "text": "new Scene"},
+			{"kind": "contains", "text": "stage.show"},
+		],
+		"solution": """public class MenuApp extends Application {
+
+	@Override
+	public void start(Stage stage) {
+		Button avvia = new Button("Avvia");
+		Button esci = new Button("Esci");
+		avvia.setOnAction(evento -> System.out.println("avvio"));
+		esci.setOnAction(evento -> stage.close());
+		VBox radice = new VBox(avvia, esci);
+		Scene scena = new Scene(radice);
+		stage.setTitle("Menu");
+		stage.setScene(scena);
+		stage.show();
+	}
+}""",
+		"hint": "Il titolo si mette sullo Stage, non sulla Scene: stage.setTitle(\"Menu\");",
+		"explain": "Stage è la finestra del sistema operativo — titolo, dimensioni, chiusura. La Scene è solo il contenuto.",
 	},
 	{
 		"topic": "persistenza",
@@ -433,15 +717,111 @@ public class Configurazione {
 		"hint": "@XmlRootElement sulla classe, @XmlElement su ciascun campo da scrivere nel file.",
 		"explain": "XML e database sono due destinazioni diverse per lo stesso oggetto: la classe non cambia, cambiano le annotazioni.",
 	},
+	{
+		"topic": "persistenza",
+		"prompt": "Mappa Cliente su una tabella: annota la classe come entity, indica che la tabella si chiama «clienti», segna la chiave primaria e mappa email sulla colonna «indirizzo_email».",
+		"code": """public class Cliente {
+	private Long id;
+	private String email;
+}""",
+		"checks": [
+			{"kind": "has_annotation", "name": "Entity"},
+			{"kind": "has_annotation", "name": "Table",
+				"message": "Il nome della tabella si indica con @Table(name = \"clienti\") sulla classe."},
+			{"kind": "field_annotated", "field": "id", "name": "Id"},
+			{"kind": "field_annotated", "field": "email", "name": "Column",
+				"message": "Quando il nome della colonna è diverso da quello del campo serve @Column(name = \"indirizzo_email\")."},
+		],
+		"solution": """@Entity
+@Table(name = "clienti")
+public class Cliente {
+
+	@Id
+	private Long id;
+
+	@Column(name = "indirizzo_email")
+	private String email;
+}""",
+		"hint": "@Entity e @Table vanno sulla classe, @Id e @Column sui campi.",
+		"explain": "Senza @Column Hibernate cercherebbe una colonna chiamata «email»: l'annotazione fa da ponte fra due nomi diversi.",
+	},
+	{
+		"topic": "persistenza",
+		"prompt": "Prepara Prodotto per JAXB: la classe è la radice del documento, il codice deve diventare un ATTRIBUTO e il nome un elemento.",
+		"code": """public class Prodotto {
+	private String codice;
+	private String nome;
+}""",
+		"checks": [
+			{"kind": "has_annotation", "name": "XmlRootElement"},
+			{"kind": "field_annotated", "field": "codice", "name": "XmlAttribute",
+				"message": "Il codice deve essere un attributo del tag, non un elemento: @XmlAttribute."},
+			{"kind": "field_annotated", "field": "nome", "name": "XmlElement"},
+		],
+		"solution": """@XmlRootElement
+public class Prodotto {
+
+	@XmlAttribute
+	private String codice;
+
+	@XmlElement
+	private String nome;
+}""",
+		"hint": "@XmlAttribute produce <prodotto codice=\"...\">, @XmlElement produce <nome>...</nome>.",
+		"explain": "Attributo o elemento non è un dettaglio: gli attributi sono valori semplici del tag, gli elementi possono contenere altra struttura.",
+	},
 ]
 
 
 # ================================================================ sorteggio ==
 
+## Ricorda che cosa è uscito l'ultima volta, per ogni gruppo di esercizi.
+## Vive quanto il processo: riavviando il livello dal menu o dalla schermata
+## finale gli esercizi cambiano di sicuro.
+static var _last_drawn: Dictionary = {}
+
+
 static func pick(pool: Array, count: int) -> Array:
 	var bag: Array = pool.duplicate()
 	bag.shuffle()
 	return bag.slice(0, mini(count, bag.size()))
+
+
+## Pesca `count` voci evitando quelle uscite l'ultima volta con la stessa
+## chiave. Se le voci rimaste non bastano riparte da tutte, così il gioco
+## resta giocabile anche con cataloghi piccoli.
+static func pick_fresh(entries: Array, count: int, memory_key: String) -> Array:
+	var recent: Array = _last_drawn.get(memory_key, [])
+
+	var fresh: Array = []
+	for entry in entries:
+		if not recent.has(identity(entry)):
+			fresh.append(entry)
+	if fresh.size() < count:
+		fresh = entries.duplicate()
+
+	fresh.shuffle()
+	var chosen: Array = fresh.slice(0, mini(count, fresh.size()))
+
+	var drawn: Array = []
+	for entry in chosen:
+		drawn.append(identity(entry))
+	_last_drawn[memory_key] = drawn
+	return chosen
+
+
+## Voci di un solo argomento, nell'ordine del catalogo.
+static func filter_topic(pool: Array, topic: String) -> Array:
+	var out: Array = []
+	for entry in pool:
+		if String(entry.get("topic", "")) == topic:
+			out.append(entry)
+	return out
+
+
+## Come si riconosce un esercizio: la richiesta è già unica.
+static func identity(entry: Dictionary) -> String:
+	return String(entry.get("prompt", entry.get("name", "")))
 
 
 static func pick_one(pool: Array) -> Dictionary:
