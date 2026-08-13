@@ -34,6 +34,7 @@ func run_all() -> void:
 	test_pool_split()
 	test_pool_refactor()
 	test_pool_write()
+	test_pool_fresh()
 	print("\n[LVL4-TEST] %d passati, %d falliti" % [_passed, _failed])
 
 
@@ -414,6 +415,42 @@ func test_pool_write() -> void:
 			_check(String(start["status"]) != "ok",
 				"[%s] il codice di partenza non è già corretto" % label)
 
-	_check(topics.has("classe"), "c'è un esercizio di scrittura di una classe")
-	_check(topics.has("javafx"), "c'è un esercizio su JavaFX")
-	_check(topics.has("persistenza"), "c'è un esercizio sulla persistenza")
+	# Ogni argomento deve avere alternative, altrimenti esce sempre lo stesso.
+	for topic in ["classe", "javafx", "persistenza"]:
+		var count: int = Lvl4Pools.filter_topic(Lvl4Pools.WRITE_POOL, String(topic)).size()
+		_check(count >= 2, "l'argomento «%s» ha almeno 2 esercizi (ne ha %d)" % [topic, count])
+
+	# Le richieste devono essere tutte diverse: sono l'identita' dell'esercizio.
+	var seen: Dictionary = {}
+	for entry in Lvl4Pools.WRITE_POOL + Lvl4Pools.REFACTOR_POOL:
+		var id: String = Lvl4Pools.identity(entry)
+		_check(not seen.has(id), "la richiesta «%s» compare una volta sola" % id.substr(0, 40))
+		seen[id] = true
+
+
+## Il sorteggio non deve riproporre gli esercizi della partita precedente.
+func test_pool_fresh() -> void:
+	var pool: Array = [
+		{"prompt": "a"}, {"prompt": "b"}, {"prompt": "c"}, {"prompt": "d"},
+	]
+	var first: Array = Lvl4Pools.pick_fresh(pool, 2, "prova")
+	var second: Array = Lvl4Pools.pick_fresh(pool, 2, "prova")
+	_equal(first.size(), 2, "pesca il numero richiesto")
+	for entry in second:
+		_check(not first.has(entry), "«%s» non si ripete dalla partita precedente" % String(entry["prompt"]))
+
+	# Chiavi diverse hanno memorie indipendenti.
+	var other: Array = Lvl4Pools.pick_fresh(pool, 4, "altra")
+	_equal(other.size(), 4, "una chiave diversa non è influenzata dall'altra")
+
+	# Se le voci non bastano non si blocca: riparte da tutte.
+	var tiny: Array = [{"prompt": "x"}, {"prompt": "y"}]
+	Lvl4Pools.pick_fresh(tiny, 2, "piccolo")
+	_equal(Lvl4Pools.pick_fresh(tiny, 2, "piccolo").size(), 2,
+		"con poche voci continua a funzionare")
+
+	# Con un solo elemento per argomento resta comunque giocabile.
+	var single: Array = [{"prompt": "unico"}]
+	Lvl4Pools.pick_fresh(single, 1, "singolo")
+	_equal(Lvl4Pools.pick_fresh(single, 1, "singolo").size(), 1,
+		"con una sola voce la ripropone invece di restare senza")

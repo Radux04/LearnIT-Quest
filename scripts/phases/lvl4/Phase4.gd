@@ -25,11 +25,12 @@ func _start() -> void:
 	_console.offset_top = 16.0
 	_console.offset_bottom = -20.0
 
-	# Un esercizio per argomento: la classe, l'interfaccia grafica, la persistenza.
+	# Un esercizio per argomento, sempre diverso da quello della partita
+	# precedente: ogni argomento ha una memoria sua.
 	var chosen: Array = []
-	chosen.append_array(Lvl4Pools.pick_topic(Lvl4Pools.WRITE_POOL, "classe", 1))
-	chosen.append_array(Lvl4Pools.pick_topic(Lvl4Pools.WRITE_POOL, "javafx", 1))
-	chosen.append_array(Lvl4Pools.pick_topic(Lvl4Pools.WRITE_POOL, "persistenza", 1))
+	for topic in ["classe", "javafx", "persistenza"]:
+		chosen.append_array(Lvl4Pools.pick_fresh(
+			Lvl4Pools.filter_topic(Lvl4Pools.WRITE_POOL, String(topic)), 1, "lvl4_" + String(topic)))
 
 	for i in range(chosen.size()):
 		if _is_over():

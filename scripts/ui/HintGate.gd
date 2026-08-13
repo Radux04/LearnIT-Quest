@@ -15,7 +15,7 @@ extends RefCounted
 ## per tutte le fasi successive — esattamente ciò che non vogliamo.
 
 const ERRORS_TO_UNLOCK := 5
-const TIME_RATIO_TO_UNLOCK := 0.25
+const TIME_RATIO_TO_UNLOCK := 0.10
 
 var errors: int = 0                    # errori commessi nella fase corrente
 var text: String = ""                  # il suggerimento vero, quando si sblocca

@@ -27,7 +27,8 @@ func _start() -> void:
 	_console.offset_top = 16.0
 	_console.offset_bottom = -20.0
 
-	var chosen: Array = Lvl4Pools.pick(Lvl4Pools.REFACTOR_POOL, EXERCISES)
+	# pick_fresh evita gli esercizi usciti nella partita precedente.
+	var chosen: Array = Lvl4Pools.pick_fresh(Lvl4Pools.REFACTOR_POOL, EXERCISES, "lvl4_refactor")
 	for i in range(chosen.size()):
 		if _is_over():
 			return
