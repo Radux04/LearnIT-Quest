@@ -165,11 +165,13 @@ In tutti e quattro i livelli la riga in basso contiene un **suggerimento**, e qu
 Resta quindi **nascosto** finché il giocatore non è davvero in difficoltà, cioè quando si verifica una di queste due condizioni:
 
 - ha commesso **almeno 5 errori nella fase corrente**, oppure
-- è trascorso il **25% della durata totale** del livello.
+- è fermo **sulla stessa fase** da un tempo pari al **25% della durata totale** del livello.
 
 Al posto del suggerimento compare, in grigio, quanto manca allo sblocco: *«🔒 Suggerimento: si sblocca dopo altri 3 errori in questa fase, oppure fra 2:14»*.
 
-Il conteggio degli errori **riparte a ogni fase**: chi è andato liscio nelle prime non si ritrova il suggerimento già sbloccato nell'ultima. Non contano come errori i costi scelti volontariamente — aprire il manuale nel Livello 2 toglie tempo ma non avvicina lo sblocco.
+**Entrambe le condizioni ripartono da zero a ogni fase:** all'inizio di una fase nuova il suggerimento torna sempre bloccato. È il motivo per cui il tempo si misura dall'inizio della fase e non dall'inizio del livello — altrimenti, superata la soglia una volta, il suggerimento resterebbe visibile per tutte le fasi successive.
+
+Il tempo contato è quello *passato a pensare*: la pausa non lo fa avanzare, e nemmeno le penalità (che accorciano il cronometro ma non fanno passare il tempo). Non contano come errori i costi scelti volontariamente — aprire il manuale nel Livello 2 toglie tempo ma non avvicina lo sblocco.
 
 La regola sta tutta in `scripts/ui/HintGate.gd`, nelle costanti `ERRORS_TO_UNLOCK` e `TIME_RATIO_TO_UNLOCK`.
 
