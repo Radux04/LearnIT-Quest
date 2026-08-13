@@ -155,8 +155,10 @@ func _play_editor(index: int) -> void:
 		for i in range(4):
 			phase._on_code_submitted("public class Vuota {\n}")
 			await _wait()
-		print("[L4] errori commessi nella fase: %d" % level.hint_gate.errors)
+		print("[L4] errori commessi nella fase: %d  ·  secondi sulla fase: %.0f" % [
+			level.hint_gate.errors, level.hint_gate.seconds_in_phase()])
 		print("[L4] suggerimento dopo 5 errori: %s" % level.hint_label.text)
+		print("[L4] sbloccato? %s" % str(level.hint_gate.unlocked()))
 
 	var solved: int = 0
 	var guard: int = 0

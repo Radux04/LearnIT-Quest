@@ -24,6 +24,11 @@ const SCENE_LEVEL_4 := "res://scenes/level4.tscn"
 
 var time_left: float = LEVEL_DURATION
 var level_duration: float = LEVEL_DURATION
+## Secondi di gioco effettivamente trascorsi. Non è `level_duration - time_left`:
+## le penalità accorciano il cronometro ma non fanno passare il tempo, e in
+## pausa il tempo non scorre. Serve a misurare da quanto il giocatore è fermo
+## su una fase.
+var elapsed_time: float = 0.0
 var timer_running: bool = false
 var level_failed: bool = false
 var level_completed: bool = false
@@ -33,6 +38,7 @@ func _process(delta: float) -> void:
 	if not timer_running:
 		return
 	time_left = maxf(time_left - delta, 0.0)
+	elapsed_time += delta
 	time_updated.emit(time_left, time_left / level_duration)
 	if time_left <= 0.0:
 		timer_running = false
@@ -43,6 +49,7 @@ func _process(delta: float) -> void:
 func start_level(duration: float = LEVEL_DURATION) -> void:
 	level_duration = duration
 	time_left = duration
+	elapsed_time = 0.0
 	timer_running = true
 	level_failed = false
 	level_completed = false
@@ -83,13 +90,7 @@ func apply_penalty(seconds: float = WRONG_ANSWER_PENALTY) -> bool:
 func elapsed_ratio() -> float:
 	if level_duration <= 0.0:
 		return 1.0
-	return clampf((level_duration - time_left) / level_duration, 0.0, 1.0)
-
-
-## Secondi che mancano perché sia trascorsa la frazione indicata del livello.
-## Zero se quel momento è già passato.
-func time_until_ratio(ratio: float) -> float:
-	return maxf(time_left - (1.0 - ratio) * level_duration, 0.0)
+	return clampf(elapsed_time / level_duration, 0.0, 1.0)
 
 
 func formatted_time() -> String:
