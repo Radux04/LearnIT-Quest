@@ -29,6 +29,7 @@ Non è esprimibile: «il metodo deve restituire 42».
 
 ```json
 {
+  "_guida":   { ... },
   "review":   [ ... ],
   "split":    [ ... ],
   "refactor": [ ... ],
@@ -36,7 +37,9 @@ Non è esprimibile: «il metodo deve restituire 42».
 }
 ```
 
-Le quattro liste alimentano fasi diverse:
+`_guida` è un promemoria scritto dentro il file stesso: il caricatore ignora le chiavi che non conosce, quindi puoi usarla per lasciare note a chi verrà dopo. (JSON non ha commenti: una chiave che comincia con `_` è il modo consueto di aggirare il problema.)
+
+**Attenzione ai nomi:** le liste sono divise per **meccanica**, non per fase — `review` ne alimenta due. Questa è la corrispondenza:
 
 | Lista | Fase | Che cosa fa il giocatore |
 |---|---|---|
