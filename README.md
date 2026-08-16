@@ -177,6 +177,21 @@ La regola sta tutta in `scripts/ui/HintGate.gd`, nelle costanti `ERRORS_TO_UNLOC
 
 ---
 
+## Aggiungere esercizi
+
+Ogni livello ha una guida pratica dedicata, con il formato dei dati, i vincoli, come verificare e un elenco di idee da implementare:
+
+| Livello | Guida | Dove stanno gli esercizi |
+|---|---|---|
+| 1 · Router | [docs/esercizi/LIVELLO_1.md](docs/esercizi/LIVELLO_1.md) | Costanti nelle fasi (`ROUTERS_TO_PLACE`, `CHALLENGE_COUNT`, …) |
+| 2 · SQL | [docs/esercizi/LIVELLO_2.md](docs/esercizi/LIVELLO_2.md) | Elenchi `SqlTask.make(...)` in `scripts/phases/lvl2/` |
+| 3 · Calcolabilità | [docs/esercizi/LIVELLO_3.md](docs/esercizi/LIVELLO_3.md) | Catalogo `scripts/phases/lvl3/Lvl3Pools.gd` |
+| 4 · Java | [docs/esercizi/LIVELLO_4.md](docs/esercizi/LIVELLO_4.md) | **File JSON**: `data/esercizi_livello_4.json` |
+
+Il Livello 4 è l'unico con gli esercizi in un **file di dati** invece che nel codice: si aggiungono senza aprire uno script. Il formato è documentato per intero nella sua guida.
+
+---
+
 ## Bilanciamento
 
 Tutte le manopole sono raccolte in pochi punti:
