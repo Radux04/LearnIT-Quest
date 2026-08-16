@@ -23,7 +23,7 @@ func _start() -> void:
 	_view.offset_right = -120.0
 	_view.offset_bottom = -110.0
 
-	for entry in Lvl4Pools.pick_topic(Lvl4Pools.REVIEW_POOL, "clean", ROUNDS):
+	for entry in Lvl4Catalogo.pick_topic(Lvl4Catalogo.review_pool(), "clean", ROUNDS):
 		if _is_over():
 			return
 		await _round(entry)
