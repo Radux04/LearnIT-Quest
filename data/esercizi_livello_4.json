@@ -1,4 +1,13 @@
 {
+  "_guida": {
+    "_": "Esercizi del Livello 4. Le liste sono divise per MECCANICA, non per fase: 'review' ne alimenta due.",
+    "review": "FASE 1 (topic 'clean') e FASE 2 (topic 'solid') - il giocatore clicca le righe difettose. 'bad' contiene gli indici delle righe, contati da 0.",
+    "split": "FASE 2 - il giocatore assegna ogni metodo alla classe giusta.",
+    "refactor": "FASE 3 - il giocatore riscrive nell'editor il codice di 'code'.",
+    "write": "FASE 4 - il giocatore scrive codice nuovo; 'topic' vale classe, javafx o persistenza.",
+    "codice": "Il codice Java si scrive come ARRAY DI RIGHE: e' piu' leggibile e gli indici di 'bad' coincidono con le posizioni.",
+    "documentazione": "Formato completo e elenco dei controlli: docs/esercizi/LIVELLO_4.md"
+  },
   "review": [
     {
       "topic": "clean",
