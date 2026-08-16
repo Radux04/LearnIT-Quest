@@ -181,7 +181,7 @@ func _play_editor(index: int) -> void:
 
 ## Ritrova nel catalogo la soluzione di riferimento dell'esercizio corrente.
 func _solution_for(task: JavaTask) -> String:
-	for pool in [Lvl4Pools.REFACTOR_POOL, Lvl4Pools.WRITE_POOL]:
+	for pool in [Lvl4Catalogo.refactor_pool(), Lvl4Catalogo.write_pool()]:
 		for entry in pool:
 			if String(entry["prompt"]) == task.prompt:
 				return String(entry["solution"])

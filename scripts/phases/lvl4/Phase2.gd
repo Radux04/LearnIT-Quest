@@ -27,7 +27,7 @@ func _start() -> void:
 	_view.offset_right = -120.0
 	_view.offset_bottom = -110.0
 
-	for entry in Lvl4Pools.pick_topic(Lvl4Pools.REVIEW_POOL, "solid", 1):
+	for entry in Lvl4Catalogo.pick_topic(Lvl4Catalogo.review_pool(), "solid", 1):
 		if _is_over():
 			return
 		await _violation_round(entry)
@@ -38,7 +38,7 @@ func _start() -> void:
 	_view = null
 
 	# Secondo giro: separare le responsabilità.
-	await _split_round(Lvl4Pools.pick_one(Lvl4Pools.SPLIT_POOL))
+	await _split_round(Lvl4Catalogo.pick_one(Lvl4Catalogo.split_pool()))
 	if _is_over():
 		return
 

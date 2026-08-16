@@ -28,11 +28,11 @@ func _start() -> void:
 	_console.offset_bottom = -20.0
 
 	# pick_fresh evita gli esercizi usciti nella partita precedente.
-	var chosen: Array = Lvl4Pools.pick_fresh(Lvl4Pools.REFACTOR_POOL, EXERCISES, "lvl4_refactor")
+	var chosen: Array = Lvl4Catalogo.pick_fresh(Lvl4Catalogo.refactor_pool(), EXERCISES, "lvl4_refactor")
 	for i in range(chosen.size()):
 		if _is_over():
 			return
-		await _do_task(Lvl4Pools.build_task(chosen[i]), i + 1, chosen.size())
+		await _do_task(Lvl4Catalogo.build_task(chosen[i]), i + 1, chosen.size())
 
 	if _is_over():
 		return

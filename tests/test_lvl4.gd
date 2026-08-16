@@ -30,6 +30,7 @@ func run_all() -> void:
 	test_task_errors()
 	test_task_encapsulation()
 	test_task_refactoring()
+	test_json_types()
 	test_pool_review()
 	test_pool_split()
 	test_pool_refactor()
@@ -335,9 +336,36 @@ func test_task_refactoring() -> void:
 #
 # Servono a chi aggiunge esercizi: segnalano subito una voce incoerente.
 
+## Gli indici che arrivano dal JSON devono essere INTERI.
+##
+## JSON non distingue interi e decimali: senza conversione 1 torna come 1.0, e
+## `[1.0].has(1)` in GDScript è falso. Il confronto fra le righe scelte dal
+## giocatore e quelle attese fallirebbe sempre, anche con la risposta giusta:
+## un bug invisibile nei test che guardano solo i contenuti.
+func test_json_types() -> void:
+	for entry in Lvl4Catalogo.review_pool():
+		var label: String = String(entry["name"])
+		for index in entry["bad"]:
+			_equal(typeof(index), TYPE_INT, "[%s] gli indici di riga sono interi" % label)
+		# La prova diretta del confronto che fa il gioco.
+		var first: int = int(entry["bad"][0])
+		_check(entry["bad"].has(first),
+			"[%s] l'insieme delle righe attese riconosce un indice intero" % label)
+
+	for entry in Lvl4Catalogo.split_pool():
+		for method in entry["methods"]:
+			_equal(typeof(method[1]), TYPE_INT,
+				"[%s] la destinazione del metodo è un intero" % String(entry["name"]))
+
+	# Il codice deve tornare come stringa su più righe, non come array.
+	var sample: Dictionary = Lvl4Catalogo.review_pool()[0]
+	_check(sample["code"] is String, "il codice è una stringa")
+	_check(String(sample["code"]).contains("\n"), "il codice ha più righe")
+
+
 func test_pool_review() -> void:
 	var topics: Dictionary = {}
-	for entry in Lvl4Pools.REVIEW_POOL:
+	for entry in Lvl4Catalogo.review_pool():
 		var label: String = String(entry["name"])
 		var lines: PackedStringArray = String(entry["code"]).split("\n")
 		topics[String(entry["topic"])] = true
@@ -361,7 +389,7 @@ func test_pool_review() -> void:
 
 
 func test_pool_split() -> void:
-	for entry in Lvl4Pools.SPLIT_POOL:
+	for entry in Lvl4Catalogo.split_pool():
 		var label: String = String(entry["name"])
 		var targets: Array = entry["targets"]
 		_equal(targets.size(), 2, "[%s] ha due classi di destinazione" % label)
@@ -378,9 +406,9 @@ func test_pool_split() -> void:
 
 
 func test_pool_refactor() -> void:
-	for entry in Lvl4Pools.REFACTOR_POOL:
+	for entry in Lvl4Catalogo.refactor_pool():
 		var label: String = String(entry["prompt"]).substr(0, 40)
-		var task: JavaTask = Lvl4Pools.build_task(entry)
+		var task: JavaTask = Lvl4Catalogo.build_task(entry)
 
 		_check(task.checks.size() > 0, "[%s] ha dei controlli" % label)
 		_check(task.hint.length() > 10, "[%s] ha un suggerimento" % label)
@@ -400,9 +428,9 @@ func test_pool_refactor() -> void:
 
 func test_pool_write() -> void:
 	var topics: Dictionary = {}
-	for entry in Lvl4Pools.WRITE_POOL:
+	for entry in Lvl4Catalogo.write_pool():
 		var label: String = String(entry["prompt"]).substr(0, 40)
-		var task: JavaTask = Lvl4Pools.build_task(entry)
+		var task: JavaTask = Lvl4Catalogo.build_task(entry)
 		topics[String(entry["topic"])] = true
 
 		_check(task.checks.size() > 0, "[%s] ha dei controlli" % label)
@@ -417,13 +445,13 @@ func test_pool_write() -> void:
 
 	# Ogni argomento deve avere alternative, altrimenti esce sempre lo stesso.
 	for topic in ["classe", "javafx", "persistenza"]:
-		var count: int = Lvl4Pools.filter_topic(Lvl4Pools.WRITE_POOL, String(topic)).size()
+		var count: int = Lvl4Catalogo.filter_topic(Lvl4Catalogo.write_pool(), String(topic)).size()
 		_check(count >= 2, "l'argomento «%s» ha almeno 2 esercizi (ne ha %d)" % [topic, count])
 
 	# Le richieste devono essere tutte diverse: sono l'identita' dell'esercizio.
 	var seen: Dictionary = {}
-	for entry in Lvl4Pools.WRITE_POOL + Lvl4Pools.REFACTOR_POOL:
-		var id: String = Lvl4Pools.identity(entry)
+	for entry in Lvl4Catalogo.write_pool() + Lvl4Catalogo.refactor_pool():
+		var id: String = Lvl4Catalogo.identity(entry)
 		_check(not seen.has(id), "la richiesta «%s» compare una volta sola" % id.substr(0, 40))
 		seen[id] = true
 
@@ -433,24 +461,24 @@ func test_pool_fresh() -> void:
 	var pool: Array = [
 		{"prompt": "a"}, {"prompt": "b"}, {"prompt": "c"}, {"prompt": "d"},
 	]
-	var first: Array = Lvl4Pools.pick_fresh(pool, 2, "prova")
-	var second: Array = Lvl4Pools.pick_fresh(pool, 2, "prova")
+	var first: Array = Lvl4Catalogo.pick_fresh(pool, 2, "prova")
+	var second: Array = Lvl4Catalogo.pick_fresh(pool, 2, "prova")
 	_equal(first.size(), 2, "pesca il numero richiesto")
 	for entry in second:
 		_check(not first.has(entry), "«%s» non si ripete dalla partita precedente" % String(entry["prompt"]))
 
 	# Chiavi diverse hanno memorie indipendenti.
-	var other: Array = Lvl4Pools.pick_fresh(pool, 4, "altra")
+	var other: Array = Lvl4Catalogo.pick_fresh(pool, 4, "altra")
 	_equal(other.size(), 4, "una chiave diversa non è influenzata dall'altra")
 
 	# Se le voci non bastano non si blocca: riparte da tutte.
 	var tiny: Array = [{"prompt": "x"}, {"prompt": "y"}]
-	Lvl4Pools.pick_fresh(tiny, 2, "piccolo")
-	_equal(Lvl4Pools.pick_fresh(tiny, 2, "piccolo").size(), 2,
+	Lvl4Catalogo.pick_fresh(tiny, 2, "piccolo")
+	_equal(Lvl4Catalogo.pick_fresh(tiny, 2, "piccolo").size(), 2,
 		"con poche voci continua a funzionare")
 
 	# Con un solo elemento per argomento resta comunque giocabile.
 	var single: Array = [{"prompt": "unico"}]
-	Lvl4Pools.pick_fresh(single, 1, "singolo")
-	_equal(Lvl4Pools.pick_fresh(single, 1, "singolo").size(), 1,
+	Lvl4Catalogo.pick_fresh(single, 1, "singolo")
+	_equal(Lvl4Catalogo.pick_fresh(single, 1, "singolo").size(), 1,
 		"con una sola voce la ripropone invece di restare senza")

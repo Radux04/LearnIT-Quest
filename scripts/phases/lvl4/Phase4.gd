@@ -29,13 +29,13 @@ func _start() -> void:
 	# precedente: ogni argomento ha una memoria sua.
 	var chosen: Array = []
 	for topic in ["classe", "javafx", "persistenza"]:
-		chosen.append_array(Lvl4Pools.pick_fresh(
-			Lvl4Pools.filter_topic(Lvl4Pools.WRITE_POOL, String(topic)), 1, "lvl4_" + String(topic)))
+		chosen.append_array(Lvl4Catalogo.pick_fresh(
+			Lvl4Catalogo.filter_topic(Lvl4Catalogo.write_pool(), String(topic)), 1, "lvl4_" + String(topic)))
 
 	for i in range(chosen.size()):
 		if _is_over():
 			return
-		await _do_task(Lvl4Pools.build_task(chosen[i]), i + 1, chosen.size())
+		await _do_task(Lvl4Catalogo.build_task(chosen[i]), i + 1, chosen.size())
 
 	if _is_over():
 		return
