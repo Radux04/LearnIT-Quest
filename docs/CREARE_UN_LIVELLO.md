@@ -22,9 +22,10 @@ Se è la prima volta che apri il progetto, leggi comunque il capitolo 1: sono le
 | ritoccare difficoltà, penalità o durata | **§ 2.1**, **§ 3.6**, **§ 4.7** |
 | aggiungere un esercizio Java al Livello 4 | **§ 5** |
 | creare un Livello 5 da zero | **§ 6** e **§ 7** |
-| capire perché una modifica ha rotto qualcosa | **§ 9** — trappole già incontrate |
+| capire perché una modifica ha rotto qualcosa | **§ 9** — tra> **Regola che vale per ogni modifica:** prima di dire «fatto», rilancia i controlli automatici del **§ 3.7** e del **§ 4.7**. Ci mettono meno di un minuto e ti dicono subito se hai rotto qualcosa altrove.
 
-> **Regola che vale per ogni modifica:** prima di dire «fatto», rilancia i controlli automatici del **§ 3.7** e del **§ 4.7**. Ci mettono meno di un minuto e ti dicono subito se hai rotto qualcosa altrove.
+> **Se vuoi solo aggiungere esercizi** senza toccare l'architettura, ogni livello ha una guida dedicata più pratica di questa, con il formato dei dati e un elenco di idee da implementare:
+> [Livello 1](esercizi/LIVELLO_1.md) · [Livello 2](esercizi/LIVELLO_2.md) · [Livello 3](esercizi/LIVELLO_3.md) · [Livello 4](esercizi/LIVELLO_4.md)ai rotto qualcosa altrove.
 
 ---
 
@@ -413,11 +414,9 @@ Per **togliere** una fase basta rimuovere le sue due voci: il file resta sul dis
 ### 4.7 Verifica
 
 ```bash
-"$GODOT" --headless --script res://tests/run_lvl3_tests.gd   # 66 test dei modelli
-"$GODOT" tests/autoplay_level3.tscn                          # il bot gioca tutto il livello
-```
+"$GODOT" --headless --script res://tests/run_lvl3_tests.gd   # 66 test dei modIl Livello 4 corregge in modo **strutturale**: non compila il Java, ne analizza la forma. Gli esercizi stanno in **`data/esercizi_livello_4.json`** (`scripts/phases/lvl4/Lvl4Catalogo.gd` si limita a caricarli) e sono divisi in quattro elenchi.
 
-Il bot ha una costante comoda: **`STOP_AT_PHASE`**. Messa a `N`, gioca le fasi precedenti in fretta e poi si ferma all'inizio della fase `N` a velocità normale — è il modo più rapido per guardare (o fotografare) una singola fase senza giocarsela a mano.
+> Il formato completo del JSON, con tutti i controlli disponibili, è in [esercizi/LIVELLO_4.md](esercizi/LIVELLO_4.md). Qui sotto solo il riassunto.essa a `N`, gioca le fasi precedenti in fretta e poi si ferma all'inizio della fase `N` a velocità normale — è il modo più rapido per guardare (o fotografare) una singola fase senza giocarsela a mano.
 
 ---
 
