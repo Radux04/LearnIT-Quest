@@ -12,6 +12,14 @@ const TIME_SCALE := 4.0
 ## ultime fasi sono leggibili anche partendo da una corsa accelerata.
 const SLOW_DOWN_AT_PHASE := 5
 
+## 0 = gioca tutto. N = arrivato alla fase N smette di giocare e resta lì, a
+## velocità normale: serve per guardare (e fotografare) quella fase.
+const STOP_AT_PHASE := 0
+
+## Router su cui simulare il passaggio del mouse, per fotografare
+## l'evidenziazione dei collegamenti. NAN = nessuno.
+const HOVER_ROUTER_VALUE := NAN
+
 var level: LevelController = null
 var _phase_seen: int = 0
 var _last_action_time: float = 0.0
@@ -56,6 +64,12 @@ func _process(_delta: float) -> void:
 	if level.current_phase >= SLOW_DOWN_AT_PHASE and not is_equal_approx(Engine.time_scale, 1.0):
 		Engine.time_scale = 1.0
 
+	# Arrivati alla fase da osservare, il bot si ferma e lascia la scena com'è.
+	if STOP_AT_PHASE > 0 and level.current_phase >= STOP_AT_PHASE:
+		Engine.time_scale = 1.0
+		_simulate_hover()
+		return
+
 	var now: float = Time.get_ticks_msec() / 1000.0
 	if now - _last_action_time < 0.10:
 		return
@@ -70,6 +84,16 @@ func _process(_delta: float) -> void:
 	if _try_dijkstra(phase):
 		return
 	_try_scan(phase)
+
+
+## Simula il passaggio del mouse su un router (il clic sintetico dei test non
+## genera l'evento di hover). Serve solo per fotografare l'evidenziazione.
+func _simulate_hover() -> void:
+	if is_nan(HOVER_ROUTER_VALUE) or level.network == null:
+		return
+	var router: RouterNode = level.network.get_router(HOVER_ROUTER_VALUE)
+	if router != null:
+		level.network._on_router_hovered(router, true)
 
 
 func _try_place_router(phase: PhaseBase) -> bool:

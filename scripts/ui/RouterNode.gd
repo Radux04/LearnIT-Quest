@@ -6,6 +6,10 @@ extends Control
 
 @warning_ignore("unused_signal")
 signal clicked(node: RouterNode)
+## Emesso entrando e uscendo col mouse: serve alla vista per evidenziare i
+## collegamenti di questo router.
+@warning_ignore("unused_signal")
+signal hovered(node: RouterNode, inside: bool)
 signal drag_started(node: RouterNode)
 signal dropped(node: RouterNode, global_pos: Vector2)
 
@@ -256,9 +260,11 @@ func _on_mouse_entered() -> void:
 	_hovered = true
 	if clickable or draggable:
 		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	hovered.emit(self, true)
 	queue_redraw()
 
 
 func _on_mouse_exited() -> void:
 	_hovered = false
+	hovered.emit(self, false)
 	queue_redraw()

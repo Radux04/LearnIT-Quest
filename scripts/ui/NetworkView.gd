@@ -9,7 +9,11 @@ const TREE_TOP := 178.0
 const LEVEL_HEIGHT_MAX := 98.0
 const LEVEL_HEIGHT_MIN := 50.0
 const BOTTOM_RESERVED := 196.0
-const MIN_CHILD_OFFSET := 38.0
+## Distanza minima fra due colonne: un router è largo 58 px, quindi sotto i
+## 74 px due nodi vicini si toccherebbero.
+const MIN_COLUMN_STEP := 74.0
+const MAX_COLUMN_STEP := 150.0
+const SIDE_MARGIN := 90.0
 const SLOT_RADIUS := 30.0
 const DROP_TOLERANCE := 78.0
 
@@ -18,7 +22,9 @@ const CABLE_OK := Color(0.25, 1.0, 0.6, 1.0)
 const CABLE_BAD := Color(1.0, 0.28, 0.32, 1.0)
 const CABLE_EXTRA := Color(0.65, 0.55, 1.0, 0.85)
 const CABLE_PATH := Color(1.0, 0.82, 0.3, 1.0)
-const EXTRA_BULGE := 34.0
+const EXTRA_BULGE := 44.0
+## Di quanto l'etichetta del costo si scosta dal cavo, perpendicolarmente.
+const WEIGHT_OFFSET := 15.0
 
 var model: BSTModel = null
 
@@ -32,7 +38,11 @@ var _flow: float = 0.0
 var _slot_pulse: float = 0.0
 var _flow_enabled: bool = true
 var _level_height: float = LEVEL_HEIGHT_MAX
+## Distanza orizzontale fra due colonne vicine, ricalcolata a ogni layout.
+var _column_step: float = MAX_COLUMN_STEP
 var graph: NetworkGraph = null         # attivo solo nella fase Dijkstra
+## Router sotto il mouse nella fase Dijkstra: i suoi cavi vengono evidenziati.
+var _hovered_value: float = NAN
 
 
 func _ready() -> void:
@@ -64,24 +74,51 @@ func compute_layout() -> void:
 	var levels: float = maxf(float(model.max_depth()) + 1.0, 1.0)
 	var available: float = maxf(size.y - BOTTOM_RESERVED - TREE_TOP, 200.0)
 	_level_height = clampf(available / levels, LEVEL_HEIGHT_MIN, LEVEL_HEIGHT_MAX)
-	var center_x: float = size.x * 0.5
-	_layout_recursive(model.root, center_x, 0)
+
+	# Disposizione IN-ORDER: ogni nodo riceve una colonna tutta sua, nell'ordine
+	# della visita simmetrica. Così due router non possono MAI sovrapporsi,
+	# nemmeno quando l'albero degenera in una catena — con il vecchio schema
+	# «dimezza l'offset a ogni livello» i nodi profondi finivano a 38 px l'uno
+	# dall'altro, cioè meno della loro larghezza, e cavi ed etichette si
+	# accavallavano diventando illeggibili.
+	var ordered: Array[float] = model.inorder()
+	_column_step = _compute_column_step(ordered.size())
+	var span: float = float(maxi(ordered.size() - 1, 0)) * _column_step
+	var start_x: float = size.x * 0.5 - span * 0.5
+
+	var columns: Dictionary = {}
+	for i in range(ordered.size()):
+		columns[ordered[i]] = start_x + float(i) * _column_step
+
+	_layout_recursive(model.root, columns, 0)
 
 
-func _child_offset(depth: int) -> float:
-	return maxf(_tree_width() / pow(2.0, float(depth) + 2.0), MIN_CHILD_OFFSET)
+## Distanza fra due colonne vicine: mai meno della larghezza di un router più
+## un margine, mai tanto da disperdere l'albero su tutto lo schermo.
+func _compute_column_step(count: int) -> float:
+	if count <= 1:
+		return MAX_COLUMN_STEP
+	var usable: float = maxf(size.x - SIDE_MARGIN * 2.0, 240.0)
+	return clampf(usable / float(count - 1), MIN_COLUMN_STEP, MAX_COLUMN_STEP)
 
 
-func _layout_recursive(node: BSTModel.BSTNodeData, x: float, depth: int) -> void:
+## Dove finirebbe un figlio che ancora non esiste: mezza colonna di lato,
+## perché la colonna intera accanto al genitore è occupata dal suo vicino
+## nella visita simmetrica.
+func _child_offset(_depth: int) -> float:
+	return _column_step * 0.5
+
+
+func _layout_recursive(node: BSTModel.BSTNodeData, columns: Dictionary, depth: int) -> void:
+	var x: float = float(columns.get(node.value, size.x * 0.5))
 	_positions[node.value] = Vector2(x, TREE_TOP + float(depth) * _level_height)
 	_depths[node.value] = depth
-	var dx: float = _child_offset(depth)
 	if node.left != null:
 		_edges.append({"from": node.value, "to": node.left.value})
-		_layout_recursive(node.left, x - dx, depth + 1)
+		_layout_recursive(node.left, columns, depth + 1)
 	if node.right != null:
 		_edges.append({"from": node.value, "to": node.right.value})
-		_layout_recursive(node.right, x + dx, depth + 1)
+		_layout_recursive(node.right, columns, depth + 1)
 
 
 ## Where a hypothetical child of `parent_value` on `side` would be drawn.
@@ -160,7 +197,18 @@ func _make_router(value: float) -> RouterNode:
 	var router: RouterNode = RouterNode.new(value)
 	add_child(router)
 	router.set_value(value)
+	router.hovered.connect(_on_router_hovered)
 	return router
+
+
+## Passando il mouse su un router si accendono i SUOI collegamenti e si
+## spengono gli altri: con molti cavi sovrapposti è l'unico modo per capire a
+## colpo d'occhio quali archi partono da lì e quanto costano.
+func _on_router_hovered(router: RouterNode, inside: bool) -> void:
+	if graph == null:
+		return
+	_hovered_value = router.value if inside else NAN
+	queue_redraw()
 
 
 func _dissolve(router: RouterNode) -> void:
@@ -360,20 +408,35 @@ func _draw() -> void:
 
 	# Modalità grafo: cavi ridondanti (curvi) e latenza scritta su ogni cavo.
 	if graph != null:
-		for link in graph.edges:
-			var a_value: float = float(link["a"])
-			var b_value: float = float(link["b"])
-			if not _positions.has(a_value) or not _positions.has(b_value):
-				continue
-			var pa: Vector2 = _positions[a_value]
-			var pb: Vector2 = _positions[b_value]
-			var is_extra: bool = bool(link["extra"])
-			var link_color: Color = _edge_color_or(a_value, b_value,
-				CABLE_EXTRA if is_extra else CABLE_IDLE)
-			var label_pos: Vector2 = (pa + pb) * 0.5
-			if is_extra:
-				label_pos = _draw_curved_cable(pa, pb, link_color)
-			_draw_weight(label_pos, int(link["weight"]), link_color)
+		var hovering: bool = not is_nan(_hovered_value)
+		# Prima i cavi non evidenziati, poi quelli del router sotto il mouse:
+		# così restano sopra e leggibili.
+		for pass_index in range(2):
+			for link in graph.edges:
+				var a_value: float = float(link["a"])
+				var b_value: float = float(link["b"])
+				if not _positions.has(a_value) or not _positions.has(b_value):
+					continue
+				var touches: bool = hovering and (
+					is_equal_approx(a_value, _hovered_value) or is_equal_approx(b_value, _hovered_value))
+				if (pass_index == 1) != touches:
+					continue
+
+				var pa: Vector2 = _positions[a_value]
+				var pb: Vector2 = _positions[b_value]
+				var is_extra: bool = bool(link["extra"])
+				var link_color: Color = _edge_color_or(a_value, b_value,
+					CABLE_EXTRA if is_extra else CABLE_IDLE)
+				# Chi non è collegato al router sotto il mouse si spegne.
+				if hovering and not touches:
+					link_color = Color(link_color.r, link_color.g, link_color.b, 0.18)
+
+				var label_pos: Vector2 = (pa + pb) * 0.5
+				if is_extra:
+					label_pos = _draw_curved_cable(pa, pb, link_color)
+				elif touches:
+					_draw_cable(pa, pb, link_color, 0.0)      # ridisegnato più acceso
+				_draw_weight(label_pos, int(link["weight"]), link_color, pa, pb, touches)
 
 	# Ghost slots where a router can be dropped.
 	for slot in _slots:
@@ -441,19 +504,47 @@ func _draw_curved_cable(a: Vector2, b: Vector2, color: Color) -> Vector2:
 
 
 ## Etichetta con il costo del cavo, su una pastiglia scura per la leggibilità.
-func _draw_weight(at: Vector2, weight: int, color: Color) -> void:
+##
+## Viene spostata di lato rispetto al cavo (perpendicolarmente): al centro
+## esatto finirebbe sopra i badge delle distanze dei router vicini, ed è
+## esattamente il motivo per cui prima non si capiva quale costo appartenesse
+## a quale collegamento.
+func _draw_weight(at: Vector2, weight: int, color: Color,
+		from_point: Vector2 = Vector2.ZERO, to_point: Vector2 = Vector2.ZERO,
+		emphasised: bool = false) -> void:
 	var font: Font = get_theme_default_font()
 	if font == null:
 		return
+
+	var anchor: Vector2 = at
+	if from_point != to_point:
+		var direction: Vector2 = (to_point - from_point).normalized()
+		var normal: Vector2 = Vector2(-direction.y, direction.x)
+		if normal.y > 0.0:
+			normal = -normal                  # sempre verso l'alto: area più libera
+		anchor += normal * WEIGHT_OFFSET
+
 	var text: String = str(weight)
-	var font_size: int = 15
+	var font_size: int = 17 if emphasised else 15
 	var text_size: Vector2 = font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1.0, font_size)
-	var pad: Vector2 = Vector2(7.0, 3.0)
-	var rect: Rect2 = Rect2(at - text_size * 0.5 - pad, text_size + pad * 2.0)
-	draw_rect(rect, Color(0.03, 0.06, 0.12, 0.92), true)
-	draw_rect(rect, Color(color.r, color.g, color.b, 0.7), false, 1.5)
-	draw_string(font, at + Vector2(-text_size.x * 0.5, text_size.y * 0.36), text,
-		HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(0.92, 0.97, 1.0))
+	var pad: Vector2 = Vector2(8.0, 4.0)
+	var rect: Rect2 = Rect2(anchor - text_size * 0.5 - pad, text_size + pad * 2.0)
+
+	var fill: Color = Color(0.03, 0.06, 0.12, 0.92)
+	var border: Color = Color(color.r, color.g, color.b, 0.7)
+	var ink: Color = Color(0.92, 0.97, 1.0)
+	if emphasised:
+		fill = Color(0.10, 0.16, 0.30, 0.98)
+		border = Color(color.r, color.g, color.b, 1.0)
+	elif color.a < 0.5:
+		# Cavo spento: anche il costo si attenua, così non distrae.
+		fill = Color(0.03, 0.06, 0.12, 0.45)
+		ink = Color(0.92, 0.97, 1.0, 0.35)
+
+	draw_rect(rect, fill, true)
+	draw_rect(rect, border, false, 2.0 if emphasised else 1.5)
+	draw_string(font, anchor + Vector2(-text_size.x * 0.5, text_size.y * 0.36), text,
+		HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, ink)
 
 
 func _draw_dashed_line(a: Vector2, b: Vector2, color: Color, width: float) -> void:
