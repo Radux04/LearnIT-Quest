@@ -69,10 +69,10 @@ mouse_filter = 2
 
 [node name="Title" type="Label" parent="."]
 layout_mode = 1
-offset_left = 90.0
-offset_top = 148.0
-offset_right = 760.0
-offset_bottom = 230.0
+offset_left = 76.0
+offset_top = 86.0
+offset_right = 780.0
+offset_bottom = 168.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0.05, 0.12, 1)
 theme_override_constants/outline_size = 10
@@ -81,20 +81,20 @@ text = "LEARNIT QUEST"
 
 [node name="Subtitle" type="Label" parent="."]
 layout_mode = 1
-offset_left = 94.0
-offset_top = 236.0
-offset_right = 800.0
-offset_bottom = 268.0
-theme_override_colors/font_color = Color(0.45, 0.82, 1, 1)
+offset_left = 80.0
+offset_top = 178.0
+offset_right = 750.0
+offset_bottom = 258.0
+theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
 theme_override_font_sizes/font_size = 22
-text = "Strutture dati, database, calcolabilità e scrittura del codice"
+text = "Impara le basi dell'informatica giocando: risolvi missioni,\nsperimenta gli algoritmi e costruisci il tuo ragionamento."
 
 [node name="Buttons" type="VBoxContainer" parent="."]
 layout_mode = 1
-offset_left = 92.0
-offset_top = 292.0
-offset_right = 560.0
-offset_bottom = 656.0
+offset_left = 76.0
+offset_top = 304.0
+offset_right = 600.0
+offset_bottom = 668.0
 theme_override_constants/separation = 12
 
 [node name="PlayButton" type="Button" parent="Buttons"]
@@ -106,7 +106,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "▶  Livello 1 · Binary Search Tree"
+text = "01  ·  Algoritmi e strutture dati"
 
 [node name="Level2Button" type="Button" parent="Buttons"]
 custom_minimum_size = Vector2(468, 62)
@@ -117,7 +117,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "▶  Livello 2 · Database MySQL"
+text = "02  ·  Database e informazioni"
 
 [node name="Level3Button" type="Button" parent="Buttons"]
 custom_minimum_size = Vector2(468, 62)
@@ -128,7 +128,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "▶  Livello 3 · Calcolabilità"
+text = "03  ·  Calcolabilità e macchina di Turing"
 
 [node name="Level4Button" type="Button" parent="Buttons"]
 custom_minimum_size = Vector2(468, 62)
@@ -139,7 +139,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_btn_hover")
-text = "▶  Livello 4 · Metodologie di programmazione"
+text = "04  ·  Programmazione e codice"
 
 [node name="QuitButton" type="Button" parent="Buttons"]
 custom_minimum_size = Vector2(468, 54)
@@ -164,5 +164,5 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.4, 0.55, 0.72, 1)
 theme_override_font_sizes/font_size = 15
-text = "Durante una partita premi Esc per mettere in pausa o cambiare livello"
+text = "Scegli un percorso e affronta una missione interattiva · Esc: pausa o cambio livello"
 horizontal_alignment = 1

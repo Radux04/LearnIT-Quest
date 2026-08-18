@@ -108,16 +108,35 @@ func _collect_slots(node: BSTNodeData, slots: Array) -> void:
 		_collect_slots(node.right, slots)
 
 
-## Cancellazione BST standard: un nodo con due figli viene sostituito
-## dal suo successore in-order.
-func erase(value: float) -> bool:
+## Cancellazione BST. Per un nodo con due figli il giocatore può scegliere
+## il successore in-order oppure il predecessore in-order.
+func erase(value: float, replacement_value: float = NAN) -> bool:
 	if not contains(value):
 		return false
-	root = _erase_recursive(root, value)
+	if not is_nan(replacement_value) and not valid_replacements(value).has(replacement_value):
+		return false
+	root = _erase_recursive(root, value, replacement_value)
 	return true
 
 
-func _erase_recursive(node: BSTNodeData, value: float) -> BSTNodeData:
+## Valori che possono prendere legalmente il posto di un nodo con due figli.
+func valid_replacements(value: float) -> Array[float]:
+	var node: BSTNodeData = find(value)
+	var out: Array[float] = []
+	if node == null or node.left == null or node.right == null:
+		return out
+	var predecessor_node: BSTNodeData = node.left
+	while predecessor_node.right != null:
+		predecessor_node = predecessor_node.right
+	var successor_node: BSTNodeData = node.right
+	while successor_node.left != null:
+		successor_node = successor_node.left
+	out.append(predecessor_node.value)
+	out.append(successor_node.value)
+	return out
+
+
+func _erase_recursive(node: BSTNodeData, value: float, replacement_value: float = NAN) -> BSTNodeData:
 	if node == null:
 		return null
 	if value < node.value and not is_equal_approx(value, node.value):
@@ -129,11 +148,19 @@ func _erase_recursive(node: BSTNodeData, value: float) -> BSTNodeData:
 			return node.right
 		if node.right == null:
 			return node.left
-		var succ: BSTNodeData = node.right
-		while succ.left != null:
-			succ = succ.left
-		node.value = succ.value
-		node.right = _erase_recursive(node.right, succ.value)
+		var replacement: BSTNodeData
+		if not is_nan(replacement_value) and replacement_value < node.value:
+			replacement = node.left
+			while replacement.right != null:
+				replacement = replacement.right
+			node.value = replacement.value
+			node.left = _erase_recursive(node.left, replacement.value)
+		else:
+			replacement = node.right
+			while replacement.left != null:
+				replacement = replacement.left
+			node.value = replacement.value
+			node.right = _erase_recursive(node.right, replacement.value)
 	return node
 
 
