@@ -11,3 +11,6 @@
 # File temporanei creati da Godot quando ricarica una GDExtension
 **/~*.dll
 **/*.TMP
+
+# Istruzioni per l'assistente: locali, mai da versionare
+CLAUDE.md
