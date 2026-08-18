@@ -1,6 +1,7 @@
+class_name MainMenu
 extends Control
 
-## Menu principale segnaposto: verrà ampliato quando arriveranno gli altri livelli.
+## Hub dei percorsi di LearnIT Quest: una panoramica delle basi dell'informatica.
 
 @onready var play_button: Button = $Buttons/PlayButton
 @onready var level2_button: Button = $Buttons/Level2Button
@@ -53,20 +54,43 @@ func _on_quit_pressed() -> void:
 
 
 func _on_diagram_draw() -> void:
-	# Sfondo animato: nodi e cavi che pulsano.
-	var nodes: Array[Vector2] = [
-		Vector2(980.0, 210.0), Vector2(870.0, 340.0), Vector2(1090.0, 340.0),
-		Vector2(806.0, 470.0), Vector2(936.0, 470.0), Vector2(1156.0, 470.0),
+	# Una mappa concettuale delle quattro aree del gioco, non di un solo esercizio.
+	var center: Vector2 = Vector2(970.0, 354.0)
+	var topics: Array[Dictionary] = [
+		{"pos": Vector2(850.0, 235.0), "color": Color(0.30, 0.76, 1.0), "icon": "BST"},
+		{"pos": Vector2(1100.0, 235.0), "color": Color(0.42, 1.0, 0.68), "icon": "DB"},
+		{"pos": Vector2(850.0, 493.0), "color": Color(1.0, 0.78, 0.30), "icon": "T"},
+		{"pos": Vector2(1100.0, 493.0), "color": Color(0.75, 0.58, 1.0), "icon": ">_"},
 	]
-	var edges: Array = [[0, 1], [0, 2], [1, 3], [1, 4], [2, 5]]
-	for edge in edges:
-		var a: Vector2 = nodes[edge[0]]
-		var b: Vector2 = nodes[edge[1]]
-		var color: Color = Color(0.25, 0.7, 1.0, 0.5)
-		diagram.draw_line(a, b, color, 2.0, true)
-		var t: float = fposmod(_time * 0.35 + float(edge[1]) * 0.13, 1.0)
-		diagram.draw_circle(a.lerp(b, t), 4.0, Color(0.4, 1.0, 0.8, sin(t * PI) * 0.9))
-	for i in range(nodes.size()):
-		var pulse: float = sin(_time * 2.0 + float(i)) * 0.5 + 0.5
-		diagram.draw_circle(nodes[i], 27.0, Color(0.06, 0.13, 0.24, 0.92))
-		diagram.draw_arc(nodes[i], 27.0, 0.0, TAU, 44, Color(0.3, 0.75, 1.0, 0.4 + pulse * 0.4), 2.0, true)
+	var center_color: Color = Color(0.48, 0.86, 1.0)
+
+	for i in range(topics.size()):
+		var topic: Dictionary = topics[i]
+		var pos: Vector2 = topic["pos"]
+		var color: Color = topic["color"]
+		diagram.draw_line(center, pos, Color(color.r, color.g, color.b, 0.20), 9.0, true)
+		diagram.draw_line(center, pos, Color(color.r, color.g, color.b, 0.63), 2.0, true)
+		var t: float = fposmod(_time * 0.28 + float(i) * 0.24, 1.0)
+		diagram.draw_circle(center.lerp(pos, t), 4.5, Color(color.r, color.g, color.b, 0.90))
+
+	var center_pulse: float = sin(_time * 2.0) * 0.5 + 0.5
+	diagram.draw_circle(center, 56.0 + center_pulse * 5.0, Color(center_color.r, center_color.g, center_color.b, 0.08))
+	diagram.draw_circle(center, 46.0, Color(0.05, 0.12, 0.22, 0.96))
+	diagram.draw_arc(center, 46.0, 0.0, TAU, 48, center_color, 2.5, true)
+
+	var font: Font = get_theme_default_font()
+	if font == null:
+		return
+	diagram.draw_string(font, center + Vector2(-25.0, 7.0), "LEARN", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, Color.WHITE)
+
+	for topic_data in topics:
+		var topic_pos: Vector2 = topic_data["pos"]
+		var topic_color: Color = topic_data["color"]
+		var icon: String = topic_data["icon"]
+		var pulse: float = sin(_time * 2.1 + topic_pos.x * 0.01) * 0.5 + 0.5
+		diagram.draw_circle(topic_pos, 38.0 + pulse * 3.0, Color(topic_color.r, topic_color.g, topic_color.b, 0.09))
+		diagram.draw_circle(topic_pos, 31.0, Color(0.05, 0.12, 0.22, 0.96))
+		diagram.draw_arc(topic_pos, 31.0, 0.0, TAU, 40, topic_color, 2.2, true)
+		var icon_size: int = 18
+		var icon_width: float = font.get_string_size(icon, HORIZONTAL_ALIGNMENT_LEFT, -1.0, icon_size).x
+		diagram.draw_string(font, topic_pos + Vector2(-icon_width * 0.5, 7.0), icon, HORIZONTAL_ALIGNMENT_LEFT, -1.0, icon_size, topic_color)

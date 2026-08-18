@@ -54,34 +54,34 @@ const BODY_RIGHT_WIDE := 1212.0
 const PAGES: Array = [
 	{
 		"diagram": "tree",
-		"diagram_title": "La rete di esempio",
-		"diagram_note": "Ogni cerchio è un router. Il numero è la sua metrica.",
+		"diagram_title": "L'albero di esempio",
+		"diagram_note": "Ogni cerchio è un nodo. Il numero è il valore memorizzato.",
 		"body": """[b][color=#7fd8ff]Che cos'è un Binary Search Tree?[/color][/b]
-La rete è organizzata come un [b]albero[/b]. Ogni [b]router[/b] (nodo) contiene una metrica numerica e ha al massimo due cavi in uscita: uno verso sinistra e uno verso destra. In cima c'è la [b]radice[/b], il router principale.
+I valori sono organizzati in un [b]albero[/b]. Ogni [b]nodo[/b] contiene un numero e ha al massimo due figli: uno a sinistra e uno a destra. In cima c'è la [b]radice[/b], il primo nodo dell'albero.
 
 [b][color=#7fd8ff]La regola d'oro[/color][/b]
-Per [b]ogni[/b] router della rete, senza eccezioni:
-• le metriche [b][color=#66c8ff]MINORI[/color][/b] finiscono nel sottoalbero [b][color=#66c8ff]SINISTRO[/color][/b];
-• le metriche [b][color=#66ffb0]MAGGIORI[/color][/b] finiscono nel sottoalbero [b][color=#66ffb0]DESTRO[/color][/b].
+Per [b]ogni[/b] nodo dell'albero, senza eccezioni:
+• i valori [b][color=#66c8ff]MINORI[/color][/b] finiscono nel sottoalbero [b][color=#66c8ff]SINISTRO[/color][/b];
+• i valori [b][color=#66ffb0]MAGGIORI[/color][/b] finiscono nel sottoalbero [b][color=#66ffb0]DESTRO[/color][/b].
 
 [b][color=#7fd8ff]Non vale solo per la radice[/color][/b]
-Guarda il diagramma: sotto 25.5 trovi 12.8 (minore di 25.5) e 37.2 (maggiore di 25.5). Ma entrambi restano anche [i]minori di 50[/i], perché stanno tutti nel sottoalbero sinistro della radice. La regola si applica a cascata, a ogni livello.
+Guarda il diagramma: sotto 25.5 trovi 12.8 (minore di 25.5) e 37.2 (maggiore di 25.5). Ma entrambi restano anche [i]minori di 50[/i], perché stanno nel sottoalbero sinistro della radice. La regola si applica a cascata, a ogni livello.
 
 [b][color=#7fd8ff]Conseguenza importante[/color][/b]
-Leggendo i router da sinistra a destra, le metriche escono già [b]ordinate[/b]:
+Leggendo i nodi da sinistra a destra, i valori escono già [b]ordinati[/b]:
 [color=#8fe3ff]12.8  ·  25.5  ·  37.2  ·  50  ·  62.4  ·  74.5  ·  88.6[/color]""",
 	},
 	{
 		"diagram": "tree",
-		"diagram_title": "Cercare 37.2 sulla rete",
-		"diagram_note": "Due confronti (50, poi 25.5) e sei arrivato: gli altri 4 router non li hai nemmeno guardati.",
+		"diagram_title": "Cercare 37.2 nell'albero",
+		"diagram_note": "Due confronti (50, poi 25.5) e hai trovato il valore: gli altri nodi non servono.",
 		"body": """[b][color=#7fd8ff]Cercare è velocissimo[/color][/b]
-Per trovare la metrica [b]37.2[/b] non serve controllare tutti i router: parti dalla radice e a ogni passo fai [b]un solo confronto[/b]. Se il valore cercato è [b]minore[/b] scendi a [b]SINISTRA[/b], se è [b]maggiore[/b] scendi a [b]DESTRA[/b].
+Per trovare il valore [b]37.2[/b] non serve controllare tutti i nodi: parti dalla radice e a ogni passo fai [b]un solo confronto[/b]. Se il valore cercato è [b]minore[/b] scendi a [b]SINISTRA[/b], se è [b]maggiore[/b] scendi a [b]DESTRA[/b].
 
-Esempio: 37.2 < 50 → sinistra; 37.2 > 25.5 → destra. Trovato in [b]2 confronti[/b] invece di 7 router. Ogni confronto butta via metà rete: il costo dipende dall'[b]altezza[/b] dell'albero, non dal numero di nodi.
+Esempio: 37.2 < 50 → sinistra; 37.2 > 25.5 → destra. Trovato in [b]2 confronti[/b] invece di controllare 7 nodi. Ogni confronto scarta un sottoalbero: il costo dipende dall'[b]altezza[/b] dell'albero, non dal numero di nodi.
 
 [b][color=#ffd166]E se il valore non esiste?[/color][/b]
-Cerchiamo [b]26.0[/b]: sinistra (26 < 50), destra (26 > 25.5), sinistra (26 < 37.2)... ma da 37.2 [b]non parte nessun cavo a sinistra[/b]. È un [b]vicolo cieco[/b]: 26.0 non è in rete, scoperto in soli 3 confronti.
+Cerchiamo [b]26.0[/b]: sinistra (26 < 50), destra (26 > 25.5), sinistra (26 < 37.2)... ma 37.2 non ha un figlio sinistro. È un [b]vicolo cieco[/b]: 26.0 non è nell'albero, scoperto in soli 3 confronti.
 
 [b][color=#7fd8ff]Le quattro visite (scansioni)[/color][/b]
 • [b]Preorder[/b]: nodo → sinistra → destra
@@ -91,43 +91,43 @@ Cerchiamo [b]26.0[/b]: sinistra (26 < 50), destra (26 > 25.5), sinistra (26 < 37
 	},
 	{
 		"diagram": "graph",
-		"diagram_title": "Stessa rete, ma con cavi ridondanti",
-		"diagram_note": "In oro il percorso a costo minimo da 50 a 74.5: tre salti per 6 ms, meglio dei due salti da 8 ms.",
-		"body": """[b][color=#c0a8ff]Quando i percorsi diventano più di uno[/color][/b]
-In un albero fra due router esiste [b]un solo cammino[/b]. Una rete vera però ha [b]cavi ridondanti[/b]: più strade possibili, e ogni cavo ha una [b]latenza[/b] in millisecondi.
+		"diagram_title": "Da albero a grafo pesato",
+		"diagram_note": "In oro il cammino di costo minimo da 50 a 74.5: costo 6, migliore dell'alternativa diretta da 8.",
+		"body": """[b][color=#c0a8ff]Quando un albero diventa un grafo[/color][/b]
+In un albero fra due nodi esiste [b]un solo cammino[/b]. In un [b]grafo pesato[/b] invece possono esistere più cammini, e ogni arco ha un [b]costo[/b].
 
-Il percorso migliore non è quello con [b]meno salti[/b], ma quello con il [b]costo totale più basso[/b]. Nel diagramma da 50 a 74.5: due salti costano 8 ms, tre salti ne costano solo [b]6[/b].
+Il cammino migliore non è quello con [b]meno passaggi[/b], ma quello con il [b]costo totale più basso[/b]. Nel diagramma da 50 a 74.5: due archi costano 8, tre archi ne costano solo [b]6[/b].
 
 [b][color=#c0a8ff]L'algoritmo di Dijkstra[/color][/b]
-Metti [b]0[/b] sulla sorgente e [b]∞[/b] su tutti gli altri router, poi ripeti:
-• fissa il router [b]non ancora fissato[/b] con il costo provvisorio [b]più basso[/b];
+Metti [b]0[/b] sulla sorgente e [b]∞[/b] su tutti gli altri nodi, poi ripeti:
+• fissa il nodo [b]non ancora fissato[/b] con il costo provvisorio [b]più basso[/b];
 • quel costo ora è definitivo, non potrà più migliorare;
 • [b]rilassa i vicini[/b]: se passando da lì ci si arriva spendendo meno, aggiorna il loro costo.
 
-Quando fissi la destinazione, il percorso trovato è [b]sicuramente il migliore[/b].
+Quando fissi la destinazione, il cammino trovato è [b]sicuramente il migliore[/b].
 
-[b][color=#ffd166]Non è solo teoria[/color][/b]
-È ciò che fanno i router veri: il protocollo [b]OSPF[/b] costruisce le tabelle di instradamento proprio con Dijkstra (Shortest Path First).""",
+[b][color=#ffd166]Dall'albero al grafo[/color][/b]
+Questa fase mostra perché negli alberi il cammino è unico, mentre nei grafi pesati serve un algoritmo per scegliere il migliore.""",
 	},
 	{
 		"diagram": "",
 		"diagram_title": "",
 		"diagram_note": "",
-		"body": """[b][color=#ff8f8f]La tua missione[/color][/b]
-Un hacker ha smontato la rete. Hai [b]5 MINUTI[/b] per rimetterla in piedi: a cronometro scaduto la partita è persa.
+		"body": """[b][color=#ffcf70]Il tuo laboratorio sugli alberi[/color][/b]
+Hai [b]5 MINUTI[/b] per costruire, esplorare e trasformare un Binary Search Tree. Il cronometro rende ogni scelta importante.
 
-[b][color=#7fd8ff]FASE 1 · Ricostruzione[/color][/b]  All'inizio è online solo la radice: [b]trascina[/b] gli 8 router nelle postazioni libere (i cerchi tratteggiati). Posizione giusta → il cavo diventa verde; posizione sbagliata → il router torna indietro e perdi [b]5 secondi[/b].
+[b][color=#7fd8ff]FASE 1 · Costruzione[/color][/b]  La radice è già presente: [b]trascina[/b] gli 8 valori negli slot liberi. Posizione corretta → il nodo entra nell'albero; posizione errata → torna indietro e perdi [b]5 secondi[/b].
 
-[b][color=#7fd8ff]FASE 2 · Instradamento[/color][/b]  6 pacchetti da consegnare: a ogni router scegli [b]SINISTRA[/b] o [b]DESTRA[/b]. Due destinazioni [b]non esistono[/b] in rete: quando riconosci il vicolo cieco premi [b]NON IN RETE[/b]. Errore: [b]-12 secondi[/b].
+[b][color=#7fd8ff]FASE 2 · Ricerca[/color][/b]  Cerca valori presenti e assenti: a ogni nodo scegli [b]SINISTRA[/b] o [b]DESTRA[/b]. Quando raggiungi uno slot vuoto premi [b]NON NELL'ALBERO[/b]. Errore: [b]-12 secondi[/b].
 
-[b][color=#7fd8ff]FASE 3 · Scansione[/color][/b]  Visita estratta a caso (Preorder, Inorder, Postorder o BFS): [b]clicca i router nell'ordine giusto[/b]. Due round, e nel secondo la regola non viene più mostrata. Errore: [b]-10 secondi[/b].
+[b][color=#7fd8ff]FASE 3 · Visite[/color][/b]  Preorder, Inorder, Postorder o BFS: [b]clicca i nodi nell'ordine giusto[/b]. Nel secondo round la regola non viene più mostrata. Errore: [b]-10 secondi[/b].
 
-[b][color=#ff8f8f]FASE 4 · Attacco finale[/color][/b]  5 richieste rapide e casuali: [b]inserisci[/b] un router, [b]elimina[/b] quello compromesso, [b]instrada[/b] un pacchetto, trova il [b]minimo[/b], il [b]massimo[/b] o il [b]successore[/b]. Errore: [b]-15 secondi[/b].
+[b][color=#ffcf70]FASE 4 · Operazioni[/color][/b]  Applica operazioni fondamentali: [b]inserisci[/b], [b]elimina[/b], cerca un valore, trova [b]minimo[/b], [b]massimo[/b] e [b]successore[/b]. Errore: [b]-15 secondi[/b].
 
-[b][color=#c0a8ff]FASE 5 · Instradamento ottimale[/color][/b]  Si accendono i cavi ridondanti con le latenze: esegui [b]Dijkstra[/b] fissando ogni volta il router non fissato con il costo più basso, finché non raggiungi la destinazione. Errore: [b]-12 secondi[/b].
+[b][color=#c0a8ff]FASE 5 · Dijkstra[/color][/b]  L'albero diventa un grafo pesato: esegui [b]Dijkstra[/b] fissando ogni volta il nodo con costo provvisorio più basso, fino alla destinazione. Errore: [b]-12 secondi[/b].
 
-[b][color=#7fd8ff]Comandi[/color][/b]  Mouse per trascinare e cliccare  ·  [b]←[/b] [b]→[/b] per instradare  ·  [b]↓[/b] per il valore non in rete.
-[b][color=#ffd166]Occhio ai decimali![/color][/b]  [b]25.5[/b] e [b]25.9[/b] finiscono in due punti diversi della rete.""",
+[b][color=#7fd8ff]Comandi[/color][/b]  Mouse per trascinare e cliccare  ·  [b]←[/b] [b]→[/b] per la ricerca  ·  [b]↓[/b] per il valore assente.
+[b][color=#ffd166]Occhio ai decimali![/color][/b]  [b]25.5[/b] e [b]25.9[/b] seguono percorsi diversi nell'albero.""",
 	},
 ]
 

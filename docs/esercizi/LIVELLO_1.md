@@ -8,8 +8,8 @@ I file:
 |---|---|
 | `scripts/bst/BSTModel.gd` | L'albero: `insert`, `erase`, `minimum`, `maximum`, `successor`, `predecessor`, le 4 visite |
 | `scripts/bst/NetworkGraph.gd` | Il grafo pesato della Fase 5 e Dijkstra |
-| `scripts/phases/PhaseBase.gd` | I mini-giochi riusabili e le penalità |
-| `scripts/phases/Phase1.gd` … `Phase5.gd` | Le cinque fasi: *quali* mini-giochi, con *quali* numeri |
+| `scripts/phases/lvl1/PhaseBase.gd` (`class_name Lvl1PhaseBase`) | I mini-giochi riusabili e le penalità |
+| `scripts/phases/lvl1/Phase1.gd` … `Phase5.gd` | Le cinque fasi: *quali* mini-giochi, con *quali* numeri |
 | `scripts/scenes/Level.gd` | Elenco delle fasi, HUD, vittoria e sconfitta |
 
 ---
@@ -24,7 +24,7 @@ I file:
 | Più giri di visita | `Phase3.gd` | `ROUNDS` |
 | Più attacchi dell'hacker | `Phase4.gd` | `CHALLENGE_COUNT` |
 | Grafo di Dijkstra più fitto | `Phase5.gd` | `EXTRA_LINKS`, `MIN_WEIGHT`, `MAX_WEIGHT` |
-| Penalità | `PhaseBase.gd` | `PENALTY_PLACE`, `PENALTY_ROUTE`, `PENALTY_SCAN`, `PENALTY_ATTACK` |
+| Penalità | `Lvl1PhaseBase` (`PhaseBase.gd`) | `PENALTY_PLACE`, `PENALTY_ROUTE`, `PENALTY_SCAN`, `PENALTY_ATTACK` |
 | Durata | `GameManager.gd` | `LEVEL_DURATION` |
 
 **Tre vincoli su `ROUTERS_TO_PLACE`:**
@@ -60,7 +60,7 @@ Poi due righe: una voce nel `match` di `_start()` e una in `_build_plan()`. Occh
 
 ## 3. I mini-giochi già pronti
 
-Prima di scriverne uno nuovo, controlla se `PhaseBase` ha già quello che ti serve:
+Prima di scriverne uno nuovo, controlla se `Lvl1PhaseBase` ha già quello che ti serve:
 
 `await place_routers(valori, penalità)` · `await route_packet(destinazione)` (gestisce anche il valore assente) · `await scan_network(tipo, mostra_regola)` · `await pick_router(valore, evidenzia, messaggio, penalità)` · `await delete_router(valore)` · `await shortest_path_game(grafo, sorgente, destinazione)`
 

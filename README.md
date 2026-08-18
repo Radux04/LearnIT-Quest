@@ -95,9 +95,10 @@ res://
 │   │   ├── SqlConsole.gd       editor di query + griglia risultato
 │   │   └── SqlManual.gd        manuale in sovraimpressione (-10 s)
 │   ├── phases/
-│   │   ├── PhaseBase.gd        mini-giochi riusabili del Livello 1
-│   │   ├── Phase1..5.gd        le cinque fasi del Livello 1
-│   │   └── lvl2/               SqlPhaseBase.gd + le cinque fasi SQL
+│   │   ├── lvl1/                Lvl1PhaseBase.gd (PhaseBase.gd) + le cinque fasi del Livello 1
+│   │   ├── lvl2/                SqlPhaseBase.gd + le cinque fasi SQL
+│   │   ├── lvl3/                Lvl3PhaseBase.gd, Lvl3Pools.gd + le cinque fasi
+│   │   └── lvl4/                Lvl4PhaseBase.gd, Lvl4Catalogo.gd + le quattro fasi
 │   └── scenes/
 │       ├── MainMenu.gd
 │       ├── IntroductionScreen.gd · Introduction2Screen.gd
@@ -120,7 +121,7 @@ BSTModel          ← solo dati e algoritmi, nessun nodo Godot
    ↑
 NetworkView       ← solo rendering e animazioni, nessuna regola di gioco
    ↑
-PhaseBase         ← le regole dei mini-giochi (che cosa è giusto o sbagliato)
+Lvl1PhaseBase     ← le regole dei mini-giochi (che cosa è giusto o sbagliato)
    ↑
 Phase1..4         ← la sceneggiatura: quali mini-giochi, con quali parametri
    ↑
@@ -202,7 +203,7 @@ Tutte le manopole sono raccolte in pochi punti:
 | Costo del manuale | `SqlManual.COST_SECONDS` |
 | Penalità del Livello 2 | `Level2Controller.PENALTY_SYNTAX`, `PENALTY_WRONG` |
 | Obiettivi del Livello 2 | le liste `SqlTask.make(...)` in `scripts/phases/lvl2/Phase1..5.gd` |
-| Penalità delle 4 fasi | `PhaseBase.PENALTY_PLACE / ROUTE / SCAN / ATTACK` |
+| Penalità delle 4 fasi | `Lvl1PhaseBase.PENALTY_PLACE / ROUTE / SCAN / ATTACK` |
 | Router da posizionare | `Phase1.ROUTERS_TO_PLACE` |
 | Numero di pacchetti e valori assenti | `Phase2.PRESENT_PACKETS`, `ABSENT_PACKETS`, `ABSENT_CANDIDATES` |
 | Numero di visite | `Phase3.ROUNDS` |

@@ -1,25 +1,25 @@
 class_name LevelController
 extends Control
 
-## Livello 1 — Binary Search Tree Network.
-## Orchestra le quattro fasi (senza caricamenti intermedi), l'HUD e il timer.
+## Livello 1 — Binary Search Tree e Dijkstra.
+## Orchestra le cinque fasi, l'HUD e il timer.
 
 const ROOT_VALUE := 50.0
 
 const PHASE_SCRIPTS: Array[String] = [
-	"res://scripts/phases/Phase1.gd",
-	"res://scripts/phases/Phase2.gd",
-	"res://scripts/phases/Phase3.gd",
-	"res://scripts/phases/Phase4.gd",
-	"res://scripts/phases/Phase5.gd",
+	"res://scripts/phases/lvl1/Phase1.gd",
+	"res://scripts/phases/lvl1/Phase2.gd",
+	"res://scripts/phases/lvl1/Phase3.gd",
+	"res://scripts/phases/lvl1/Phase4.gd",
+	"res://scripts/phases/lvl1/Phase5.gd",
 ]
 
 const PHASE_BANNERS: Array = [
-	["FASE 1 — RICOSTRUZIONE", "L'hacker ha staccato 8 router: rimettili al loro posto. Occhio ai decimali!", Color(0.35, 0.85, 1.0)],
-	["FASE 2 — INSTRADAMENTO", "Guida i pacchetti dalla radice alla destinazione... se esiste.", Color(0.35, 1.0, 0.7)],
-	["FASE 3 — SCANSIONE", "Tre visite diverse: Preorder, Inorder, Postorder o BFS.", Color(0.75, 0.6, 1.0)],
-	["FASE 4 — ATTACCO FINALE", "Inserimenti, cancellazioni, minimo, massimo e successore.", Color(1.0, 0.42, 0.42)],
-	["FASE 5 — INSTRADAMENTO OTTIMALE", "La rete ha cavi ridondanti con latenze diverse: trova il percorso più veloce.", Color(0.7, 0.65, 1.0)],
+	["FASE 1 — COSTRUISCI IL BST", "Inserisci i valori rispettando la proprietà sinistra < nodo < destra.", Color(0.35, 0.85, 1.0)],
+	["FASE 2 — RICERCA", "Segui i confronti dalla radice: trova valori presenti e assenti.", Color(0.35, 1.0, 0.7)],
+	["FASE 3 — VISITE", "Preorder, Inorder, Postorder e BFS: ogni visita ha un ordine preciso.", Color(0.75, 0.6, 1.0)],
+	["FASE 4 — OPERAZIONI SUL BST", "Inserimento, cancellazione, ricerca, minimo, massimo e successore.", Color(1.0, 0.68, 0.35)],
+	["FASE 5 — DIJKSTRA", "Trasforma l'albero in un grafo pesato e trova il cammino minimo.", Color(0.7, 0.65, 1.0)],
 ]
 
 const HINT_COLOR_OPEN := Color(0.72, 0.85, 1.0)
@@ -113,7 +113,7 @@ func _run_level() -> void:
 			return
 
 		var phase_script: GDScript = load(PHASE_SCRIPTS[i])
-		var phase: PhaseBase = phase_script.new()
+		var phase: Lvl1PhaseBase = phase_script.new()
 		phase.name = "Phase%d" % current_phase
 		phase.level = self
 		add_child(phase)
@@ -270,7 +270,7 @@ func _on_time_expired() -> void:
 	network.clear_slots()
 	end_title.text = "TEMPO SCADUTO"
 	end_title.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-	end_subtitle.text = "L'hacker ha avuto la meglio: la rete non è stata ripristinata in tempo.\nRipassa la regola del BST — minori a sinistra, maggiori a destra — e riprova."
+	end_subtitle.text = "Il tempo è scaduto prima di completare il laboratorio.\nRipassa la regola del BST — minori a sinistra, maggiori a destra — e riprova."
 	_show_end_screen()
 
 
@@ -280,7 +280,7 @@ func _show_victory() -> void:
 	Sfx.play("victory")
 	clear_action_bar()
 	set_alert_mode(false)
-	end_title.text = "RETE RIPRISTINATA"
+	end_title.text = "LABORATORIO COMPLETATO"
 	end_title.add_theme_color_override("font_color", Color(0.3, 1.0, 0.6))
 	end_subtitle.text = "Hai completato il Livello 1 con %s ancora sul cronometro.\n\nHai imparato sul campo: inserimento, ricerca riuscita e fallita, visite\n(Preorder, Inorder, Postorder, BFS), minimo, massimo, successore in-order\ne cancellazione di un nodo con due figli." % GameManager.formatted_time()
 	restart_button.text = "Gioca di nuovo"

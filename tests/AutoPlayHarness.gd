@@ -34,9 +34,9 @@ func _ready() -> void:
 	set_process(true)
 
 
-func _current_phase() -> PhaseBase:
+func _current_phase() -> Lvl1PhaseBase:
 	for child in level.get_children():
-		if child is PhaseBase:
+		if child is Lvl1PhaseBase:
 			return child
 	return null
 
@@ -54,7 +54,7 @@ func _process(_delta: float) -> void:
 			Engine.time_scale = 1.0
 		return
 
-	var phase: PhaseBase = _current_phase()
+	var phase: Lvl1PhaseBase = _current_phase()
 	if phase == null:
 		return
 
@@ -96,7 +96,7 @@ func _simulate_hover() -> void:
 		level.network._on_router_hovered(router, true)
 
 
-func _try_place_router(phase: PhaseBase) -> bool:
+func _try_place_router(phase: Lvl1PhaseBase) -> bool:
 	var tray: Dictionary = phase.get("_tray_routers")
 	if tray == null or tray.is_empty():
 		return false
@@ -115,7 +115,7 @@ func _try_place_router(phase: PhaseBase) -> bool:
 	return false
 
 
-func _try_pick(phase: PhaseBase) -> bool:
+func _try_pick(phase: Lvl1PhaseBase) -> bool:
 	if not phase.get("_pick_active"):
 		return false
 	var target: float = float(phase.get("_pick_target"))
@@ -129,7 +129,7 @@ func _try_pick(phase: PhaseBase) -> bool:
 	return true
 
 
-func _try_route(phase: PhaseBase) -> bool:
+func _try_route(phase: Lvl1PhaseBase) -> bool:
 	if not phase.get("_accepting_direction"):
 		return false
 	var direction: String = phase.expected_direction()
@@ -142,7 +142,7 @@ func _try_route(phase: PhaseBase) -> bool:
 
 
 ## Esegue il ciclo di Dijkstra: fissa il router non fissato a distanza minima.
-func _try_dijkstra(phase: PhaseBase) -> bool:
+func _try_dijkstra(phase: Lvl1PhaseBase) -> bool:
 	if not phase.get("_dij_active"):
 		return false
 	var dist: Dictionary = phase.get("_dij_dist")
@@ -165,7 +165,7 @@ func _try_dijkstra(phase: PhaseBase) -> bool:
 	return true
 
 
-func _try_scan(phase: PhaseBase) -> bool:
+func _try_scan(phase: Lvl1PhaseBase) -> bool:
 	if not phase.get("_scan_active"):
 		return false
 	var expected: Array = phase.get("_expected")

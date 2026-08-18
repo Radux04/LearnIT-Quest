@@ -1,15 +1,15 @@
-class_name PhaseBase
+class_name Lvl1PhaseBase
 extends Node
 
-## Classe base di ogni fase. Contiene i mini-giochi riutilizzabili sul BST
-## (inserimento drag & drop, instradamento con ricerca positiva E negativa,
-## visita dell'albero, selezione di un router) così le quattro fasi possono
-## comporli senza duplicare logica.
+## Classe base delle fasi del BST. Contiene mini-giochi riutilizzabili:
+## inserimento drag & drop, ricerca positiva e negativa, visite, selezione,
+## cancellazione e Dijkstra.
 
 @warning_ignore("unused_signal")
 signal finished
 signal helper_done
 signal direction_chosen(direction: String)
+signal replacement_chosen(value: float)
 
 const COLOR_OK := Color(0.3, 1.0, 0.6)
 const COLOR_BAD := Color(1.0, 0.35, 0.4)
@@ -28,6 +28,7 @@ var _pending_values: Array[float] = []
 var _drop_penalty: float = 0.0
 var _accepting_direction: bool = false
 var _direction_buttons: Array[Button] = []
+var _replacement_buttons: Array[Button] = []
 
 var _expected: Array[float] = []
 var _scan_index: int = 0
@@ -66,6 +67,7 @@ func _start() -> void:
 func _cleanup() -> void:
 	_clear_tray()
 	_clear_direction_buttons()
+	_clear_replacement_buttons()
 	_disconnect_router_clicks()
 	level.set_hint("")
 
@@ -78,12 +80,18 @@ func _wait(seconds: float) -> void:
 	await get_tree().create_timer(seconds).timeout
 
 
+## Registra una prova superata: finisce nei progressi salvati del giocatore.
+func _score() -> void:
+	if level != null:
+		level.solved_count += 1
+
+
 static func fmt(value: float) -> String:
 	return BSTModel.fmt(value)
 
 
 # ==== INSERT GAME ====
-# Trascina i router dal vassoio nello slot libero corretto della rete.
+# Trascina i nodi dal vassoio nello slot libero corretto dell'albero.
 
 func place_routers(values: Array[float], penalty: float = 0.0) -> void:
 	if _is_over():
@@ -137,7 +145,7 @@ func _on_router_dropped(router: RouterNode, global_pos: Vector2) -> void:
 
 	var slot: Dictionary = level.network.nearest_slot(global_pos)
 	if slot.is_empty():
-		level.toast("Rilascia il router su una postazione libera della rete.", COLOR_INFO)
+		level.toast("Rilascia il valore su uno slot libero dell'albero.", COLOR_INFO)
 		router.return_home()
 		return
 
@@ -187,7 +195,7 @@ func _reject_router(router: RouterNode, slot: Dictionary) -> void:
 	var side: String = String(slot["side"])
 	var reason: String = ""
 	if level.model.contains(router.value):
-		reason = "il router %s è già online: in un BST non esistono duplicati." % fmt(router.value)
+		reason = "il valore %s è già nell'albero: in un BST non esistono duplicati." % fmt(router.value)
 	elif side == "left":
 		reason = "%s NON è minore di %s: non può stare a sinistra." % [fmt(router.value), fmt(parent_value)]
 	else:
@@ -214,10 +222,10 @@ func _clear_tray() -> void:
 	_pending_values.clear()
 
 
-# ============================================================ ROUTING GAME ==
-# Porta un pacchetto dalla radice fino alla destinazione.
-# Se il valore NON è in rete il giocatore deve riconoscere il vicolo cieco
-# e dichiarare "NON IN RETE": è la ricerca con esito negativo.
+# ============================================================= SEARCH GAME ==
+# Cerca un valore a partire dalla radice.
+# Se il valore non è nell'albero il giocatore riconosce lo slot vuoto e
+# dichiara "NON NELL'ALBERO": è la ricerca con esito negativo.
 
 func route_packet(target: float) -> void:
 	if _is_over() or level.model.root == null:
@@ -244,10 +252,10 @@ func route_packet(target: float) -> void:
 		var child: BSTModel.BSTNodeData = null
 		if node != null and side != "":
 			child = node.left if side == "left" else node.right
-		# Se da quel lato non parte alcun cavo, la risposta giusta è "assente".
+		# Se da quel lato non c'è alcun figlio, la risposta giusta è "assente".
 		var expected: String = "absent" if child == null else side
 
-		level.set_hint("Router %s — il pacchetto cerca %s.  %s è %s di %s." % [
+		level.set_hint("Nodo %s — cerchi %s.  %s è %s di %s." % [
 			fmt(current), fmt(target), fmt(target),
 			"MINORE" if target < current else "MAGGIORE", fmt(current)])
 		_set_direction_enabled(true)
@@ -277,10 +285,10 @@ func route_packet(target: float) -> void:
 		# Risposta sbagliata: spiega esattamente perché.
 		var explanation: String = ""
 		if expected == "absent":
-			explanation = "Da %s non parte nessun cavo a %s: era un vicolo cieco, %s NON è in rete." % [
+			explanation = "Il nodo %s non ha un figlio a %s: %s NON è nell'albero." % [
 				fmt(current), "sinistra" if side == "left" else "destra", fmt(target)]
 		elif direction == "absent":
-			explanation = "Il router %s ha ancora un cavo a %s: la ricerca non era finita!" % [
+			explanation = "Il nodo %s ha ancora un figlio a %s: la ricerca non era finita!" % [
 				fmt(current), "sinistra" if side == "left" else "destra"]
 		else:
 			explanation = "%s è %s di %s: dovevi andare a %s!" % [
@@ -315,7 +323,7 @@ func expected_direction() -> String:
 	var side: String = level.model.step_direction(current_router, current_target)
 	if side == "":
 		return ""
-	# Se dal lato corretto non c'è figlio, il valore non è in rete.
+	# Se dal lato corretto non c'è figlio, il valore non è nell'albero.
 	var child: BSTModel.BSTNodeData = node.left if side == "left" else node.right
 	return side if child != null else "absent"
 
@@ -324,7 +332,7 @@ func _route_error(packet: Control, from_value: float, wrong_child: BSTModel.BSTN
 	if wrong_child != null:
 		level.network.set_edge_color(from_value, wrong_child.value, NetworkView.CABLE_BAD)
 	Sfx.play("error")
-	level.toast("Pacchetto perso! " + explanation, COLOR_BAD)
+	level.toast("Ricerca da ripetere. " + explanation, COLOR_BAD)
 	level.network.destroy_packet(packet, true)
 	level.penalty(PENALTY_ROUTE)
 
@@ -335,7 +343,7 @@ func _search_failed_correctly(packet: Control, at_value: float, target: float, c
 		router.flash(COLOR_WARN)
 		router.pop()
 	Sfx.play("scan")
-	level.toast("Esatto: %s NON è in rete. Bastati %d confronti per esserne certi." % [
+	level.toast("Esatto: %s NON è nell'albero. Bastati %d confronti per esserne certi." % [
 		fmt(target), comparisons], COLOR_WARN)
 	level.network.destroy_packet(packet, false)
 	await _wait(1.1)
@@ -360,7 +368,7 @@ func _packet_delivered(packet: Control, value: float, comparisons: int) -> void:
 		router.set_state(RouterNode.State.SUCCESS)
 		router.pop()
 	Sfx.play("correct")
-	level.toast("Consegnato a %s in %d confronti invece di %d router controllati!" % [
+	level.toast("Trovato %s in %d confronti invece di controllare %d nodi!" % [
 		fmt(value), comparisons, level.model.size()], COLOR_OK)
 	net.destroy_packet(packet, false)
 	await _wait(1.0)
@@ -375,7 +383,7 @@ func _make_direction_buttons() -> void:
 	var left_button: Button = level.make_action_button("◀  SINISTRA",
 		Vector2(level.size.x * 0.5 - 280.0, y), Vector2(250.0, 58.0))
 	left_button.pressed.connect(_on_direction_pressed.bind("left"))
-	var absent_button: Button = level.make_action_button("✖  NON IN RETE",
+	var absent_button: Button = level.make_action_button("✖  NON NELL'ALBERO",
 		Vector2(level.size.x * 0.5, y), Vector2(250.0, 58.0))
 	absent_button.pressed.connect(_on_direction_pressed.bind("absent"))
 	var right_button: Button = level.make_action_button("DESTRA  ▶",
@@ -420,7 +428,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 # =============================================================== SCAN GAME ==
-# Clicca i router seguendo un ordine di visita.
+# Clicca i nodi seguendo un ordine di visita.
 
 func scan_network(kind: String, show_rule: bool) -> void:
 	if _is_over():
@@ -429,7 +437,7 @@ func scan_network(kind: String, show_rule: bool) -> void:
 	_scan_index = 0
 	_scan_active = true
 
-	level.set_objective("Antivirus: scansiona la rete in ordine %s (%d router)." % [
+	level.set_objective("Visita l'albero in ordine %s (%d nodi)." % [
 		kind.to_upper(), _expected.size()])
 	level.set_hint(traversal_rule(kind) if show_rule else "Nessun aiuto: ricorda la definizione della visita.")
 	for router in level.network.all_routers():
@@ -472,18 +480,18 @@ func _on_scan_click(router: RouterNode) -> void:
 		router.show_badge(str(_scan_index))
 		router.pop()
 		Sfx.play("scan")
-		level.toast("Router %s scansionato (%d/%d)" % [
+		level.toast("Nodo %s selezionato (%d/%d)" % [
 			fmt(router.value), _scan_index, _expected.size()], COLOR_OK)
 		if _scan_index >= _expected.size():
 			Sfx.play("correct")
-			level.toast("Scansione completata! Nessuna minaccia rilevata.", COLOR_OK)
+			level.toast("Visita completata! Ordine corretto.", COLOR_OK)
 			_scan_active = false
 			helper_done.emit()
 	else:
 		Sfx.play("error")
 		router.set_state(RouterNode.State.ERROR)
 		router.shake()
-		level.toast("Router sbagliato! Non tocca a %s. Tempo -%d s" % [
+		level.toast("Nodo sbagliato! Non tocca a %s. Tempo -%d s" % [
 			fmt(router.value), int(PENALTY_SCAN)], COLOR_BAD)
 		level.penalty(PENALTY_SCAN)
 		await _wait(0.5)
@@ -492,8 +500,8 @@ func _on_scan_click(router: RouterNode) -> void:
 
 
 # =============================================================== PICK GAME ==
-# "Clicca il router giusto": usato per minimo, massimo, successore
-# e per l'eliminazione del router compromesso.
+# "Clicca il nodo giusto": usato per minimo, massimo, successore
+# e per l'eliminazione di un nodo.
 
 func pick_router(target: float, highlight: bool, success_message: String, penalty: float = PENALTY_ATTACK) -> void:
 	if _is_over() or is_nan(target) or not level.model.contains(target):
@@ -506,9 +514,9 @@ func pick_router(target: float, highlight: bool, success_message: String, penalt
 	if highlight:
 		var marked: RouterNode = level.network.get_router(target)
 		if marked != null:
-			marked.set_state(RouterNode.State.HACKED)
+			marked.set_state(RouterNode.State.ACTIVE)
 			marked.set_pulsing(true)
-		Sfx.play("alarm")
+		Sfx.play("click")
 	_connect_router_clicks(_on_pick_click)
 
 	await helper_done
@@ -537,27 +545,77 @@ func _on_pick_click(router: RouterNode) -> void:
 		level.penalty(_pick_penalty)
 
 
-## Elimina un router compromesso: il giocatore lo individua e la rete
-## si riorganizza (con successore in-order se il nodo ha due figli).
+## Elimina un nodo. Se possiede due figli, il giocatore sceglie quale nodo
+## sostitutivo usare: predecessore oppure successore in-order.
 func delete_router(target: float) -> void:
 	if _is_over() or not level.model.contains(target):
 		return
 	var node: BSTModel.BSTNodeData = level.model.find(target)
 	var two_children: bool = node != null and node.left != null and node.right != null
-	var successor_value: float = level.model.successor(target)
+	var replacement_value: float = NAN
 
-	await pick_router(target, true, "Router compromesso %s isolato." % fmt(target))
+	await pick_router(target, true, "Nodo %s selezionato per l'eliminazione." % fmt(target))
 	if _is_over():
 		return
 
-	level.model.erase(target)
+	if two_children:
+		replacement_value = await _choose_replacement(target)
+		if _is_over() or is_nan(replacement_value):
+			return
+
+	if not level.model.erase(target, replacement_value):
+		level.toast("Scelta di sostituzione non valida.", COLOR_BAD)
+		return
 	await _wait(0.25)
 	level.network.rebuild(true)
-	if two_children and not is_nan(successor_value):
-		level.toast("Aveva due figli: al suo posto sale il successore in-order %s." % fmt(successor_value), COLOR_INFO)
+	if two_children:
+		level.toast("Scelta applicata: %s prende il posto di %s." % [
+			fmt(replacement_value), fmt(target)], COLOR_INFO)
 	else:
-		level.toast("Rete riorganizzata: la proprietà del BST è intatta.", COLOR_INFO)
+		level.toast("Albero riorganizzato: la proprietà del BST è intatta.", COLOR_INFO)
 	await _wait(1.1)
+
+
+func _choose_replacement(target: float) -> float:
+	var choices: Array[float] = level.model.valid_replacements(target)
+	if choices.size() != 2:
+		return NAN
+
+	level.set_objective("Scegli il nodo che prenderà il posto di %s." % fmt(target))
+	level.set_hint("Con due figli puoi scegliere il predecessore (max del ramo sinistro) oppure il successore (min del ramo destro).")
+	var labels: Array[String] = [
+		"Predecessore: %s" % fmt(choices[0]),
+		"Successore: %s" % fmt(choices[1])]
+	var button_width: float = minf(280.0, maxf(180.0, (level.size.x - 180.0) * 0.42))
+	var button_gap: float = 24.0
+	var button_step: float = button_width + button_gap
+	for i in range(choices.size()):
+		var button_center: Vector2 = Vector2(
+			level.size.x * 0.5 + (float(i) - 0.5) * button_step,
+			level.size.y - 96.0)
+		var button: Button = level.make_action_button(labels[i], button_center,
+			Vector2(button_width, 54.0), Color(0.12, 0.35, 0.6))
+		button.add_theme_font_size_override("font_size", 17)
+		button.pressed.connect(_on_replacement_pressed.bind(choices[i]))
+		_replacement_buttons.append(button)
+
+	var selected: float = await replacement_chosen
+	_clear_replacement_buttons()
+	return selected
+
+
+func _on_replacement_pressed(value: float) -> void:
+	if _replacement_buttons.is_empty():
+		return
+	Sfx.play("click")
+	replacement_chosen.emit(value)
+
+
+func _clear_replacement_buttons() -> void:
+	for button in _replacement_buttons:
+		if is_instance_valid(button):
+			button.queue_free()
+	_replacement_buttons.clear()
 
 
 # ========================================================== DIJKSTRA GAME ==
@@ -706,7 +764,7 @@ func _dijkstra_finished(distance: float) -> void:
 	helper_done.emit()
 
 
-# ============================================================ click routing ==
+# ======================================================== gestione dei click ==
 
 func _connect_router_clicks(callback: Callable) -> void:
 	for router in level.network.all_routers():

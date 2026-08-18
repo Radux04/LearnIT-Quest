@@ -1,16 +1,14 @@
-extends PhaseBase
+extends Lvl1PhaseBase
 
-## FASE 4 — Attacco finale.
-## L'hacker bombarda la rete con richieste casuali. Oltre a inserimento,
-## eliminazione e instradamento entrano in gioco le operazioni "classiche"
-## del BST: minimo, massimo e successore in-order.
+## FASE 4 — Operazioni sul BST.
+## Il giocatore applica inserimento, cancellazione, ricerca, minimo, massimo
+## e successore in-order su un albero già costruito.
 
 const CHALLENGE_COUNT := 5
 
 
 func _start() -> void:
-	level.set_phase_header("FASE 4 — ATTACCO DELL'HACKER", Color(1.0, 0.42, 0.42))
-	level.set_alert_mode(true)
+	level.set_phase_header("FASE 4 — OPERAZIONI SUL BST", Color(1.0, 0.68, 0.35))
 
 	var plan: Array[String] = _build_plan()
 	var done: int = 0
@@ -33,20 +31,18 @@ func _start() -> void:
 				await _challenge_route()
 		done += 1
 		if not _is_over():
-			level.set_objective("Attacco respinto %d/%d..." % [done, plan.size()])
+			level.set_objective("Operazione completata %d/%d..." % [done, plan.size()])
 			await _wait(0.45)
-
-	level.set_alert_mode(false)
 	if _is_over():
 		return
 	Sfx.play("victory")
-	level.toast("Hacker respinto! La rete è di nuovo sicura.", COLOR_OK)
+	level.toast("Operazioni completate: sai modificare e interrogare il BST.", COLOR_OK)
 	await _wait(1.3)
 	finished.emit()
 
 
 ## Mix garantito: ogni tipo di operazione compare almeno una volta,
-## l'ordine è casuale e la rete non viene mai svuotata.
+## l'ordine è casuale e l'albero non viene mai svuotato.
 func _build_plan() -> Array[String]:
 	var plan: Array[String] = ["insert", "route", "delete", "min", "max", "successor", "route"]
 	while plan.size() > CHALLENGE_COUNT:
@@ -60,8 +56,7 @@ func _challenge_insert() -> void:
 	if is_nan(value):
 		await _challenge_route()
 		return
-	Sfx.play("alarm")
-	level.set_objective("L'hacker inietta un router: INSERISCI %s nella posizione corretta!" % fmt(value))
+	level.set_objective("Inserisci %s nella posizione corretta dell'albero." % fmt(value))
 	level.set_hint("Scendi dalla radice confrontando le metriche: minore → sinistra, maggiore → destra.")
 	var values: Array[float] = [value]
 	await place_routers(values, PENALTY_ATTACK)
@@ -72,8 +67,8 @@ func _challenge_delete() -> void:
 	if is_nan(target):
 		await _challenge_route()
 		return
-	level.set_objective("Router compromesso rilevato: ELIMINA %s cliccandoci sopra!" % fmt(target))
-	level.set_hint("Se ha due figli, il suo posto verrà preso dal successore in-order.")
+	level.set_objective("Elimina il nodo %s cliccandoci sopra." % fmt(target))
+	level.set_hint("Se ha due figli, dopo averlo selezionato sceglierai tu tra predecessore e successore in-order.")
 	await delete_router(target)
 
 
@@ -83,12 +78,12 @@ func _challenge_extreme(want_min: bool) -> void:
 		await _challenge_route()
 		return
 	if want_min:
-		level.set_objective("Diagnostica: clicca il router con la metrica PIÙ BASSA della rete.")
+		level.set_objective("Clicca il nodo con il valore PIÙ BASSO dell'albero.")
 		level.set_hint("Il minimo di un BST si trova scendendo sempre a sinistra dalla radice.")
 	else:
-		level.set_objective("Diagnostica: clicca il router con la metrica PIÙ ALTA della rete.")
+		level.set_objective("Clicca il nodo con il valore PIÙ ALTO dell'albero.")
 		level.set_hint("Il massimo di un BST si trova scendendo sempre a destra dalla radice.")
-	await pick_router(target, false, "Esatto: %s è l'estremo della rete." % fmt(target), PENALTY_ATTACK)
+	await pick_router(target, false, "Esatto: %s è l'estremo dell'albero." % fmt(target), PENALTY_ATTACK)
 
 
 func _challenge_successor() -> void:
@@ -99,8 +94,8 @@ func _challenge_successor() -> void:
 	var index: int = randi() % (ordered.size() - 1)
 	var reference: float = ordered[index]
 	var target: float = ordered[index + 1]
-	level.set_objective("Failover: clicca il SUCCESSORE di %s (la metrica subito più grande)." % fmt(reference))
-	level.set_hint("Il successore in-order è il router che segue %s nella visita Inorder." % fmt(reference))
+	level.set_objective("Clicca il SUCCESSORE di %s (il valore subito più grande)." % fmt(reference))
+	level.set_hint("Il successore in-order è il nodo che segue %s nella visita Inorder." % fmt(reference))
 	await pick_router(target, false, "Corretto: dopo %s viene %s." % [fmt(reference), fmt(target)], PENALTY_ATTACK)
 
 
@@ -109,8 +104,8 @@ func _challenge_route() -> void:
 	if candidates.size() > 1:
 		candidates.remove_at(0)
 	var target: float = candidates[randi() % candidates.size()]
-	level.set_objective("Traffico sospetto: INSTRADA un pacchetto verso %s." % fmt(target))
-	level.set_hint("← e → per scegliere il ramo, ↓ se il valore non è in rete.")
+	level.set_objective("Esegui una RICERCA del valore %s." % fmt(target))
+	level.set_hint("← e → per scegliere il ramo, ↓ se il valore non è nell'albero.")
 	await route_packet(target)
 
 
