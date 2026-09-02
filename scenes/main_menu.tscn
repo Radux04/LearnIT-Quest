@@ -87,7 +87,8 @@ offset_right = 750.0
 offset_bottom = 258.0
 theme_override_colors/font_color = Color(0.62, 0.88, 1, 1)
 theme_override_font_sizes/font_size = 22
-text = "Impara le basi dell'informatica giocando: risolvi missioni,\nsperimenta gli algoritmi e costruisci il tuo ragionamento."
+text = "Impara le basi dell'informatica giocando: risolvi missioni,
+sperimenta gli algoritmi e costruisci il tuo ragionamento."
 
 [node name="Buttons" type="VBoxContainer" parent="."]
 layout_mode = 1
