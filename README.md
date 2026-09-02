@@ -9,55 +9,55 @@ Ogni livello è una "missione informatica" da completare in **5 minuti**: niente
 | **Engine** | Godot 4.5 (Forward+) |
 | **Risoluzione** | 1280×720, stretch `canvas_items` / `expand` |
 | **Lingua** | Italiano |
-| **Livelli disponibili** | 1 — Binary Search Tree Network · 2 — Database Recovery (MySQL) |
+| **Livelli disponibili** | 1 — Alberi binari di ricerca · 2 — Database Recovery (MySQL) |
 
 ---
 
-## Livello 1 · Binary Search Tree Network
+## Livello 1 · Alberi binari di ricerca e algoritmi
 
-La rete informatica è rappresentata come un albero di **router futuristici** collegati da **cavi luminosi** percorsi da **pacchetti animati**. Ogni router è un nodo del BST e la sua "metrica" è la chiave. Nell'ultima fase la rete si apre in un **grafo pesato** e si passa al cammino minimo con **Dijkstra**.
+L'albero binario di ricerca è disegnato come una struttura di **nodi luminosi** collegati da **archi**. Ogni nodo contiene una **chiave** e la struttura rispetta la regola d'oro: minori a sinistra, maggiori a destra. Nell'ultima fase l'albero si apre in un **grafo pesato** e si passa al cammino minimo con **Dijkstra**.
 
-Le metriche sono **numeri decimali** scelti a coppie ravvicinate (`25.5` / `25.9`, `62.1` / `62.4`): non basta guardare la parte intera, bisogna confrontare davvero.
+Le chiavi sono **numeri decimali** scelti a coppie ravvicinate (`25.5` / `25.9`, `62.1` / `62.4`): non basta guardare la parte intera, bisogna confrontare davvero.
 
 ### Introduzione teorica (3 pagine)
 
 Prima del gameplay c'è una spiegazione navigabile con diagramma animato:
 
-1. **Che cos'è un BST** — nodi, cavi, radice, la regola d'oro (minori a sinistra, maggiori a destra) e il fatto che vale a *ogni* livello, non solo alla radice.
+1. **Che cos'è un BST** — nodi, archi, radice, la regola d'oro (minori a sinistra, maggiori a destra) e il fatto che vale a *ogni* livello, non solo alla radice.
 2. **La ricerca** — perché costa quanto l'*altezza* dell'albero e non il numero di nodi, cosa succede quando il valore **non esiste** (vicolo cieco), e le quattro visite. Il diagramma evidenzia il percorso di ricerca reale.
-3. **Dijkstra** — cosa cambia quando i percorsi diventano più di uno: cavi con latenze diverse, il ciclo *fissa il minimo / rilassa i vicini*, e il fatto che il percorso con meno salti spesso **non** è il più veloce. Il diagramma mostra un grafo pesato con il cammino ottimo in oro.
+3. **Dijkstra** — cosa cambia quando i percorsi diventano più di uno: archi con costi diversi, il ciclo *fissa il minimo / rilassa i vicini*, e il fatto che il percorso con meno salti spesso **non** è il più veloce. Il diagramma mostra un grafo pesato con il cammino ottimo in oro.
 4. **La missione** — le 5 fasi, il timer, i comandi e le penalità.
 
 Il livello parte solo premendo *"Inizia la missione"*.
 
 ### Le quattro fasi
 
-Le fasi si susseguono **senza caricamenti**: la rete disegnata a schermo è sempre la stessa e viene riorganizzata dal vivo, fino a trasformarsi in un grafo pesato nell'ultima fase.
+Le fasi si susseguono **senza caricamenti**: l'albero disegnato a schermo è sempre lo stesso e viene riorganizzato dal vivo, fino ad aprirsi in un grafo pesato nell'ultima fase.
 
 | Fase | Cosa fa il giocatore | Concetto di algoritmi | Penalità |
 |---|---|---|---|
-| **1 · Ricostruzione** | Trascina 8 router nelle postazioni libere della rete | **Inserimento** in un BST | −5 s |
-| **2 · Instradamento** | Guida 6 pacchetti dalla radice alla destinazione scegliendo SINISTRA/DESTRA — e riconosce i **vicoli ciechi** | **Ricerca** con esito positivo *e negativo* | −12 s |
-| **3 · Scansione** | Clicca i router nell'ordine di una visita estratta a caso | **Preorder, Inorder, Postorder, BFS** | −10 s |
-| **4 · Attacco finale** | Risponde a 5 richieste rapide e casuali | **Inserimento, cancellazione (con successore in-order), ricerca, minimo, massimo, successore** | −15 s |
-| **5 · Instradamento ottimale** | Esegue a mano il ciclo di **Dijkstra** sulla rete diventata un grafo pesato | **Cammino minimo**, rilassamento, differenza fra "meno salti" e "costo minore" | −12 s |
+| **1 · Costruzione** | Trascina 8 chiavi nelle posizioni libere dell'albero | **Inserimento** in un BST | −5 s |
+| **2 · Ricerca** | Scende dalla radice scegliendo SINISTRA/DESTRA per 6 chiavi — e riconosce i **vicoli ciechi** | **Ricerca** con esito positivo *e negativo* | −12 s |
+| **3 · Visite** | Clicca i nodi nell'ordine di una visita estratta a caso | **Preorder, Inorder, Postorder, BFS** | −10 s |
+| **4 · Operazioni** | Risponde a 5 richieste rapide e casuali | **Inserimento, cancellazione (con predecessore o successore in-order), ricerca, minimo, massimo, successore** | −15 s |
+| **5 · Cammino minimo** | Esegue a mano il ciclo di **Dijkstra** sull'albero diventato un grafo pesato | **Cammino minimo**, rilassamento, differenza fra "meno salti" e "costo minore" | −12 s |
 
 Dettagli che rendono l'esperienza didattica e non un quiz:
 
 - **Fase 1** — se sbagli, il messaggio spiega *esattamente perché*: «25.9 NON è minore di 25.5: non può stare a sinistra». Le postazioni libere sono cerchi tratteggiati pulsanti, quindi il giocatore vede subito dove *si potrebbe* inserire.
-- **Fase 2** — 2 pacchetti su 7 hanno una destinazione che **non esiste** in rete. Il giocatore deve accorgersi che dal lato in cui dovrebbe scendere non parte alcun cavo e premere **`✖ NON IN RETE`**. A consegna riuscita il gioco mostra il costo reale: *«Consegnato a 74.5 in 2 confronti invece di 9 router controllati!»*.
-- **Fase 3** — la regola della visita è mostrata solo nel **primo** dei tre round: dal secondo bisogna ricordarsela. Ogni clic corretto illumina il router e gli assegna il numero d'ordine.
+- **Fase 2** — 2 chiavi su 6 **non esistono** nell'albero. Il giocatore deve accorgersi che dal lato in cui dovrebbe scendere non c'è alcun figlio e dichiarare l'assenza. A ricerca riuscita il gioco mostra il costo reale: *«Trovato 74.5 in 2 confronti invece di controllare 9 nodi!»*.
+- **Fase 3** — la regola della visita è mostrata solo nel **primo** dei round: dal secondo bisogna ricordarsela. Ogni clic corretto illumina il nodo e gli assegna il numero d'ordine.
 - **Fase 4** — la cancellazione sceglie di preferenza un nodo con **due figli**, il caso più istruttivo, e spiega che al suo posto sale il **successore in-order**. Lo sfondo pulsa in rosso durante l'attacco.
-- **Fase 5** — l'hacker, ritirandosi, riattiva i **cavi ridondanti**: l'albero diventa un **grafo pesato**, ogni cavo mostra la sua latenza in ms e fra due router esistono più strade. Il giocatore esegue il ciclo di Dijkstra a mano: a ogni turno deve cliccare il router **non ancora fissato con il costo provvisorio più basso**. Il gioco si occupa del **rilassamento** dei vicini e aggiorna i badge (`∞` → costo provvisorio → costo definitivo), così l'algoritmo si *vede* lavorare; alla fine il cammino ottimo si illumina in oro. Cliccare troppo presto un router costoso spiega l'errore: «Troppo presto: 62.4 costa 11, ma c'è ancora un router non fissato a 8. Dijkstra prende sempre il minimo!». È lo stesso algoritmo che il protocollo **OSPF** usa davvero nei router.
+- **Fase 5** — compaiono **archi aggiuntivi**: l'albero diventa un **grafo pesato**, ogni arco mostra il suo costo e fra due nodi esistono più cammini. Il giocatore esegue il ciclo di Dijkstra a mano: a ogni turno deve cliccare il nodo **non ancora fissato con il costo provvisorio più basso**. Il gioco si occupa del **rilassamento** dei vicini e aggiorna i badge (`∞` → costo provvisorio → costo definitivo), così l'algoritmo si *vede* lavorare; alla fine il cammino ottimo si illumina in oro. Cliccare troppo presto un nodo costoso spiega l'errore: «Troppo presto: 62.4 costa 11, ma c'è ancora un nodo non fissato a 8. Dijkstra prende sempre il minimo!».
 
 ### Comandi
 
 | Azione | Comando |
 |---|---|
-| Trascinare un router | Mouse (tieni premuto e rilascia sulla postazione) |
-| Selezionare/scansionare un router | Clic sinistro |
-| Instradare a sinistra / destra | Pulsanti oppure **←** / **→** |
-| Dichiarare che il valore non è in rete | Pulsante **`✖ NON IN RETE`** oppure **↓** |
+| Trascinare un nodo | Mouse (tieni premuto e rilascia sulla posizione) |
+| Selezionare un nodo | Clic sinistro |
+| Scendere a sinistra / destra | Pulsanti oppure **←** / **→** |
+| Dichiarare che il valore non è nell'albero | Pulsante **`✖ NON NELL'ALBERO`** oppure **↓** |
 | Avanzare nell'introduzione | **Invio / Spazio**, indietro con **Esc** |
 
 ---
@@ -69,7 +69,7 @@ res://
 ├── scenes/
 │   ├── main_menu.tscn          scena principale del gioco
 │   ├── introduction.tscn       teoria Livello 1 (4 pagine)
-│   ├── level.tscn              Livello 1 — rete di router
+│   ├── level.tscn              Livello 1 — alberi binari di ricerca
 │   ├── introduction2.tscn      teoria Livello 2 (6 pagine)
 │   ├── level2.tscn             Livello 2 — database MySQL
 │   ├── introduction3.tscn      teoria Livello 3 (7 pagine)
@@ -81,7 +81,7 @@ res://
 │   │   ├── GameManager.gd      autoload: timer, penalità, cambio scena
 │   │   └── Sfx.gd              autoload: audio sintetizzato a runtime
 │   ├── bst/BSTModel.gd         il BST puro (nessuna grafica)
-│   ├── graph/NetworkGraph.gd   grafo pesato + algoritmo di Dijkstra
+│   ├── graph/WeightedGraph.gd  grafo pesato + algoritmo di Dijkstra
 │   ├── sql/
 │   │   ├── SqlTokenizer.gd     da testo a token
 │   │   ├── SqlParser.gd        da token ad albero sintattico
@@ -89,8 +89,8 @@ res://
 │   │   ├── SqlDatabase.gd      tabelle, righe, confronti, snapshot
 │   │   └── SqlTask.gd          obiettivi e correzione per equivalenza
 │   ├── ui/
-│   │   ├── NetworkView.gd      disegna la rete: cavi, slot, pacchetti
-│   │   ├── RouterNode.gd       un router: stati, drag & drop, clic
+│   │   ├── TreeView.gd         disegna l'albero: archi, slot, token di ricerca
+│   │   ├── TreeNodeView.gd     un nodo: stati, drag & drop, clic
 │   │   ├── SqlTableView.gd     una tabella con colonne e righe
 │   │   ├── SqlConsole.gd       editor di query + griglia risultato
 │   │   └── SqlManual.gd        manuale in sovraimpressione (-10 s)
@@ -119,7 +119,7 @@ Tre strati separati, ognuno ignaro di quello sopra:
 ```
 BSTModel          ← solo dati e algoritmi, nessun nodo Godot
    ↑
-NetworkView       ← solo rendering e animazioni, nessuna regola di gioco
+TreeView          ← solo rendering e animazioni, nessuna regola di gioco
    ↑
 Lvl1PhaseBase     ← le regole dei mini-giochi (che cosa è giusto o sbagliato)
    ↑
@@ -157,7 +157,7 @@ Il progetto include due scene di verifica, utili dopo ogni modifica:
 | `res://tests/timeout.tscn` | Porta il cronometro a zero e verifica la schermata *Tempo Scaduto* con i due pulsanti. |
 | `res://tests/test_sql_engine.gd` | 52 test del motore SQL, eseguibili senza aprire l'editor (vedi sopra). |
 
-Esegui `autoplay.tscn` con **F6**: se arriva a `RETE RIPRISTINATA` senza errori runtime, l'intera catena (modello, vista, fasi, HUD) è sana. Alza `TIME_SCALE` in `AutoPlayHarness.gd` per accelerare la verifica.
+Esegui `autoplay.tscn` con **F6**: se arriva a `LABORATORIO COMPLETATO` senza errori runtime, l'intera catena (modello, vista, fasi, HUD) è sana. Alza `TIME_SCALE` in `AutoPlayHarness.gd` per accelerare la verifica.
 
 ## Il suggerimento a scadenza
 
@@ -184,7 +184,7 @@ Ogni livello ha una guida pratica dedicata, con il formato dei dati, i vincoli, 
 
 | Livello | Guida | Dove stanno gli esercizi |
 |---|---|---|
-| 1 · Router | [docs/esercizi/LIVELLO_1.md](docs/esercizi/LIVELLO_1.md) | Costanti nelle fasi (`ROUTERS_TO_PLACE`, `CHALLENGE_COUNT`, …) |
+| 1 · Alberi binari | [docs/esercizi/LIVELLO_1.md](docs/esercizi/LIVELLO_1.md) | Costanti nelle fasi (`VALUES_TO_PLACE`, `CHALLENGE_COUNT`, …) |
 | 2 · SQL | [docs/esercizi/LIVELLO_2.md](docs/esercizi/LIVELLO_2.md) | Elenchi `SqlTask.make(...)` in `scripts/phases/lvl2/` |
 | 3 · Calcolabilità | [docs/esercizi/LIVELLO_3.md](docs/esercizi/LIVELLO_3.md) | Catalogo `scripts/phases/lvl3/Lvl3Pools.gd` |
 | 4 · Java | [docs/esercizi/LIVELLO_4.md](docs/esercizi/LIVELLO_4.md) | **File JSON**: `data/esercizi_livello_4.json` |
@@ -204,11 +204,11 @@ Tutte le manopole sono raccolte in pochi punti:
 | Penalità del Livello 2 | `Level2Controller.PENALTY_SYNTAX`, `PENALTY_WRONG` |
 | Obiettivi del Livello 2 | le liste `SqlTask.make(...)` in `scripts/phases/lvl2/Phase1..5.gd` |
 | Penalità delle 4 fasi | `Lvl1PhaseBase.PENALTY_PLACE / ROUTE / SCAN / ATTACK` |
-| Router da posizionare | `Phase1.ROUTERS_TO_PLACE` |
-| Numero di pacchetti e valori assenti | `Phase2.PRESENT_PACKETS`, `ABSENT_PACKETS`, `ABSENT_CANDIDATES` |
+| Chiavi da posizionare | `Phase1.VALUES_TO_PLACE` |
+| Numero di ricerche e valori assenti | `Phase2.PRESENT_KEYS`, `ABSENT_KEYS`, `ABSENT_CANDIDATES` |
 | Numero di visite | `Phase3.ROUNDS` |
 | Numero e mix di sfide finali | `Phase4.CHALLENGE_COUNT`, `Phase4._build_plan()` |
-| Cavi ridondanti e latenze | `Phase5.EXTRA_LINKS`, `MIN_WEIGHT`, `MAX_WEIGHT` |
+| Archi ridondanti e costi | `Phase5.EXTRA_LINKS`, `MIN_WEIGHT`, `MAX_WEIGHT` |
 
 ---
 

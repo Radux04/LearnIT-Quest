@@ -13,7 +13,7 @@ const MAX_WEIGHT := 9
 func _start() -> void:
 	level.set_phase_header("FASE 5 — DIJKSTRA: CAMMINO MINIMO", Color(0.7, 0.65, 1.0))
 
-	var graph: NetworkGraph = NetworkGraph.from_tree(level.model, MIN_WEIGHT, MAX_WEIGHT)
+	var graph: WeightedGraph = WeightedGraph.from_tree(level.model, MIN_WEIGHT, MAX_WEIGHT)
 	_add_redundant_links(graph)
 
 	var source: float = level.model.root.value
@@ -23,9 +23,9 @@ func _start() -> void:
 		return
 
 	var optimal: Array[float] = graph.shortest_path(source, target)
-	var cost: int = NetworkGraph.path_cost(graph, optimal)
+	var cost: int = WeightedGraph.path_cost(graph, optimal)
 
-	level.network.set_graph(graph)
+	level.tree_view.set_graph(graph)
 	await level.show_banner("GRAFO PESATO",
 		"Ogni arco ha un costo: cerca il cammino minimo, non quello con meno passaggi.",
 		Color(0.7, 0.65, 1.0))
@@ -48,7 +48,7 @@ func _start() -> void:
 
 ## Aggiunge alcuni archi fra nodi vicini sullo schermo ma non collegati
 ## nell'albero: sono questi a creare cammini alternativi.
-func _add_redundant_links(graph: NetworkGraph) -> void:
+func _add_redundant_links(graph: WeightedGraph) -> void:
 	var values: Array[float] = level.model.values()
 	var candidates: Array = []
 	for i in range(values.size()):
@@ -57,7 +57,7 @@ func _add_redundant_links(graph: NetworkGraph) -> void:
 			var b: float = values[j]
 			if graph.has_edge(a, b):
 				continue
-			var distance: float = level.network.center_of(a).distance_to(level.network.center_of(b))
+			var distance: float = level.tree_view.center_of(a).distance_to(level.tree_view.center_of(b))
 			candidates.append({"a": a, "b": b, "d": distance})
 
 	candidates.sort_custom(func(x, y): return float(x["d"]) < float(y["d"]))
@@ -66,7 +66,7 @@ func _add_redundant_links(graph: NetworkGraph) -> void:
 	for candidate in candidates:
 		if added >= EXTRA_LINKS:
 			break
-		# Salta i cavi troppo lunghi: attraverserebbero mezzo schermo.
+		# Salta i archi troppo lunghi: attraverserebbero mezzo schermo.
 		if float(candidate["d"]) > 420.0:
 			continue
 		graph.add_edge(float(candidate["a"]), float(candidate["b"]),
@@ -76,7 +76,7 @@ func _add_redundant_links(graph: NetworkGraph) -> void:
 
 ## Una destinazione lontana dalla sorgente, così l'algoritmo deve davvero
 ## fissare più nodi prima di arrivarci.
-func _choose_destination(graph: NetworkGraph, source: float) -> float:
+func _choose_destination(graph: WeightedGraph, source: float) -> float:
 	var result: Dictionary = graph.dijkstra(source)
 	var distances: Dictionary = result["dist"]
 	var best: float = NAN
@@ -84,8 +84,8 @@ func _choose_destination(graph: NetworkGraph, source: float) -> float:
 	for value in graph.nodes():
 		if is_equal_approx(value, source):
 			continue
-		var path: Array[float] = NetworkGraph.path_from(result["prev"], source, value)
-		if path.size() > best_hops and float(distances[value]) < NetworkGraph.INF:
+		var path: Array[float] = WeightedGraph.path_from(result["prev"], source, value)
+		if path.size() > best_hops and float(distances[value]) < WeightedGraph.INF:
 			best_hops = path.size()
 			best = value
 	return best

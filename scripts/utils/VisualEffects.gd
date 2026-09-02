@@ -11,7 +11,7 @@ static func play_correct_feedback(parent: Node, position: Vector2, duration: flo
 	parent.add_child(particle)
 	
 	var sprite: Sprite2D = Sprite2D.new()
-	sprite.texture = load("res://assets/generated/packet_glow.png")
+	sprite.texture = load("res://assets/generated/token_glow.png")
 	sprite.centered = true
 	sprite.scale = Vector2(0.5, 0.5)
 	sprite.modulate = Color.GREEN

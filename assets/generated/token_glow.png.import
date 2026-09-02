@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://i12qvkupp66h"
-path="res://.godot/imported/data_packet_frame_0.png-a281e605d911e02be5c7cc9c5756c2bd.ctex"
+uid="uid://dx7wvxjjpnpd6"
+path="res://.godot/imported/token_glow.png-343680556d9c8c88fd5eeeb795fd8cdf.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/generated/data_packet_frame_0.png"
-dest_files=["res://.godot/imported/data_packet_frame_0.png-a281e605d911e02be5c7cc9c5756c2bd.ctex"]
+source_file="res://assets/generated/token_glow.png"
+dest_files=["res://.godot/imported/token_glow.png-343680556d9c8c88fd5eeeb795fd8cdf.ctex"]
 
 [params]
 

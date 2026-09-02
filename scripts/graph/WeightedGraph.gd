@@ -1,11 +1,11 @@
-class_name NetworkGraph
+class_name WeightedGraph
 extends RefCounted
 
-## Grafo pesato non orientato costruito sopra la rete di router.
-## I cavi dell'albero diventano archi, più alcuni "cavi ridondanti" che
+## Grafo pesato non orientato costruito sopra l'albero binario di ricerca.
+## I archi dell'albero diventano archi, più alcuni "archi ridondanti" che
 ## creano percorsi alternativi: senza di essi il cammino fra due nodi
 ## sarebbe unico e Dijkstra non avrebbe nulla da decidere.
-## Il peso di un arco è la latenza del cavo in millisecondi.
+## Il peso di un arco è il costo dell'arco.
 
 const INF := 1000000000.0
 
@@ -60,10 +60,10 @@ func edge_weight(a: float, b: float) -> int:
 	return -1
 
 
-## Costruisce il grafo a partire dall'albero: ogni cavo padre-figlio
-## diventa un arco con una latenza casuale.
-static func from_tree(model: BSTModel, min_weight: int = 1, max_weight: int = 9) -> NetworkGraph:
-	var graph: NetworkGraph = NetworkGraph.new()
+## Costruisce il grafo a partire dall'albero: ogni arco padre-figlio
+## diventa un arco con una costo casuale.
+static func from_tree(model: BSTModel, min_weight: int = 1, max_weight: int = 9) -> WeightedGraph:
+	var graph: WeightedGraph = WeightedGraph.new()
 	for value in model.values():
 		graph.add_node(value)
 	graph._add_tree_edges(model.root, min_weight, max_weight)
@@ -135,7 +135,7 @@ static func path_from(prev: Dictionary, source: float, target: float) -> Array[f
 
 ## Numero di archi (salti) del cammino, utile per far notare che
 ## "meno salti" non vuol dire "meno costo".
-static func path_cost(graph: NetworkGraph, path: Array[float]) -> int:
+static func path_cost(graph: WeightedGraph, path: Array[float]) -> int:
 	var total: int = 0
 	for i in range(path.size() - 1):
 		total += graph.edge_weight(path[i], path[i + 1])

@@ -1,15 +1,15 @@
-class_name NetworkView
+class_name TreeView
 extends Control
 
-## Renders the BST as a futuristic router network: glowing cables, routers and
-## animated network packets. Purely presentational - phases drive it.
+## Renders the BST as a futuristic tree: glowing edges, nodes and
+## animated search tokens. Purely presentational - phases drive it.
 
 const MARGIN_X := 70.0
 const TREE_TOP := 178.0
 const LEVEL_HEIGHT_MAX := 98.0
 const LEVEL_HEIGHT_MIN := 50.0
 const BOTTOM_RESERVED := 196.0
-## Distanza minima fra due colonne: un router è largo 58 px, quindi sotto i
+## Distanza minima fra due colonne: un nodo è largo 58 px, quindi sotto i
 ## 74 px due nodi vicini si toccherebbero.
 const MIN_COLUMN_STEP := 74.0
 const MAX_COLUMN_STEP := 150.0
@@ -17,18 +17,18 @@ const SIDE_MARGIN := 90.0
 const SLOT_RADIUS := 30.0
 const DROP_TOLERANCE := 78.0
 
-const CABLE_IDLE := Color(0.25, 0.62, 1.0, 0.85)
-const CABLE_OK := Color(0.25, 1.0, 0.6, 1.0)
-const CABLE_BAD := Color(1.0, 0.28, 0.32, 1.0)
-const CABLE_EXTRA := Color(0.65, 0.55, 1.0, 0.85)
-const CABLE_PATH := Color(1.0, 0.82, 0.3, 1.0)
+const EDGE_IDLE := Color(0.25, 0.62, 1.0, 0.85)
+const EDGE_OK := Color(0.25, 1.0, 0.6, 1.0)
+const EDGE_BAD := Color(1.0, 0.28, 0.32, 1.0)
+const EDGE_EXTRA := Color(0.65, 0.55, 1.0, 0.85)
+const EDGE_PATH := Color(1.0, 0.82, 0.3, 1.0)
 const EXTRA_BULGE := 44.0
-## Di quanto l'etichetta del costo si scosta dal cavo, perpendicolarmente.
+## Di quanto l'etichetta del costo si scosta dal arco, perpendicolarmente.
 const WEIGHT_OFFSET := 15.0
 
 var model: BSTModel = null
 
-var _routers: Dictionary = {}          # float value -> RouterNode
+var _node_views: Dictionary = {}          # float value -> TreeNodeView
 var _positions: Dictionary = {}        # float value -> Vector2 (center)
 var _depths: Dictionary = {}           # float value -> int
 var _edges: Array = []                 # [{ "from": float, "to": float }]
@@ -40,8 +40,8 @@ var _flow_enabled: bool = true
 var _level_height: float = LEVEL_HEIGHT_MAX
 ## Distanza orizzontale fra due colonne vicine, ricalcolata a ogni layout.
 var _column_step: float = MAX_COLUMN_STEP
-var graph: NetworkGraph = null         # attivo solo nella fase Dijkstra
-## Router sotto il mouse nella fase Dijkstra: i suoi cavi vengono evidenziati.
+var graph: WeightedGraph = null         # attivo solo nella fase Dijkstra
+## Nodo sotto il mouse nella fase Dijkstra: i suoi archi vengono evidenziati.
 var _hovered_value: float = NAN
 
 
@@ -76,10 +76,10 @@ func compute_layout() -> void:
 	_level_height = clampf(available / levels, LEVEL_HEIGHT_MIN, LEVEL_HEIGHT_MAX)
 
 	# Disposizione IN-ORDER: ogni nodo riceve una colonna tutta sua, nell'ordine
-	# della visita simmetrica. Così due router non possono MAI sovrapporsi,
+	# della visita simmetrica. Così due nodi non possono MAI sovrapporsi,
 	# nemmeno quando l'albero degenera in una catena — con il vecchio schema
 	# «dimezza l'offset a ogni livello» i nodi profondi finivano a 38 px l'uno
-	# dall'altro, cioè meno della loro larghezza, e cavi ed etichette si
+	# dall'altro, cioè meno della loro larghezza, e archi ed etichette si
 	# accavallavano diventando illeggibili.
 	var ordered: Array[float] = model.inorder()
 	_column_step = _compute_column_step(ordered.size())
@@ -93,7 +93,7 @@ func compute_layout() -> void:
 	_layout_recursive(model.root, columns, 0)
 
 
-## Distanza fra due colonne vicine: mai meno della larghezza di un router più
+## Distanza fra due colonne vicine: mai meno della larghezza di un nodo più
 ## un margine, mai tanto da disperdere l'albero su tutto lo schermo.
 func _compute_column_step(count: int) -> float:
 	if count <= 1:
@@ -136,94 +136,94 @@ func center_of(value: float) -> Vector2:
 	return _positions.get(value, Vector2.ZERO)
 
 
-func has_router(value: float) -> bool:
-	return _routers.has(value)
+func has_node_view(value: float) -> bool:
+	return _node_views.has(value)
 
 
-func get_router(value: float) -> RouterNode:
-	return _routers.get(value, null)
+func get_node_view(value: float) -> TreeNodeView:
+	return _node_views.get(value, null)
 
 
-func all_routers() -> Array:
-	return _routers.values()
+func all_node_views() -> Array:
+	return _node_views.values()
 
 
 # --------------------------------------------------------------- building ---
 
-## Rebuilds routers from the model. Existing routers are re-used and tweened
-## to their new position so the network never "jumps".
+## Rebuilds node views from the model. Existing ones are re-used and tweened
+## to their new position so the tree never "jumps".
 func rebuild(animate: bool = true) -> void:
 	compute_layout()
 	if model == null:
 		return
 	var live_values: Array[float] = model.values()
 
-	# Remove routers that no longer exist in the model.
-	for value in _routers.keys():
+	# Remove node views that no longer exist in the model.
+	for value in _node_views.keys():
 		if not live_values.has(value):
-			var stale: RouterNode = _routers[value]
-			_routers.erase(value)
+			var stale: TreeNodeView = _node_views[value]
+			_node_views.erase(value)
 			_dissolve(stale)
 
 	for value in live_values:
 		var target: Vector2 = _positions[value]
-		if _routers.has(value):
-			var router: RouterNode = _routers[value]
+		if _node_views.has(value):
+			var node_view: TreeNodeView = _node_views[value]
 			if animate:
-				router.move_to_center(target, 0.35)
+				node_view.move_to_center(target, 0.35)
 			else:
-				router.set_center(target)
+				node_view.set_center(target)
 		else:
-			var new_router: RouterNode = _make_router(value)
-			new_router.set_center(target)
-			_routers[value] = new_router
+			var new_node_view: TreeNodeView = _make_node_view(value)
+			new_node_view.set_center(target)
+			_node_views[value] = new_node_view
 	queue_redraw()
 
 
-func adopt_router(router: RouterNode, value: float) -> void:
-	## Takes an externally created router (e.g. dragged from the tray) into the network.
-	_routers[value] = router
-	if router.get_parent() != self:
-		var global_pos: Vector2 = router.global_position
-		if router.get_parent() != null:
-			router.get_parent().remove_child(router)
-		add_child(router)
-		router.global_position = global_pos
-	router.draggable = false
-	router.z_index = 0
+func adopt_node_view(node_view: TreeNodeView, value: float) -> void:
+	## Takes an externally created node view (e.g. dragged from the tray) into the tree.
+	_node_views[value] = node_view
+	if node_view.get_parent() != self:
+		var global_pos: Vector2 = node_view.global_position
+		if node_view.get_parent() != null:
+			node_view.get_parent().remove_child(node_view)
+		add_child(node_view)
+		node_view.global_position = global_pos
+	node_view.draggable = false
+	node_view.z_index = 0
 
 
-func _make_router(value: float) -> RouterNode:
-	var router: RouterNode = RouterNode.new(value)
-	add_child(router)
-	router.set_value(value)
-	router.hovered.connect(_on_router_hovered)
-	return router
+func _make_node_view(value: float) -> TreeNodeView:
+	var node_view: TreeNodeView = TreeNodeView.new(value)
+	add_child(node_view)
+	node_view.set_value(value)
+	node_view.hovered.connect(_on_node_hovered)
+	return node_view
 
 
-## Passando il mouse su un router si accendono i SUOI collegamenti e si
-## spengono gli altri: con molti cavi sovrapposti è l'unico modo per capire a
+## Passando il mouse su un nodo si accendono i SUOI collegamenti e si
+## spengono gli altri: con molti archi sovrapposti è l'unico modo per capire a
 ## colpo d'occhio quali archi partono da lì e quanto costano.
-func _on_router_hovered(router: RouterNode, inside: bool) -> void:
+func _on_node_hovered(node_view: TreeNodeView, inside: bool) -> void:
 	if graph == null:
 		return
-	_hovered_value = router.value if inside else NAN
+	_hovered_value = node_view.value if inside else NAN
 	queue_redraw()
 
 
-func _dissolve(router: RouterNode) -> void:
-	router.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var tween: Tween = router.create_tween()
+func _dissolve(node_view: TreeNodeView) -> void:
+	node_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tween: Tween = node_view.create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(router, "modulate:a", 0.0, 0.3)
-	tween.tween_property(router, "scale", Vector2(1.6, 1.6), 0.3)
-	tween.chain().tween_callback(router.queue_free)
+	tween.tween_property(node_view, "modulate:a", 0.0, 0.3)
+	tween.tween_property(node_view, "scale", Vector2(1.6, 1.6), 0.3)
+	tween.chain().tween_callback(node_view.queue_free)
 
 
 func clear_all() -> void:
-	for router in _routers.values():
-		router.queue_free()
-	_routers.clear()
+	for node_view in _node_views.values():
+		node_view.queue_free()
+	_node_views.clear()
 	_slots.clear()
 	_edge_colors.clear()
 	queue_redraw()
@@ -278,7 +278,7 @@ static func _edge_key(from_value: float, to_value: float) -> String:
 	return "%s>%s" % [BSTModel.fmt(from_value), BSTModel.fmt(to_value)]
 
 
-## I cavi sono bidirezionali: cerca il colore in entrambi i versi.
+## I archi sono bidirezionali: cerca il colore in entrambi i versi.
 func _edge_color_or(from_value: float, to_value: float, fallback: Color) -> Color:
 	if _edge_colors.has(_edge_key(from_value, to_value)):
 		return _edge_colors[_edge_key(from_value, to_value)]
@@ -289,8 +289,8 @@ func _edge_color_or(from_value: float, to_value: float, fallback: Color) -> Colo
 
 # --------------------------------------------------------- grafo pesato ----
 
-## Attiva la visualizzazione a grafo: cavi ridondanti curvi e costi sui cavi.
-func set_graph(new_graph: NetworkGraph) -> void:
+## Attiva la visualizzazione a grafo: archi ridondanti curvi e costi sui archi.
+func set_graph(new_graph: WeightedGraph) -> void:
 	graph = new_graph
 	queue_redraw()
 
@@ -300,8 +300,8 @@ func clear_graph() -> void:
 	queue_redraw()
 
 
-## Evidenzia un cammino (sequenza di valori) come cavi dorati.
-func highlight_path(path: Array[float], color: Color = CABLE_PATH) -> void:
+## Evidenzia un cammino (sequenza di valori) come archi dorati.
+func highlight_path(path: Array[float], color: Color = EDGE_PATH) -> void:
 	for i in range(path.size() - 1):
 		set_edge_color(path[i], path[i + 1], color)
 
@@ -318,24 +318,24 @@ func flash_edge(from_value: float, to_value: float, color: Color, duration: floa
 	queue_redraw()
 
 
-# ---------------------------------------------------------------- packets ---
+# ----------------------------------------------------------------- token ---
 
-## Creates a packet visual at a given local position.
-func spawn_packet(value: float, at_local: Vector2) -> Control:
-	var packet: Control = Control.new()
-	packet.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	packet.size = Vector2(44.0, 44.0)
-	packet.pivot_offset = Vector2(22.0, 22.0)
-	packet.z_index = 150
-	add_child(packet)
+## Creates a token visual at a given local position.
+func spawn_token(value: float, at_local: Vector2) -> Control:
+	var token: Control = Control.new()
+	token.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	token.size = Vector2(44.0, 44.0)
+	token.pivot_offset = Vector2(22.0, 22.0)
+	token.z_index = 150
+	add_child(token)
 
 	var texture: TextureRect = TextureRect.new()
-	texture.texture = load("res://assets/generated/data_packet_frame_0.png")
+	texture.texture = load("res://assets/generated/search_token_frame_0.png")
 	texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	texture.size = Vector2(44.0, 44.0)
 	texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	packet.add_child(texture)
+	token.add_child(texture)
 
 	var label: Label = Label.new()
 	label.text = BSTModel.fmt(value)
@@ -347,34 +347,34 @@ func spawn_packet(value: float, at_local: Vector2) -> Control:
 	label.add_theme_color_override("font_outline_color", Color(0.0, 0.05, 0.1))
 	label.add_theme_constant_override("outline_size", 5)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	packet.add_child(label)
+	token.add_child(label)
 
-	packet.position = at_local - Vector2(22.0, 22.0)
-	return packet
+	token.position = at_local - Vector2(22.0, 22.0)
+	return token
 
 
-func move_packet(packet: Control, to_local: Vector2, duration: float = 0.5) -> void:
-	if not is_instance_valid(packet):
+func move_token(token: Control, to_local: Vector2, duration: float = 0.5) -> void:
+	if not is_instance_valid(token):
 		return
-	var tween: Tween = packet.create_tween()
+	var tween: Tween = token.create_tween()
 	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(packet, "position", to_local - Vector2(22.0, 22.0), duration)
+	tween.tween_property(token, "position", to_local - Vector2(22.0, 22.0), duration)
 	await tween.finished
 
 
-func destroy_packet(packet: Control, exploded: bool = false) -> void:
-	if not is_instance_valid(packet):
+func destroy_token(token: Control, exploded: bool = false) -> void:
+	if not is_instance_valid(token):
 		return
-	var tween: Tween = packet.create_tween()
+	var tween: Tween = token.create_tween()
 	tween.set_parallel(true)
 	if exploded:
-		tween.tween_property(packet, "modulate", Color(1.0, 0.2, 0.2, 0.0), 0.35)
-		tween.tween_property(packet, "scale", Vector2(2.0, 2.0), 0.35)
-		tween.tween_property(packet, "rotation", 1.2, 0.35)
+		tween.tween_property(token, "modulate", Color(1.0, 0.2, 0.2, 0.0), 0.35)
+		tween.tween_property(token, "scale", Vector2(2.0, 2.0), 0.35)
+		tween.tween_property(token, "rotation", 1.2, 0.35)
 	else:
-		tween.tween_property(packet, "modulate:a", 0.0, 0.25)
-		tween.tween_property(packet, "scale", Vector2(1.5, 1.5), 0.25)
-	tween.chain().tween_callback(packet.queue_free)
+		tween.tween_property(token, "modulate:a", 0.0, 0.25)
+		tween.tween_property(token, "scale", Vector2(1.5, 1.5), 0.25)
+	tween.chain().tween_callback(token.queue_free)
 
 
 # ---------------------------------------------------------------- drawing ---
@@ -394,7 +394,7 @@ func _on_resized() -> void:
 
 
 func _draw() -> void:
-	# Cables between routers.
+	# Edges between nodes.
 	for i in range(_edges.size()):
 		var edge: Dictionary = _edges[i]
 		var from_value: float = float(edge["from"])
@@ -403,13 +403,13 @@ func _draw() -> void:
 			continue
 		var a: Vector2 = _positions[from_value]
 		var b: Vector2 = _positions[to_value]
-		var color: Color = _edge_color_or(from_value, to_value, CABLE_IDLE)
+		var color: Color = _edge_color_or(from_value, to_value, EDGE_IDLE)
 		_draw_cable(a, b, color, float(i) * 0.31)
 
-	# Modalità grafo: cavi ridondanti (curvi) e latenza scritta su ogni cavo.
+	# Modalità grafo: archi ridondanti (curvi) e costo scritto su ogni arco.
 	if graph != null:
 		var hovering: bool = not is_nan(_hovered_value)
-		# Prima i cavi non evidenziati, poi quelli del router sotto il mouse:
+		# Prima i archi non evidenziati, poi quelli del nodo sotto il mouse:
 		# così restano sopra e leggibili.
 		for pass_index in range(2):
 			for link in graph.edges:
@@ -426,8 +426,8 @@ func _draw() -> void:
 				var pb: Vector2 = _positions[b_value]
 				var is_extra: bool = bool(link["extra"])
 				var link_color: Color = _edge_color_or(a_value, b_value,
-					CABLE_EXTRA if is_extra else CABLE_IDLE)
-				# Chi non è collegato al router sotto il mouse si spegne.
+					EDGE_EXTRA if is_extra else EDGE_IDLE)
+				# Chi non è collegato al nodo sotto il mouse si spegne.
 				if hovering and not touches:
 					link_color = Color(link_color.r, link_color.g, link_color.b, 0.18)
 
@@ -438,7 +438,7 @@ func _draw() -> void:
 					_draw_cable(pa, pb, link_color, 0.0)      # ridisegnato più acceso
 				_draw_weight(label_pos, int(link["weight"]), link_color, pa, pb, touches)
 
-	# Ghost slots where a router can be dropped.
+	# Ghost slots where a node can be dropped.
 	for slot in _slots:
 		var pos: Vector2 = slot["pos"]
 		var parent_value: float = float(slot["parent"])
@@ -469,8 +469,8 @@ func _draw_cable(a: Vector2, b: Vector2, color: Color, phase_offset: float) -> v
 		draw_circle(p, 7.5, Color(color.r, color.g, color.b, 0.22 * fade))
 
 
-## Cavo ridondante: una curva, per distinguerlo dai cavi dell'albero e per
-## non farlo passare sopra i router che stanno in mezzo.
+## Arco ridondante: una curva, per distinguerlo dai archi dell'albero e per
+## non farlo passare sopra i nodi che stanno in mezzo.
 ## Ritorna il punto centrale della curva (dove va scritto il costo).
 func _draw_curved_cable(a: Vector2, b: Vector2, color: Color) -> Vector2:
 	var dir: Vector2 = (b - a).normalized()
@@ -503,10 +503,10 @@ func _draw_curved_cable(a: Vector2, b: Vector2, color: Color) -> Vector2:
 	return points[mid]
 
 
-## Etichetta con il costo del cavo, su una pastiglia scura per la leggibilità.
+## Etichetta con il costo del arco, su una pastiglia scura per la leggibilità.
 ##
-## Viene spostata di lato rispetto al cavo (perpendicolarmente): al centro
-## esatto finirebbe sopra i badge delle distanze dei router vicini, ed è
+## Viene spostata di lato rispetto al arco (perpendicolarmente): al centro
+## esatto finirebbe sopra i badge delle distanze dei nodi vicini, ed è
 ## esattamente il motivo per cui prima non si capiva quale costo appartenesse
 ## a quale collegamento.
 func _draw_weight(at: Vector2, weight: int, color: Color,
@@ -537,7 +537,7 @@ func _draw_weight(at: Vector2, weight: int, color: Color,
 		fill = Color(0.10, 0.16, 0.30, 0.98)
 		border = Color(color.r, color.g, color.b, 1.0)
 	elif color.a < 0.5:
-		# Cavo spento: anche il costo si attenua, così non distrae.
+		# Arco spento: anche il costo si attenua, così non distrae.
 		fill = Color(0.03, 0.06, 0.12, 0.45)
 		ink = Color(0.92, 0.97, 1.0, 0.35)
 

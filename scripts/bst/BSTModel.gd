@@ -2,9 +2,9 @@ class_name BSTModel
 extends RefCounted
 
 ## Modello dati puro di un Binary Search Tree.
-## Le chiavi sono numeri REALI (metriche di rete tipo 25.5, 37.2): niente
+## Le chiavi sono numeri REALI (decimali come 25.5, 37.2): niente
 ## interi, così il giocatore è costretto a confrontare davvero i valori.
-## Nessuna logica di rendering: la NetworkView legge questo modello.
+## Nessuna logica di rendering: la TreeView legge questo modello.
 
 class BSTNodeData extends RefCounted:
 	var value: float = 0.0
