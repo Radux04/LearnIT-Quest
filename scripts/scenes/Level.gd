@@ -28,7 +28,7 @@ const HINT_COLOR_LOCKED := Color(0.48, 0.54, 0.68)
 ## Decide quando il suggerimento in basso diventa visibile.
 var hint_gate: HintGate = HintGate.new()
 
-@onready var network: NetworkView = $NetworkView
+@onready var tree_view: TreeView = $TreeView
 @onready var tray: Control = $Tray
 @onready var action_bar: Control = $ActionBar
 @onready var hud: Control = $HUD
@@ -73,10 +73,10 @@ func _ready() -> void:
 
 	model.clear()
 	model.insert(ROOT_VALUE)
-	network.setup(model)
-	var root_router: RouterNode = network.get_router(ROOT_VALUE)
-	if root_router != null:
-		root_router.set_state(RouterNode.State.SUCCESS)
+	tree_view.setup(model)
+	var root_node_view: TreeNodeView = tree_view.get_node_view(ROOT_VALUE)
+	if root_node_view != null:
+		root_node_view.set_state(TreeNodeView.State.SUCCESS)
 
 	GameManager.start_level()
 	_run_level()
@@ -196,10 +196,10 @@ func clear_action_bar() -> void:
 
 func flash_slot(slot: Dictionary, color: Color) -> void:
 	var parent_value: float = float(slot["parent"])
-	var pos: Vector2 = network.slot_center(parent_value, String(slot["side"]))
+	var pos: Vector2 = tree_view.slot_center(parent_value, String(slot["side"]))
 	var marker: Control = Control.new()
 	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	network.add_child(marker)
+	tree_view.add_child(marker)
 	var rect: ColorRect = ColorRect.new()
 	rect.color = Color(color.r, color.g, color.b, 0.35)
 	rect.size = Vector2(64.0, 64.0)
@@ -267,7 +267,7 @@ func _on_time_expired() -> void:
 	is_over = true
 	Sfx.play("fail")
 	clear_action_bar()
-	network.clear_slots()
+	tree_view.clear_slots()
 	end_title.text = "TEMPO SCADUTO"
 	end_title.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 	end_subtitle.text = "Il tempo è scaduto prima di completare il laboratorio.\nRipassa la regola del BST — minori a sinistra, maggiori a destra — e riprova."

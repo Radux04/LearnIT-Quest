@@ -16,9 +16,9 @@ const SLOW_DOWN_AT_PHASE := 5
 ## velocità normale: serve per guardare (e fotografare) quella fase.
 const STOP_AT_PHASE := 0
 
-## Router su cui simulare il passaggio del mouse, per fotografare
+## Nodo su cui simulare il passaggio del mouse, per fotografare
 ## l'evidenziazione dei collegamenti. NAN = nessuno.
-const HOVER_ROUTER_VALUE := NAN
+const HOVER_NODE_VALUE := NAN
 
 var level: LevelController = null
 var _phase_seen: int = 0
@@ -75,7 +75,7 @@ func _process(_delta: float) -> void:
 		return
 	_last_action_time = now
 
-	if _try_place_router(phase):
+	if _try_place_node(phase):
 		return
 	if _try_pick(phase):
 		return
@@ -86,30 +86,30 @@ func _process(_delta: float) -> void:
 	_try_scan(phase)
 
 
-## Simula il passaggio del mouse su un router (il clic sintetico dei test non
+## Simula il passaggio del mouse su un node_view (il clic sintetico dei test non
 ## genera l'evento di hover). Serve solo per fotografare l'evidenziazione.
 func _simulate_hover() -> void:
-	if is_nan(HOVER_ROUTER_VALUE) or level.network == null:
+	if is_nan(HOVER_NODE_VALUE) or level.tree_view == null:
 		return
-	var router: RouterNode = level.network.get_router(HOVER_ROUTER_VALUE)
-	if router != null:
-		level.network._on_router_hovered(router, true)
+	var node_view: TreeNodeView = level.tree_view.get_node_view(HOVER_NODE_VALUE)
+	if node_view != null:
+		level.tree_view._on_node_hovered(node_view, true)
 
 
-func _try_place_router(phase: Lvl1PhaseBase) -> bool:
-	var tray: Dictionary = phase.get("_tray_routers")
+func _try_place_node(phase: Lvl1PhaseBase) -> bool:
+	var tray: Dictionary = phase.get("_tray_nodes")
 	if tray == null or tray.is_empty():
 		return false
 	for value in tray.keys():
-		var router: RouterNode = tray[value]
-		if not is_instance_valid(router):
+		var node_view: TreeNodeView = tray[value]
+		if not is_instance_valid(node_view):
 			continue
 		var slot: Dictionary = level.model.insertion_slot(float(value))
 		if slot.is_empty():
 			continue
-		var target: Vector2 = level.network.slot_center(float(slot["parent"]), String(slot["side"]))
-		phase._on_router_dropped(router, level.network.global_position + target)
-		print("[AUTOPLAY] router %s -> %s di %s" % [
+		var target: Vector2 = level.tree_view.slot_center(float(slot["parent"]), String(slot["side"]))
+		phase._on_node_dropped(node_view, level.tree_view.global_position + target)
+		print("[AUTOPLAY] nodo %s -> %s di %s" % [
 			BSTModel.fmt(float(value)), slot["side"], BSTModel.fmt(float(slot["parent"]))])
 		return true
 	return false
@@ -121,11 +121,11 @@ func _try_pick(phase: Lvl1PhaseBase) -> bool:
 	var target: float = float(phase.get("_pick_target"))
 	if is_nan(target):
 		return false
-	var router: RouterNode = level.network.get_router(target)
-	if router == null:
+	var node_view: TreeNodeView = level.tree_view.get_node_view(target)
+	if node_view == null:
 		return false
-	phase._on_pick_click(router)
-	print("[AUTOPLAY] selezionato router %s" % BSTModel.fmt(target))
+	phase._on_pick_click(node_view)
+	print("[AUTOPLAY] selezionato nodo %s" % BSTModel.fmt(target))
 	return true
 
 
@@ -136,19 +136,19 @@ func _try_route(phase: Lvl1PhaseBase) -> bool:
 	if direction == "":
 		return false
 	phase._on_direction_pressed(direction)
-	print("[AUTOPLAY] router %s -> %s (cerca %s)" % [
-		BSTModel.fmt(phase.current_router), direction, BSTModel.fmt(phase.current_target)])
+	print("[AUTOPLAY] nodo %s -> %s (cerca %s)" % [
+		BSTModel.fmt(phase.current_node), direction, BSTModel.fmt(phase.current_target)])
 	return true
 
 
-## Esegue il ciclo di Dijkstra: fissa il router non fissato a distanza minima.
+## Esegue il ciclo di Dijkstra: fissa il node_view non fissato a distanza minima.
 func _try_dijkstra(phase: Lvl1PhaseBase) -> bool:
 	if not phase.get("_dij_active"):
 		return false
 	var dist: Dictionary = phase.get("_dij_dist")
 	var settled: Array = phase.get("_dij_settled")
 	var best: float = NAN
-	var best_dist: float = NetworkGraph.INF
+	var best_dist: float = WeightedGraph.INF
 	for value in dist.keys():
 		if settled.has(float(value)):
 			continue
@@ -157,10 +157,10 @@ func _try_dijkstra(phase: Lvl1PhaseBase) -> bool:
 			best = float(value)
 	if is_nan(best):
 		return false
-	var router: RouterNode = level.network.get_router(best)
-	if router == null:
+	var node_view: TreeNodeView = level.tree_view.get_node_view(best)
+	if node_view == null:
 		return false
-	phase._on_dijkstra_click(router)
+	phase._on_dijkstra_click(node_view)
 	print("[AUTOPLAY] Dijkstra: fissato %s a costo %d" % [BSTModel.fmt(best), int(best_dist)])
 	return true
 
@@ -172,8 +172,8 @@ func _try_scan(phase: Lvl1PhaseBase) -> bool:
 	var index: int = int(phase.get("_scan_index"))
 	if index >= expected.size():
 		return false
-	var router: RouterNode = level.network.get_router(float(expected[index]))
-	if router == null:
+	var node_view: TreeNodeView = level.tree_view.get_node_view(float(expected[index]))
+	if node_view == null:
 		return false
-	phase._on_scan_click(router)
+	phase._on_traverse_click(node_view)
 	return true

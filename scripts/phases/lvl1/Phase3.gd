@@ -23,7 +23,7 @@ func _start() -> void:
 		await level.show_banner("VISITA %s" % kind.to_upper(), subtitle, Color(0.75, 0.6, 1.0))
 		if _is_over():
 			return
-		await scan_network(kind, show_rule)
+		await traverse_tree(kind, show_rule)
 
 	if _is_over():
 		return

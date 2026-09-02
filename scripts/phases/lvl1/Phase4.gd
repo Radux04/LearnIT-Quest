@@ -59,7 +59,7 @@ func _challenge_insert() -> void:
 	level.set_objective("Inserisci %s nella posizione corretta dell'albero." % fmt(value))
 	level.set_hint("Scendi dalla radice confrontando le metriche: minore → sinistra, maggiore → destra.")
 	var values: Array[float] = [value]
-	await place_routers(values, PENALTY_ATTACK)
+	await place_nodes(values, PENALTY_ATTACK)
 
 
 func _challenge_delete() -> void:
@@ -69,7 +69,7 @@ func _challenge_delete() -> void:
 		return
 	level.set_objective("Elimina il nodo %s cliccandoci sopra." % fmt(target))
 	level.set_hint("Se ha due figli, dopo averlo selezionato sceglierai tu tra predecessore e successore in-order.")
-	await delete_router(target)
+	await delete_node(target)
 
 
 func _challenge_extreme(want_min: bool) -> void:
@@ -83,7 +83,7 @@ func _challenge_extreme(want_min: bool) -> void:
 	else:
 		level.set_objective("Clicca il nodo con il valore PIÙ ALTO dell'albero.")
 		level.set_hint("Il massimo di un BST si trova scendendo sempre a destra dalla radice.")
-	await pick_router(target, false, "Esatto: %s è l'estremo dell'albero." % fmt(target), PENALTY_ATTACK)
+	await pick_node(target, false, "Esatto: %s è l'estremo dell'albero." % fmt(target), PENALTY_ATTACK)
 
 
 func _challenge_successor() -> void:
@@ -96,7 +96,7 @@ func _challenge_successor() -> void:
 	var target: float = ordered[index + 1]
 	level.set_objective("Clicca il SUCCESSORE di %s (il valore subito più grande)." % fmt(reference))
 	level.set_hint("Il successore in-order è il nodo che segue %s nella visita Inorder." % fmt(reference))
-	await pick_router(target, false, "Corretto: dopo %s viene %s." % [fmt(reference), fmt(target)], PENALTY_ATTACK)
+	await pick_node(target, false, "Corretto: dopo %s viene %s." % [fmt(reference), fmt(target)], PENALTY_ATTACK)
 
 
 func _challenge_route() -> void:
@@ -106,7 +106,7 @@ func _challenge_route() -> void:
 	var target: float = candidates[randi() % candidates.size()]
 	level.set_objective("Esegui una RICERCA del valore %s." % fmt(target))
 	level.set_hint("← e → per scegliere il ramo, ↓ se il valore non è nell'albero.")
-	await route_packet(target)
+	await search_key(target)
 
 
 ## Preferisce un nodo con due figli: è il caso di cancellazione più istruttivo.
@@ -134,7 +134,7 @@ func _free_value() -> float:
 		var slot: Dictionary = level.model.insertion_slot(candidate)
 		if slot.is_empty():
 			continue
-		if level.network.slot_center(float(slot["parent"]), String(slot["side"])).y > level.size.y - 210.0:
+		if level.tree_view.slot_center(float(slot["parent"]), String(slot["side"])).y > level.size.y - 210.0:
 			continue
 		return candidate
 	return NAN

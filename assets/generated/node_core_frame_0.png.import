@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://boimla22w3r84"
-path="res://.godot/imported/router_core_frame_0.png-a198b482ccb847efb17e712802b6009d.ctex"
+uid="uid://2l6kit7ovxc3"
+path="res://.godot/imported/node_core_frame_0.png-8726bf5496c8d80937b86aa20404da50.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/generated/router_core_frame_0.png"
-dest_files=["res://.godot/imported/router_core_frame_0.png-a198b482ccb847efb17e712802b6009d.ctex"]
+source_file="res://assets/generated/node_core_frame_0.png"
+dest_files=["res://.godot/imported/node_core_frame_0.png-8726bf5496c8d80937b86aa20404da50.ctex"]
 
 [params]
 

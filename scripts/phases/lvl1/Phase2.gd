@@ -4,10 +4,10 @@ extends Lvl1PhaseBase
 ## Il giocatore cerca valori presenti e assenti. Per quelli assenti deve
 ## riconoscere lo slot vuoto: anche una ricerca negativa costa O(altezza).
 
-const PRESENT_PACKETS := 4
-const ABSENT_PACKETS := 2
+const PRESENT_KEYS := 4
+const ABSENT_KEYS := 2
 
-## Valori scelti apposta per cadere "in mezzo" ai router esistenti.
+## Valori scelti apposta per cadere "in mezzo" ai nodi esistenti.
 const ABSENT_CANDIDATES: Array[float] = [25.7, 50.4, 13.5, 70.9, 62.3, 99.1, 5.2]
 
 
@@ -22,7 +22,7 @@ func _start() -> void:
 		var known: String = "" if level.model.contains(target) else "  (potrebbe non essere nell'albero!)"
 		level.set_objective("Ricerca %d/%d — trova %s%s" % [
 			i + 1, targets.size(), fmt(target), known])
-		await route_packet(target)
+		await search_key(target)
 		if not _is_over():
 			await _wait(0.3)
 
@@ -42,7 +42,7 @@ func _build_queue() -> Array[float]:
 
 	var queue: Array[float] = []
 	for value in present:
-		if queue.size() >= PRESENT_PACKETS:
+		if queue.size() >= PRESENT_KEYS:
 			break
 		queue.append(value)
 
@@ -51,7 +51,7 @@ func _build_queue() -> Array[float]:
 		if not level.model.contains(value):
 			absent.append(value)
 	absent.shuffle()
-	for i in range(mini(ABSENT_PACKETS, absent.size())):
+	for i in range(mini(ABSENT_KEYS, absent.size())):
 		queue.append(absent[i])
 
 	queue.shuffle()

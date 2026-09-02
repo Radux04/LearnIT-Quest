@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bt2rggdmjt3x5"
-path="res://.godot/imported/packet_glow.png-12e8a88f2ab8a5c3109369f314d76368.ctex"
+uid="uid://c3ivrmbcys2gy"
+path="res://.godot/imported/search_token_frame_0.png-2272c95a2de472b2a7f812445871010e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/generated/packet_glow.png"
-dest_files=["res://.godot/imported/packet_glow.png-12e8a88f2ab8a5c3109369f314d76368.ctex"]
+source_file="res://assets/generated/search_token_frame_0.png"
+dest_files=["res://.godot/imported/search_token_frame_0.png-2272c95a2de472b2a7f812445871010e.ctex"]
 
 [params]
 

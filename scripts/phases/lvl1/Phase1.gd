@@ -4,7 +4,7 @@ extends Lvl1PhaseBase
 ## La radice è già presente. Il giocatore trascina gli altri valori nello slot
 ## corretto applicando la proprietà di ordinamento a ogni livello.
 
-const ROUTERS_TO_PLACE: Array[float] = [
+const VALUES_TO_PLACE: Array[float] = [
 	25.5, 74.5,        # livello 1
 	12.8, 37.2, 62.4, 88.6,
 	25.9, 62.1,        # coppie "trappola": vicinissime ai valori sopra
@@ -16,9 +16,9 @@ func _start() -> void:
 	level.set_objective("Trascina ogni valore nello slot corretto: MINORI a sinistra, MAGGIORI a destra.")
 	level.set_hint("Confronta a ogni nodo, non solo con la radice. Attenzione ai decimali: errore = -%d s." % int(PENALTY_PLACE))
 
-	var values: Array[float] = ROUTERS_TO_PLACE.duplicate()
+	var values: Array[float] = VALUES_TO_PLACE.duplicate()
 	values.shuffle()
-	await place_routers(values, PENALTY_PLACE)
+	await place_nodes(values, PENALTY_PLACE)
 
 	if _is_over():
 		return

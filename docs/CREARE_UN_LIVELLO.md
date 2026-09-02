@@ -26,7 +26,7 @@ Non duplicare HUD, timer e schermate finali: sono già nei controller `Level.gd`
 
 1. Definisci argomento, metafora, gesto, regola di validazione, feedback e successione delle fasi.
 2. Crea `scripts/<argomento>/<Nome>Model.gd`: `class_name`, `extends RefCounted`, solo dati/regole/simulazione e nessun nodo Godot.
-3. Scegli la base: `PhaseBase` per meccaniche router, `SqlPhaseBase` per comandi testuali, `Lvl3PhaseBase`/`Lvl4PhaseBase` per una view su palco.
+3. Scegli la base: `Lvl1PhaseBase` per meccaniche su alberi, `SqlPhaseBase` per comandi testuali, `Lvl3PhaseBase`/`Lvl4PhaseBase` per una view su palco.
 4. Crea una view solo se necessaria: raccoglie input e disegna, mentre il model stabilisce se la mossa è corretta.
 5. Crea `Phase1.gd`, `Phase2.gd`, ecc. Ogni fase imposta titolo, obiettivo e hint, poi chiude con `finished.emit()` o `complete(...)`.
 6. Inserisci ogni file in `PHASE_SCRIPTS` e il banner corrispondente in `PHASE_BANNERS`: stessa lunghezza e stesso ordine.
@@ -95,7 +95,7 @@ Esempio di feedback: “Per P(attacco dato traffico notturno), il totale contien
 
 Per ogni livello: crea il file, registralo in `PHASE_SCRIPTS` e `PHASE_BANNERS`, aggiorna introduzione e autoplay, poi ribilancia il timer.
 
-### Livello 1 - BST, router e Dijkstra
+### Livello 1 - BST, alberi binari e Dijkstra
 
 File: `scripts/phases/lvl1/PhaseN.gd`, controller `Level.gd`.
 
@@ -104,9 +104,9 @@ File: `scripts/phases/lvl1/PhaseN.gd`, controller `Level.gd`.
 | Bilanciamento | scegliere LL, LR, RR, RL | altezza e costo di ricerca |
 | Diagnostica BST | cliccare la prima violazione | proprietà globale BST |
 | Backup ordinato | click Inorder | visita e ordinamento |
-| Rete resiliente | spegnere un link e ricalcolare | guasti e rotte alternative |
+| Grafo resiliente | rimuovere un arco e ricalcolare | archi critici e cammini alternativi |
 
-Riusa `Lvl1PhaseBase`: `place_routers`, `route_packet`, `scan_network`, `pick_router`, `delete_router`, `shortest_path_game`.
+Riusa `Lvl1PhaseBase`: `place_nodes`, `search_key`, `traverse_tree`, `pick_node`, `delete_node`, `shortest_path_game`.
 
 ### Livello 2 - database e SQL
 

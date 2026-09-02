@@ -23,7 +23,7 @@ const PENALTY_ATTACK := 15.0
 
 var level: Node = null                       # LevelController
 
-var _tray_routers: Dictionary = {}           # float value -> RouterNode
+var _tray_nodes: Dictionary = {}           # float value -> TreeNodeView
 var _pending_values: Array[float] = []
 var _drop_penalty: float = 0.0
 var _accepting_direction: bool = false
@@ -40,7 +40,7 @@ var _pick_penalty: float = PENALTY_ATTACK
 var _pick_success_message: String = ""
 
 # Stato della fase Dijkstra.
-var _dij_graph: NetworkGraph = null
+var _dij_graph: WeightedGraph = null
 var _dij_dist: Dictionary = {}
 var _dij_prev: Dictionary = {}
 var _dij_settled: Array[float] = []
@@ -50,7 +50,7 @@ var _dij_active: bool = false
 
 # Stato osservabile (usato dall'HUD, dai messaggi e dai test automatici).
 var current_target: float = NAN
-var current_router: float = NAN
+var current_node: float = NAN
 var current_target_exists: bool = true
 
 
@@ -68,7 +68,7 @@ func _cleanup() -> void:
 	_clear_tray()
 	_clear_direction_buttons()
 	_clear_replacement_buttons()
-	_disconnect_router_clicks()
+	_disconnect_node_clicks()
 	level.set_hint("")
 
 
@@ -93,30 +93,30 @@ static func fmt(value: float) -> String:
 # ==== INSERT GAME ====
 # Trascina i nodi dal vassoio nello slot libero corretto dell'albero.
 
-func place_routers(values: Array[float], penalty: float = 0.0) -> void:
+func place_nodes(values: Array[float], penalty: float = 0.0) -> void:
 	if _is_over():
 		return
 	_drop_penalty = penalty
 	_pending_values = values.duplicate()
-	_tray_routers.clear()
+	_tray_nodes.clear()
 
 	for value in _pending_values:
-		var router: RouterNode = RouterNode.new(value)
-		router.draggable = true
-		level.tray.add_child(router)
-		router.set_value(value)
-		router.dropped.connect(_on_router_dropped)
-		router.drag_started.connect(_on_router_drag_started)
-		_tray_routers[value] = router
+		var node_view: TreeNodeView = TreeNodeView.new(value)
+		node_view.draggable = true
+		level.tray.add_child(node_view)
+		node_view.set_value(value)
+		node_view.dropped.connect(_on_node_dropped)
+		node_view.drag_started.connect(_on_node_drag_started)
+		_tray_nodes[value] = node_view
 
 	_relayout_tray()
-	level.network.show_all_free_slots()
+	level.tree_view.show_all_free_slots()
 	await helper_done
-	level.network.clear_slots()
+	level.tree_view.clear_slots()
 
 
 func _relayout_tray() -> void:
-	var keys: Array = _tray_routers.keys()
+	var keys: Array = _tray_nodes.keys()
 	keys.sort()
 	var count: int = keys.size()
 	if count == 0:
@@ -125,100 +125,100 @@ func _relayout_tray() -> void:
 	var start_x: float = level.size.x * 0.5 - (float(count) - 1.0) * spacing * 0.5
 	var y: float = level.size.y - 104.0
 	for i in range(count):
-		var router: RouterNode = _tray_routers[keys[i]]
+		var node_view: TreeNodeView = _tray_nodes[keys[i]]
 		var target: Vector2 = Vector2(start_x + float(i) * spacing, y)
-		router.home_position = target - RouterNode.NODE_SIZE * 0.5
-		if not router.is_dragging():
-			var tween: Tween = router.create_tween()
+		node_view.home_position = target - TreeNodeView.NODE_SIZE * 0.5
+		if not node_view.is_dragging():
+			var tween: Tween = node_view.create_tween()
 			tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-			tween.tween_property(router, "position", router.home_position, 0.2)
+			tween.tween_property(node_view, "position", node_view.home_position, 0.2)
 
 
-func _on_router_drag_started(_router: RouterNode) -> void:
+func _on_node_drag_started(_node_view: TreeNodeView) -> void:
 	Sfx.play("click")
 
 
-func _on_router_dropped(router: RouterNode, global_pos: Vector2) -> void:
+func _on_node_dropped(node_view: TreeNodeView, global_pos: Vector2) -> void:
 	if _is_over():
-		router.return_home()
+		node_view.return_home()
 		return
 
-	var slot: Dictionary = level.network.nearest_slot(global_pos)
+	var slot: Dictionary = level.tree_view.nearest_slot(global_pos)
 	if slot.is_empty():
 		level.toast("Rilascia il valore su uno slot libero dell'albero.", COLOR_INFO)
-		router.return_home()
+		node_view.return_home()
 		return
 
-	var correct: Dictionary = level.model.insertion_slot(router.value)
+	var correct: Dictionary = level.model.insertion_slot(node_view.value)
 	var is_correct: bool = (not correct.is_empty()
 		and is_equal_approx(float(correct["parent"]), float(slot["parent"]))
 		and String(correct["side"]) == String(slot["side"]))
 
 	if is_correct:
-		_accept_router(router, float(slot["parent"]))
+		_accept_node(node_view, float(slot["parent"]))
 	else:
-		_reject_router(router, slot)
+		_reject_node(node_view, slot)
 
 
-func _accept_router(router: RouterNode, parent_value: float) -> void:
-	var value: float = router.value
-	_tray_routers.erase(value)
+func _accept_node(node_view: TreeNodeView, parent_value: float) -> void:
+	var value: float = node_view.value
+	_tray_nodes.erase(value)
 	_pending_values.erase(value)
-	router.draggable = false
-	router.dropped.disconnect(_on_router_dropped)
-	router.drag_started.disconnect(_on_router_drag_started)
+	node_view.draggable = false
+	node_view.dropped.disconnect(_on_node_dropped)
+	node_view.drag_started.disconnect(_on_node_drag_started)
 
 	level.model.insert(value)
-	level.network.adopt_router(router, value)
-	level.network.rebuild(true)
-	level.network.set_edge_color(parent_value, value, NetworkView.CABLE_OK)
-	router.set_state(RouterNode.State.SUCCESS)
-	router.pop()
+	level.tree_view.adopt_node_view(node_view, value)
+	level.tree_view.rebuild(true)
+	level.tree_view.set_edge_color(parent_value, value, TreeView.EDGE_OK)
+	node_view.set_state(TreeNodeView.State.SUCCESS)
+	node_view.pop()
 	Sfx.play("place")
 	level.toast("Collegamento stabilito: %s %s di %s." % [
 		fmt(value), "a sinistra" if value < parent_value else "a destra", fmt(parent_value)], COLOR_OK)
 
 	_relayout_tray()
-	level.network.show_all_free_slots()
+	level.tree_view.show_all_free_slots()
 
 	await _wait(0.5)
-	if is_instance_valid(router):
-		router.set_state(RouterNode.State.IDLE)
-	level.network.reset_edges()
+	if is_instance_valid(node_view):
+		node_view.set_state(TreeNodeView.State.IDLE)
+	level.tree_view.reset_edges()
 
 	if _pending_values.is_empty():
 		helper_done.emit()
 
 
-func _reject_router(router: RouterNode, slot: Dictionary) -> void:
+func _reject_node(node_view: TreeNodeView, slot: Dictionary) -> void:
 	var parent_value: float = float(slot["parent"])
 	var side: String = String(slot["side"])
 	var reason: String = ""
-	if level.model.contains(router.value):
-		reason = "il valore %s è già nell'albero: in un BST non esistono duplicati." % fmt(router.value)
+	if level.model.contains(node_view.value):
+		reason = "il valore %s è già nell'albero: in un BST non esistono duplicati." % fmt(node_view.value)
 	elif side == "left":
-		reason = "%s NON è minore di %s: non può stare a sinistra." % [fmt(router.value), fmt(parent_value)]
+		reason = "%s NON è minore di %s: non può stare a sinistra." % [fmt(node_view.value), fmt(parent_value)]
 	else:
-		reason = "%s NON è maggiore di %s: non può stare a destra." % [fmt(router.value), fmt(parent_value)]
+		reason = "%s NON è maggiore di %s: non può stare a destra." % [fmt(node_view.value), fmt(parent_value)]
 
 	level.toast("Collegamento rifiutato — " + reason, COLOR_BAD)
-	router.set_state(RouterNode.State.ERROR)
-	router.shake()
+	node_view.set_state(TreeNodeView.State.ERROR)
+	node_view.shake()
 	Sfx.play("error")
-	level.flash_slot(slot, NetworkView.CABLE_BAD)
+	level.flash_slot(slot, TreeView.EDGE_BAD)
 	if _drop_penalty > 0.0:
 		level.penalty(_drop_penalty)
 	await _wait(0.45)
-	if is_instance_valid(router):
-		router.set_state(RouterNode.State.IDLE)
-		router.return_home()
+	if is_instance_valid(node_view):
+		node_view.set_state(TreeNodeView.State.IDLE)
+		node_view.return_home()
 
 
 func _clear_tray() -> void:
-	for router in _tray_routers.values():
-		if is_instance_valid(router):
-			router.queue_free()
-	_tray_routers.clear()
+	for node_view in _tray_nodes.values():
+		if is_instance_valid(node_view):
+			node_view.queue_free()
+	_tray_nodes.clear()
 	_pending_values.clear()
 
 
@@ -227,24 +227,24 @@ func _clear_tray() -> void:
 # Se il valore non è nell'albero il giocatore riconosce lo slot vuoto e
 # dichiara "NON NELL'ALBERO": è la ricerca con esito negativo.
 
-func route_packet(target: float) -> void:
+func search_key(target: float) -> void:
 	if _is_over() or level.model.root == null:
 		return
-	var net: NetworkView = level.network
+	var net: TreeView = level.tree_view
 	var exists: bool = level.model.contains(target)
 	var current: float = level.model.root.value
 	current_target = target
 	current_target_exists = exists
-	var packet: Control = _spawn_packet_at(target, current)
+	var token: Control = _spawn_token_at(target, current)
 	var comparisons: int = 0
 	_make_direction_buttons()
 
 	while not _is_over():
-		current_router = current
-		var router: RouterNode = net.get_router(current)
-		if router != null:
-			router.set_state(RouterNode.State.ACTIVE)
-			router.set_pulsing(true)
+		current_node = current
+		var node_view: TreeNodeView = net.get_node_view(current)
+		if node_view != null:
+			node_view.set_state(TreeNodeView.State.ACTIVE)
+			node_view.set_pulsing(true)
 
 		# Lato verso cui la ricerca deve proseguire, e figlio che ci si trova.
 		var node: BSTModel.BSTNodeData = level.model.find(current)
@@ -264,21 +264,21 @@ func route_packet(target: float) -> void:
 		_set_direction_enabled(false)
 		if _is_over():
 			break
-		if router != null:
-			router.set_pulsing(false)
-			router.set_state(RouterNode.State.IDLE)
+		if node_view != null:
+			node_view.set_pulsing(false)
+			node_view.set_state(TreeNodeView.State.IDLE)
 		comparisons += 1
 
 		if direction == expected:
 			if expected == "absent":
-				await _search_failed_correctly(packet, current, target, comparisons)
+				await _search_failed_correctly(token, current, target, comparisons)
 				break
-			net.set_edge_color(current, child.value, NetworkView.CABLE_OK)
-			Sfx.play("packet")
-			await net.move_packet(packet, _packet_anchor(child.value), 0.42)
+			net.set_edge_color(current, child.value, TreeView.EDGE_OK)
+			Sfx.play("token")
+			await net.move_token(token, _token_anchor(child.value), 0.42)
 			current = child.value
 			if is_equal_approx(current, target):
-				await _packet_delivered(packet, current, comparisons)
+				await _key_found(token, current, comparisons)
 				break
 			continue
 
@@ -298,29 +298,29 @@ func route_packet(target: float) -> void:
 		var wrong_child: BSTModel.BSTNodeData = null
 		if node != null and direction != "absent":
 			wrong_child = node.left if direction == "left" else node.right
-		_route_error(packet, current, wrong_child, explanation)
+		_search_error(token, current, wrong_child, explanation)
 		await _wait(1.2)
 		net.reset_edges()
 		if _is_over():
 			break
 		current = level.model.root.value
 		comparisons = 0
-		packet = _spawn_packet_at(target, current)
+		token = _spawn_token_at(target, current)
 
 	_clear_direction_buttons()
 	current_target = NAN
-	current_router = NAN
+	current_node = NAN
 	level.set_hint("")
 
 
 ## Risposta corretta per il passo attuale: "left", "right" o "absent".
 func expected_direction() -> String:
-	if is_nan(current_router) or is_nan(current_target):
+	if is_nan(current_node) or is_nan(current_target):
 		return ""
-	var node: BSTModel.BSTNodeData = level.model.find(current_router)
+	var node: BSTModel.BSTNodeData = level.model.find(current_node)
 	if node == null:
 		return ""
-	var side: String = level.model.step_direction(current_router, current_target)
+	var side: String = level.model.step_direction(current_node, current_target)
 	if side == "":
 		return ""
 	# Se dal lato corretto non c'è figlio, il valore non è nell'albero.
@@ -328,53 +328,53 @@ func expected_direction() -> String:
 	return side if child != null else "absent"
 
 
-func _route_error(packet: Control, from_value: float, wrong_child: BSTModel.BSTNodeData, explanation: String) -> void:
+func _search_error(token: Control, from_value: float, wrong_child: BSTModel.BSTNodeData, explanation: String) -> void:
 	if wrong_child != null:
-		level.network.set_edge_color(from_value, wrong_child.value, NetworkView.CABLE_BAD)
+		level.tree_view.set_edge_color(from_value, wrong_child.value, TreeView.EDGE_BAD)
 	Sfx.play("error")
 	level.toast("Ricerca da ripetere. " + explanation, COLOR_BAD)
-	level.network.destroy_packet(packet, true)
+	level.tree_view.destroy_token(token, true)
 	level.penalty(PENALTY_ROUTE)
 
 
-func _search_failed_correctly(packet: Control, at_value: float, target: float, comparisons: int) -> void:
-	var router: RouterNode = level.network.get_router(at_value)
-	if router != null:
-		router.flash(COLOR_WARN)
-		router.pop()
+func _search_failed_correctly(token: Control, at_value: float, target: float, comparisons: int) -> void:
+	var node_view: TreeNodeView = level.tree_view.get_node_view(at_value)
+	if node_view != null:
+		node_view.flash(COLOR_WARN)
+		node_view.pop()
 	Sfx.play("scan")
 	level.toast("Esatto: %s NON è nell'albero. Bastati %d confronti per esserne certi." % [
 		fmt(target), comparisons], COLOR_WARN)
-	level.network.destroy_packet(packet, false)
+	level.tree_view.destroy_token(token, false)
 	await _wait(1.1)
-	level.network.reset_edges()
+	level.tree_view.reset_edges()
 
 
-func _packet_anchor(value: float) -> Vector2:
-	return level.network.center_of(value) + Vector2(0.0, -46.0)
+func _token_anchor(value: float) -> Vector2:
+	return level.tree_view.center_of(value) + Vector2(0.0, -46.0)
 
 
-func _spawn_packet_at(target: float, node_value: float) -> Control:
-	var net: NetworkView = level.network
-	var packet: Control = net.spawn_packet(target, _packet_anchor(node_value) + Vector2(0.0, -60.0))
-	net.move_packet(packet, _packet_anchor(node_value), 0.3)
-	return packet
+func _spawn_token_at(target: float, node_value: float) -> Control:
+	var net: TreeView = level.tree_view
+	var token: Control = net.spawn_token(target, _token_anchor(node_value) + Vector2(0.0, -60.0))
+	net.move_token(token, _token_anchor(node_value), 0.3)
+	return token
 
 
-func _packet_delivered(packet: Control, value: float, comparisons: int) -> void:
-	var net: NetworkView = level.network
-	var router: RouterNode = net.get_router(value)
-	if router != null:
-		router.set_state(RouterNode.State.SUCCESS)
-		router.pop()
+func _key_found(token: Control, value: float, comparisons: int) -> void:
+	var net: TreeView = level.tree_view
+	var node_view: TreeNodeView = net.get_node_view(value)
+	if node_view != null:
+		node_view.set_state(TreeNodeView.State.SUCCESS)
+		node_view.pop()
 	Sfx.play("correct")
 	level.toast("Trovato %s in %d confronti invece di controllare %d nodi!" % [
 		fmt(value), comparisons, level.model.size()], COLOR_OK)
-	net.destroy_packet(packet, false)
+	net.destroy_token(token, false)
 	await _wait(1.0)
 	net.reset_edges()
-	if router != null and is_instance_valid(router):
-		router.set_state(RouterNode.State.IDLE)
+	if node_view != null and is_instance_valid(node_view):
+		node_view.set_state(TreeNodeView.State.IDLE)
 
 
 func _make_direction_buttons() -> void:
@@ -430,7 +430,7 @@ func _unhandled_input(event: InputEvent) -> void:
 # =============================================================== SCAN GAME ==
 # Clicca i nodi seguendo un ordine di visita.
 
-func scan_network(kind: String, show_rule: bool) -> void:
+func traverse_tree(kind: String, show_rule: bool) -> void:
 	if _is_over():
 		return
 	_expected = level.model.traversal(kind)
@@ -440,19 +440,19 @@ func scan_network(kind: String, show_rule: bool) -> void:
 	level.set_objective("Visita l'albero in ordine %s (%d nodi)." % [
 		kind.to_upper(), _expected.size()])
 	level.set_hint(traversal_rule(kind) if show_rule else "Nessun aiuto: ricorda la definizione della visita.")
-	for router in level.network.all_routers():
-		router.set_state(RouterNode.State.IDLE)
-		router.hide_badge()
-	_connect_router_clicks(_on_scan_click)
+	for node_view in level.tree_view.all_node_views():
+		node_view.set_state(TreeNodeView.State.IDLE)
+		node_view.hide_badge()
+	_connect_node_clicks(_on_traverse_click)
 
 	await helper_done
 
 	_scan_active = false
-	_disconnect_router_clicks()
+	_disconnect_node_clicks()
 	await _wait(0.6)
-	for router in level.network.all_routers():
-		router.set_state(RouterNode.State.IDLE)
-		router.hide_badge()
+	for node_view in level.tree_view.all_node_views():
+		node_view.set_state(TreeNodeView.State.IDLE)
+		node_view.hide_badge()
 
 
 static func traversal_rule(kind: String) -> String:
@@ -468,20 +468,20 @@ static func traversal_rule(kind: String) -> String:
 	return ""
 
 
-func _on_scan_click(router: RouterNode) -> void:
+func _on_traverse_click(node_view: TreeNodeView) -> void:
 	if not _scan_active or _is_over():
 		return
 	if _scan_index >= _expected.size():
 		return
 
-	if is_equal_approx(router.value, _expected[_scan_index]):
+	if is_equal_approx(node_view.value, _expected[_scan_index]):
 		_scan_index += 1
-		router.set_state(RouterNode.State.SCANNED)
-		router.show_badge(str(_scan_index))
-		router.pop()
+		node_view.set_state(TreeNodeView.State.SCANNED)
+		node_view.show_badge(str(_scan_index))
+		node_view.pop()
 		Sfx.play("scan")
 		level.toast("Nodo %s selezionato (%d/%d)" % [
-			fmt(router.value), _scan_index, _expected.size()], COLOR_OK)
+			fmt(node_view.value), _scan_index, _expected.size()], COLOR_OK)
 		if _scan_index >= _expected.size():
 			Sfx.play("correct")
 			level.toast("Visita completata! Ordine corretto.", COLOR_OK)
@@ -489,21 +489,21 @@ func _on_scan_click(router: RouterNode) -> void:
 			helper_done.emit()
 	else:
 		Sfx.play("error")
-		router.set_state(RouterNode.State.ERROR)
-		router.shake()
+		node_view.set_state(TreeNodeView.State.ERROR)
+		node_view.shake()
 		level.toast("Nodo sbagliato! Non tocca a %s. Tempo -%d s" % [
-			fmt(router.value), int(PENALTY_SCAN)], COLOR_BAD)
+			fmt(node_view.value), int(PENALTY_SCAN)], COLOR_BAD)
 		level.penalty(PENALTY_SCAN)
 		await _wait(0.5)
-		if is_instance_valid(router) and router.state == RouterNode.State.ERROR:
-			router.set_state(RouterNode.State.IDLE)
+		if is_instance_valid(node_view) and node_view.state == TreeNodeView.State.ERROR:
+			node_view.set_state(TreeNodeView.State.IDLE)
 
 
 # =============================================================== PICK GAME ==
 # "Clicca il nodo giusto": usato per minimo, massimo, successore
 # e per l'eliminazione di un nodo.
 
-func pick_router(target: float, highlight: bool, success_message: String, penalty: float = PENALTY_ATTACK) -> void:
+func pick_node(target: float, highlight: bool, success_message: String, penalty: float = PENALTY_ATTACK) -> void:
 	if _is_over() or is_nan(target) or not level.model.contains(target):
 		return
 	_pick_target = target
@@ -512,49 +512,49 @@ func pick_router(target: float, highlight: bool, success_message: String, penalt
 	_pick_success_message = success_message
 
 	if highlight:
-		var marked: RouterNode = level.network.get_router(target)
+		var marked: TreeNodeView = level.tree_view.get_node_view(target)
 		if marked != null:
-			marked.set_state(RouterNode.State.ACTIVE)
+			marked.set_state(TreeNodeView.State.ACTIVE)
 			marked.set_pulsing(true)
 		Sfx.play("click")
-	_connect_router_clicks(_on_pick_click)
+	_connect_node_clicks(_on_pick_click)
 
 	await helper_done
 
 	_pick_active = false
-	_disconnect_router_clicks()
+	_disconnect_node_clicks()
 
 
-func _on_pick_click(router: RouterNode) -> void:
+func _on_pick_click(node_view: TreeNodeView) -> void:
 	if not _pick_active or _is_over():
 		return
-	if is_equal_approx(router.value, _pick_target):
+	if is_equal_approx(node_view.value, _pick_target):
 		_pick_active = false
-		router.set_pulsing(false)
-		router.set_state(RouterNode.State.SUCCESS)
-		router.pop()
+		node_view.set_pulsing(false)
+		node_view.set_state(TreeNodeView.State.SUCCESS)
+		node_view.pop()
 		Sfx.play("correct")
 		level.toast(_pick_success_message, COLOR_OK)
 		helper_done.emit()
 	else:
 		Sfx.play("error")
-		router.shake()
-		router.flash(COLOR_BAD)
+		node_view.shake()
+		node_view.flash(COLOR_BAD)
 		level.toast("Non è quello: %s non va bene. Tempo -%d s" % [
-			fmt(router.value), int(_pick_penalty)], COLOR_BAD)
+			fmt(node_view.value), int(_pick_penalty)], COLOR_BAD)
 		level.penalty(_pick_penalty)
 
 
 ## Elimina un nodo. Se possiede due figli, il giocatore sceglie quale nodo
 ## sostitutivo usare: predecessore oppure successore in-order.
-func delete_router(target: float) -> void:
+func delete_node(target: float) -> void:
 	if _is_over() or not level.model.contains(target):
 		return
 	var node: BSTModel.BSTNodeData = level.model.find(target)
 	var two_children: bool = node != null and node.left != null and node.right != null
 	var replacement_value: float = NAN
 
-	await pick_router(target, true, "Nodo %s selezionato per l'eliminazione." % fmt(target))
+	await pick_node(target, true, "Nodo %s selezionato per l'eliminazione." % fmt(target))
 	if _is_over():
 		return
 
@@ -567,7 +567,7 @@ func delete_router(target: float) -> void:
 		level.toast("Scelta di sostituzione non valida.", COLOR_BAD)
 		return
 	await _wait(0.25)
-	level.network.rebuild(true)
+	level.tree_view.rebuild(true)
 	if two_children:
 		level.toast("Scelta applicata: %s prende il posto di %s." % [
 			fmt(replacement_value), fmt(target)], COLOR_INFO)
@@ -620,17 +620,17 @@ func _clear_replacement_buttons() -> void:
 
 # ========================================================== DIJKSTRA GAME ==
 # Il giocatore esegue a mano il ciclo principale di Dijkstra: a ogni turno
-# deve cliccare il router NON ancora fissato con la distanza provvisoria
+# deve cliccare il nodo NON ancora fissato con la distanza provvisoria
 # più bassa. Il gioco si occupa del rilassamento dei vicini e mostra le
 # distanze aggiornate sui badge, così l'algoritmo si vede lavorare.
 
-const DIJ_INF := NetworkGraph.INF
+const DIJ_INF := WeightedGraph.INF
 const BADGE_UNREACHED := Color(0.35, 0.42, 0.55)
 const BADGE_TENTATIVE := Color(1.0, 0.82, 0.35)
 const BADGE_SETTLED := Color(0.3, 1.0, 0.6)
 
 
-func shortest_path_game(graph: NetworkGraph, source: float, target: float) -> void:
+func shortest_path_game(graph: WeightedGraph, source: float, target: float) -> void:
 	if _is_over() or graph == null:
 		return
 	_dij_graph = graph
@@ -644,31 +644,31 @@ func shortest_path_game(graph: NetworkGraph, source: float, target: float) -> vo
 	_dij_dist[source] = 0.0
 
 	_dij_active = true
-	level.network.set_graph(graph)
-	level.network.reset_edges()
-	for router in level.network.all_routers():
-		router.set_state(RouterNode.State.IDLE)
+	level.tree_view.set_graph(graph)
+	level.tree_view.reset_edges()
+	for node_view in level.tree_view.all_node_views():
+		node_view.set_state(TreeNodeView.State.IDLE)
 	_refresh_dijkstra_badges()
-	_connect_router_clicks(_on_dijkstra_click)
+	_connect_node_clicks(_on_dijkstra_click)
 
 	await helper_done
 
 	_dij_active = false
-	_disconnect_router_clicks()
+	_disconnect_node_clicks()
 
 
 func _refresh_dijkstra_badges() -> void:
-	for router in level.network.all_routers():
-		var d: float = float(_dij_dist.get(router.value, DIJ_INF))
+	for node_view in level.tree_view.all_node_views():
+		var d: float = float(_dij_dist.get(node_view.value, DIJ_INF))
 		if d >= DIJ_INF:
-			router.show_badge("∞", BADGE_UNREACHED)
-		elif _dij_settled.has(router.value):
-			router.show_badge(str(int(d)), BADGE_SETTLED)
+			node_view.show_badge("∞", BADGE_UNREACHED)
+		elif _dij_settled.has(node_view.value):
+			node_view.show_badge(str(int(d)), BADGE_SETTLED)
 		else:
-			router.show_badge(str(int(d)), BADGE_TENTATIVE)
+			node_view.show_badge(str(int(d)), BADGE_TENTATIVE)
 
 
-## La distanza provvisoria più bassa fra i router non ancora fissati.
+## La distanza provvisoria più bassa fra i nodi non ancora fissati.
 func _dijkstra_min_distance() -> float:
 	var best: float = DIJ_INF
 	for value in _dij_dist.keys():
@@ -678,13 +678,13 @@ func _dijkstra_min_distance() -> float:
 	return best
 
 
-func _on_dijkstra_click(router: RouterNode) -> void:
+func _on_dijkstra_click(node_view: TreeNodeView) -> void:
 	if not _dij_active or _is_over():
 		return
-	var value: float = router.value
+	var value: float = node_view.value
 
 	if _dij_settled.has(value):
-		level.toast("Il router %s è già fissato: la sua distanza non cambierà più." % fmt(value), COLOR_INFO)
+		level.toast("Il nodo %s è già fissato: la sua distanza non cambierà più." % fmt(value), COLOR_INFO)
 		return
 
 	var d: float = float(_dij_dist.get(value, DIJ_INF))
@@ -692,27 +692,27 @@ func _on_dijkstra_click(router: RouterNode) -> void:
 
 	if d >= DIJ_INF:
 		Sfx.play("error")
-		router.shake()
-		level.toast("%s è ancora a distanza ∞: non è raggiungibile dai router già fissati. Tempo -%d s" % [
+		node_view.shake()
+		level.toast("%s è ancora a distanza ∞: non è raggiungibile dai nodi già fissati. Tempo -%d s" % [
 			fmt(value), int(PENALTY_ROUTE)], COLOR_BAD)
 		level.penalty(PENALTY_ROUTE)
 		return
 
 	if d > best + 0.0001:
 		Sfx.play("error")
-		router.shake()
-		level.toast("Troppo presto: %s costa %d, ma c'è ancora un router non fissato a %d. Dijkstra prende sempre il minimo! Tempo -%d s" % [
+		node_view.shake()
+		level.toast("Troppo presto: %s costa %d, ma c'è ancora un nodo non fissato a %d. Dijkstra prende sempre il minimo! Tempo -%d s" % [
 			fmt(value), int(d), int(best), int(PENALTY_ROUTE)], COLOR_BAD)
 		level.penalty(PENALTY_ROUTE)
 		return
 
-	_settle_dijkstra_node(router, value, d)
+	_settle_dijkstra_node(node_view, value, d)
 
 
-func _settle_dijkstra_node(router: RouterNode, value: float, distance: float) -> void:
+func _settle_dijkstra_node(node_view: TreeNodeView, value: float, distance: float) -> void:
 	_dij_settled.append(value)
-	router.set_state(RouterNode.State.SUCCESS)
-	router.pop()
+	node_view.set_state(TreeNodeView.State.SUCCESS)
+	node_view.pop()
 	Sfx.play("scan")
 
 	# Rilassamento dei vicini.
@@ -726,7 +726,7 @@ func _settle_dijkstra_node(router: RouterNode, value: float, distance: float) ->
 			_dij_dist[to] = candidate
 			_dij_prev[to] = value
 			improved.append("%s→%d" % [fmt(to), int(candidate)])
-			level.network.set_edge_color(value, to, NetworkView.CABLE_OK)
+			level.tree_view.set_edge_color(value, to, TreeView.EDGE_OK)
 
 	_refresh_dijkstra_badges()
 
@@ -739,25 +739,25 @@ func _settle_dijkstra_node(router: RouterNode, value: float, distance: float) ->
 	else:
 		level.toast("Fissato %s a costo %d. Aggiornati: %s" % [
 			fmt(value), int(distance), ", ".join(improved)], COLOR_OK)
-	level.set_hint("Ora clicca il router non fissato con il costo più basso.")
+	level.set_hint("Ora clicca il nodo non fissato con il costo più basso.")
 
 
 func _dijkstra_finished(distance: float) -> void:
 	_dij_active = false
-	var path: Array[float] = NetworkGraph.path_from(_dij_prev, _dij_source, _dij_target)
-	level.network.reset_edges()
-	level.network.highlight_path(path)
+	var path: Array[float] = WeightedGraph.path_from(_dij_prev, _dij_source, _dij_target)
+	level.tree_view.reset_edges()
+	level.tree_view.highlight_path(path)
 	for value in path:
-		var router: RouterNode = level.network.get_router(value)
-		if router != null:
-			router.set_state(RouterNode.State.SUCCESS)
-			router.pop()
+		var node_view: TreeNodeView = level.tree_view.get_node_view(value)
+		if node_view != null:
+			node_view.set_state(TreeNodeView.State.SUCCESS)
+			node_view.pop()
 	Sfx.play("correct")
 
 	var readable: PackedStringArray = PackedStringArray()
 	for value in path:
 		readable.append(fmt(value))
-	level.toast("Percorso ottimo trovato: %s  —  latenza totale %d ms in %d salti." % [
+	level.toast("Percorso ottimo trovato: %s  —  costo totale %d in %d archi." % [
 		" → ".join(readable), int(distance), maxi(path.size() - 1, 0)], COLOR_OK)
 	level.set_hint("")
 	await _wait(2.6)
@@ -766,20 +766,20 @@ func _dijkstra_finished(distance: float) -> void:
 
 # ======================================================== gestione dei click ==
 
-func _connect_router_clicks(callback: Callable) -> void:
-	for router in level.network.all_routers():
-		router.clickable = true
-		if not router.clicked.is_connected(callback):
-			router.clicked.connect(callback)
+func _connect_node_clicks(callback: Callable) -> void:
+	for node_view in level.tree_view.all_node_views():
+		node_view.clickable = true
+		if not node_view.clicked.is_connected(callback):
+			node_view.clicked.connect(callback)
 
 
-func _disconnect_router_clicks() -> void:
-	if level == null or level.network == null:
+func _disconnect_node_clicks() -> void:
+	if level == null or level.tree_view == null:
 		return
-	for router in level.network.all_routers():
-		if not is_instance_valid(router):
+	for node_view in level.tree_view.all_node_views():
+		if not is_instance_valid(node_view):
 			continue
-		router.clickable = false
-		router.set_pulsing(false)
-		for connection in router.clicked.get_connections():
-			router.clicked.disconnect(connection["callable"])
+		node_view.clickable = false
+		node_view.set_pulsing(false)
+		for connection in node_view.clicked.get_connections():
+			node_view.clicked.disconnect(connection["callable"])

@@ -1,22 +1,22 @@
-class_name RouterNode
+class_name TreeNodeView
 extends Control
 
-## A single router of the network = a single node of the BST.
+## A single visual node of the BST.
 ## Handles its own visual state, hover, click and optional drag & drop.
 
 @warning_ignore("unused_signal")
-signal clicked(node: RouterNode)
+signal clicked(node: TreeNodeView)
 ## Emesso entrando e uscendo col mouse: serve alla vista per evidenziare i
-## collegamenti di questo router.
+## collegamenti di questo nodo.
 @warning_ignore("unused_signal")
-signal hovered(node: RouterNode, inside: bool)
-signal drag_started(node: RouterNode)
-signal dropped(node: RouterNode, global_pos: Vector2)
+signal hovered(node: TreeNodeView, inside: bool)
+signal drag_started(node: TreeNodeView)
+signal dropped(node: TreeNodeView, global_pos: Vector2)
 
 enum State { IDLE, ACTIVE, SUCCESS, ERROR, SCANNED, HACKED, GHOST }
 
 const NODE_SIZE := Vector2(58.0, 58.0)
-const ROUTER_TEXTURE := "res://assets/generated/router_core_frame_0.png"
+const NODE_TEXTURE := "res://assets/generated/node_core_frame_0.png"
 
 const COLOR_IDLE := Color(0.35, 0.72, 1.0)
 const COLOR_ACTIVE := Color(0.35, 0.95, 1.0)
@@ -54,7 +54,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	_texture_rect = TextureRect.new()
-	_texture_rect.texture = load(ROUTER_TEXTURE)
+	_texture_rect.texture = load(NODE_TEXTURE)
 	_texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_texture_rect.size = NODE_SIZE
