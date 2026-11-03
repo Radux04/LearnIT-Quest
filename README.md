@@ -1,6 +1,8 @@
 # LearnIT Quest
 
-**Edugame 2D in Godot 4.5 che insegna le strutture dati e gli algoritmi facendoli usare, non spiegandoli.**
+**Edugame 2D in Godot 4.5 che insegna informatica (strutture dati, algoritmi, SQL, calcolabilità e clean code) facendola usare, non spiegandola.**
+
+> Progetto della mia tesi di laurea triennale in Informatica all'Università di Camerino (A.A. 2025/2026, relatore prof. Fabrizio Fornari). Sviluppato da Alessandro Raducu ([@Radux04](https://github.com/Radux04)).
 
 Ogni livello è una "missione informatica" da completare in **5 minuti**: niente quiz a risposta multipla, ma meccaniche di gioco in cui l'algoritmo *è* il gameplay. Se il tempo scade la partita è persa e si può ricominciare o tornare al menu.
 
@@ -9,7 +11,7 @@ Ogni livello è una "missione informatica" da completare in **5 minuti**: niente
 | **Engine** | Godot 4.5 (Forward+) |
 | **Risoluzione** | 1280×720, stretch `canvas_items` / `expand` |
 | **Lingua** | Italiano |
-| **Livelli disponibili** | 1 — Alberi binari di ricerca · 2 — Database Recovery (MySQL) |
+| **Livelli disponibili** | 1 — Alberi binari di ricerca · 2 — Database Recovery (MySQL) · 3 — Laboratorio di Calcolabilità · 4 — Code Review Java |
 
 ---
 
@@ -19,7 +21,7 @@ L'albero binario di ricerca è disegnato come una struttura di **nodi luminosi**
 
 Le chiavi sono **numeri decimali** scelti a coppie ravvicinate (`25.5` / `25.9`, `62.1` / `62.4`): non basta guardare la parte intera, bisogna confrontare davvero.
 
-### Introduzione teorica (3 pagine)
+### Introduzione teorica (4 pagine)
 
 Prima del gameplay c'è una spiegazione navigabile con diagramma animato:
 
@@ -30,7 +32,7 @@ Prima del gameplay c'è una spiegazione navigabile con diagramma animato:
 
 Il livello parte solo premendo *"Inizia la missione"*.
 
-### Le quattro fasi
+### Le cinque fasi
 
 Le fasi si susseguono **senza caricamenti**: l'albero disegnato a schermo è sempre lo stesso e viene riorganizzato dal vivo, fino ad aprirsi in un grafo pesato nell'ultima fase.
 
@@ -147,7 +149,7 @@ Per provare direttamente il livello: apri `res://scenes/level.tscn` e premi **F6
 
 ## Test automatici
 
-Il progetto include due scene di verifica, utili dopo ogni modifica:
+Il progetto include scene di verifica e test automatici, utili dopo ogni modifica:
 
 | Scena | Cosa fa |
 |---|---|
